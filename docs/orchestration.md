@@ -446,3 +446,52 @@ A Stop hook (`.claude/hooks/nefario-report-check.sh`) automatically detects orch
 **Reports generated multiple times:**
 - This indicates the infinite loop protection failed. Check the `stop_hook_active` flag logic in the script.
 - File an issue if this occurs consistently.
+
+---
+
+## 6. Commit Points in Execution Flow
+
+Execution sessions produce file changes that need version control. Commit checkpoints are integrated into the orchestration flow at natural pause points, so committing work does not introduce separate interruptions.
+
+### Feature Branch Creation
+
+At the start of any session that will modify files, a feature branch is created from HEAD before any edits occur:
+
+- **Orchestrated sessions**: `nefario/<slug>` (e.g., `nefario/build-mcp-server-with-oauth`)
+- **Single-agent sessions**: `agent/<agent-name>/<slug>` (e.g., `agent/frontend-minion/fix-header-layout`)
+
+If already on a non-main branch (user-created), the existing branch is used. If the working tree has uncommitted changes, the user is warned before branching.
+
+### Commit Checkpoints and Approval Gates
+
+In orchestrated sessions, commit checkpoints are co-located with approval gates. After the user approves a gate, a commit checkpoint immediately follows, proposing to commit the files changed since the last commit. This reuses the existing "review and decide" pause rather than creating a separate interaction.
+
+```
+[Gate approved] --> [Commit checkpoint] --> [Next batch executes]
+```
+
+For single-agent sessions, a single commit checkpoint is presented at session end via a Stop hook.
+
+### Commit Budget
+
+The number of commit prompts is bounded:
+
+```
+commit_budget = gate_budget + 1
+```
+
+For orchestrated sessions with a 3-5 gate budget (Decision 11), this means 4-6 commit checkpoints: one per gate plus one at wrap-up. For single-agent sessions, the budget is 1 (the wrap-up commit).
+
+### The `defer-all` Escape Hatch
+
+At any commit checkpoint, the user can respond `defer-all` to suppress all remaining mid-session commit prompts. Deferred changes accumulate and are presented as a single batch commit at wrap-up. This is the primary anti-fatigue mechanism for users who prefer fewer interactions.
+
+Auto-deferral also applies to trivial changes (Markdown-only edits under 5 lines), which are silently batched into the wrap-up commit.
+
+### PR Creation at Wrap-Up
+
+After the final commit checkpoint, the session offers to create a pull request via `gh pr create`. The PR body is auto-generated from gate summaries (orchestrated) or the agent's completion summary (single-agent). If `gh` CLI is unavailable, the session prints manual push instructions.
+
+### Full Design Reference
+
+The complete commit workflow specification -- including file change tracking, hook composition, safety rails, sensitive file detection, and edge cases -- is documented in [commit-workflow.md](commit-workflow.md). The security assessment covering input validation, fail-closed behavior, and git command safety is at [commit-workflow-security.md](commit-workflow-security.md).

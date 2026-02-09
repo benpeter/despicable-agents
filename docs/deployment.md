@@ -66,6 +66,43 @@ The `install.sh` script at the repository root manages symlink creation and remo
 
 **Multi-machine sync**: Clone the repository on another machine, run `./install.sh`, and all agents are deployed. Git pull keeps agents in sync across machines.
 
+## Hook Deployment
+
+Three hook scripts in `.claude/hooks/` extend Claude Code's behavior for commit workflow and report automation. Hooks are registered in `.claude/settings.json` and run automatically during sessions.
+
+### Hook Scripts
+
+| Script | Event | Purpose |
+|--------|-------|---------|
+| `track-file-change.sh` | PostToolUse (Write, Edit) | Appends modified file paths to a session-scoped change ledger. The ledger tracks which files the current session changed, so commit checkpoints only propose session-produced changes. |
+| `nefario-report-check.sh` | Stop | Detects orchestration sessions via transcript scanning and enforces report generation before session exit. |
+| `commit-point-check.sh` | Stop | Reads the change ledger, filters sensitive files, and presents a commit checkpoint if uncommitted session changes exist. |
+
+### Settings Configuration
+
+Hooks are registered in `.claude/settings.json` at the project root. The configuration specifies event types, matchers (for PostToolUse), and execution order:
+
+- **Stop hooks** execute in array order. Report-check runs first because it may generate new files (reports) that should be included in the subsequent commit checkpoint. Commit-check runs second to capture all session changes including any generated report.
+- **PostToolUse hooks** use a matcher to fire only on `Write` and `Edit` tool calls. The hook appends the file path to the change ledger with minimal overhead (< 5ms per call).
+
+### Hook Ordering
+
+```
+Stop event fires:
+  1. nefario-report-check.sh  (may generate report files)
+  2. commit-point-check.sh    (proposes commit of all session changes)
+```
+
+The ordering matters: if commit-check ran first, report files generated afterward would be missed from the commit. Both hooks use exit code 2 to block session exit and provide instructions via stderr, with built-in infinite loop protection.
+
+### Prerequisites
+
+- Hook scripts must have execute permissions: `chmod +x .claude/hooks/*.sh`
+- `jq` must be installed for JSON parsing in hooks
+- macOS users: scripts use a perl-based timeout fallback when GNU `timeout` is unavailable
+
+See [commit-workflow.md](commit-workflow.md) Section 7 for the full hook composition design and [commit-workflow-security.md](commit-workflow-security.md) for security properties of hook scripts.
+
 ## The Nefario Skill
 
 The nefario orchestration skill is deployed separately from agents. It lives at `~/.claude/skills/nefario/` and is not managed by `install.sh`. The skill bridges nefario's planning intelligence to the main Claude Code session's execution capability.

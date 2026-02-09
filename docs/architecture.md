@@ -116,7 +116,9 @@ Most tasks have secondary dimensions beyond the primary domain. Nefario's planni
 | Document | Covers |
 |----------|--------|
 | [Agent Anatomy and Overlay System](agent-anatomy.md) | AGENT.md structure, frontmatter schema, five-section prompt template, RESEARCH.md role, overlay files |
-| [Orchestration and Delegation](orchestration.md) | Five-phase planning process, delegation flow, boundary enforcement, escalation paths, execution reports, automatic report generation |
+| [Orchestration and Delegation](orchestration.md) | Five-phase planning process, delegation flow, boundary enforcement, escalation paths, execution reports, automatic report generation, commit points in execution flow |
 | [Build Pipeline and Versioning](build-pipeline.md) | Research and build phases, version tracking, `/lab` skill, cross-check verification |
-| [Deployment](deployment.md) | Symlink-based deployment, `install.sh`, development workflow |
-| [Design Decisions](decisions.md) | Architectural tradeoffs: hierarchy vs. flat, strict boundaries, two-file agents, model selection, memory scope, versioning strategy, reporting automation |
+| [Deployment](deployment.md) | Symlink-based deployment, `install.sh`, hook deployment, development workflow |
+| [Design Decisions](decisions.md) | Architectural tradeoffs: hierarchy vs. flat, strict boundaries, two-file agents, model selection, memory scope, versioning strategy, reporting automation, git workflow integration |
+| [Commit Workflow](commit-workflow.md) | Branching strategy, commit checkpoint format, trigger points, anti-fatigue rules, file change tracking, hook composition, safety rails |
+| [Commit Workflow Security](commit-workflow-security.md) | Input validation, safe filename parsing, commit message safety, git command safety for hooks, fail-closed behavior |

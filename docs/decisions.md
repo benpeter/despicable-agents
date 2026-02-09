@@ -221,6 +221,33 @@ These decisions were implemented in the nefario v1.4 update.
 
 ---
 
+## Git Workflow Integration (Decision 18)
+
+### Decision 18: Hook-Based Commit Workflow
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implementing |
+| **Date** | 2026-02-09 |
+| **Choice** | Hook-based commit workflow with checkpoints co-located at approval gates and session boundaries. Feature branch per session (`nefario/<slug>` for orchestrated, `agent/<name>/<slug>` for single-agent) with PR creation at wrap-up. No git-minion agent. Three hooks: PostToolUse hook for file change tracking, Stop hook for commit checkpoint presentation, Stop hook for report generation (existing). Commit budget equals gate budget + 1. `defer-all` escape hatch suppresses mid-session prompts. |
+| **Alternatives rejected** | (1) **git-minion specialist agent**: Deferred (see Decision 19) due to 4-to-1 specialist consensus against; agent count inflation for a workflow integration concern rather than a domain expertise gap. (2) **Separate commit interruptions** (independent of approval gates): Rejected because cognitive load analysis shows folding commits into existing gate pauses is strictly better -- the user is already in "review and decide" mode. (3) **Automatic commits without human approval**: Rejected because shared repository commits require human judgment; auto-committing violates the principle that irreversible actions need user consent. |
+| **Rationale** | Agents produce file changes that need version control, but the existing workflow has no structured commit points. Co-locating commits with approval gates adds zero additional interaction overhead -- gates are already pauses. The change ledger (PostToolUse tracking) ensures only session-produced changes are staged, preventing accidental commit of unrelated work. Safety rails (sensitive file detection, branch protection, fail-closed checks) prevent common git mistakes. |
+| **Consequences** | Three new hook scripts to maintain. `.claude/settings.json` gains hook configuration. Session-scoped temp files (`/tmp/claude-change-ledger-*`) created and cleaned up. Commit budget constrains interaction count. PR creation requires `gh` CLI (graceful degradation if absent). Full design: [commit-workflow.md](commit-workflow.md). Security assessment: [commit-workflow-security.md](commit-workflow-security.md). |
+
+### Decision 19: Defer git-minion Creation
+
+| Field | Value |
+|-------|-------|
+| **Status** | Deferred |
+| **Date** | 2026-02-09 |
+| **Choice** | Defer git-minion creation. The commit workflow is implemented as hooks and orchestration integration, not as a specialist agent. |
+| **Alternatives rejected** | **Create git-minion now** as a specialist for branching strategy, PR workflow, commit hook maintenance, and merge conflict resolution. Rejected based on 4-to-1 specialist consensus: the job-to-be-done is workflow integration (hooks + orchestration), not git domain expertise. Adding an agent inflates the team without a clear expertise gap that existing agents cannot cover. |
+| **Rationale** | Hook scripts are infrastructure (devx-minion/iac-minion territory), not a specialist domain. Branching conventions are simple enough to encode in documentation and orchestration prompts. Revisit when concrete demand emerges for deep git expertise -- complex branching strategies, PR workflow automation, or commit hook maintenance that exceeds what infrastructure agents handle. |
+| **Consequences** | Agent count stays at 19. Git workflow knowledge is distributed across documentation and hook scripts rather than concentrated in a specialist. If git complexity grows, a future decision can introduce git-minion without breaking existing architecture. |
+
+---
+
 ## Deferred
 
-Nefario-gated complexity classification -- revisit after 20+ full-process runs.
+- Nefario-gated complexity classification -- revisit after 20+ full-process runs.
+- git-minion specialist agent (Decision 19) -- revisit when concrete demand for branching strategy, PR workflow, or commit hook maintenance emerges.

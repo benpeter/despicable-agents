@@ -82,6 +82,15 @@ parse_expected() {
     done < "$expected_file"
 }
 
+# Clean up test agent directory (used by run_test and exit trap)
+TEST_AGENT_DIR="${REPO_ROOT}/test-agent"
+cleanup_test_agent() {
+    rm -rf "${TEST_AGENT_DIR}"
+}
+
+# Ensure cleanup on unexpected exit
+trap cleanup_test_agent EXIT
+
 # Run test on a single fixture
 run_test() {
     local fixture_name="$1"
@@ -96,22 +105,32 @@ run_test() {
     # Parse expected results
     parse_expected "${fixture_dir}/expected.txt"
 
-    # Create temporary directory for test run
-    local temp_dir
-    temp_dir=$(mktemp -d)
+    # Clean up any leftover test-agent dir from a previous run
+    cleanup_test_agent
 
-    # Copy fixture to temp location to simulate agent directory
-    cp -r "${fixture_dir}" "${temp_dir}/test-agent"
+    # Copy fixture into repo root where validate-overlays.sh resolves agent dirs
+    # (validate-overlays.sh uses SCRIPT_DIR, its own location, to find agents)
+    mkdir -p "${TEST_AGENT_DIR}"
+    cp -r "${fixture_dir}"/* "${TEST_AGENT_DIR}/"
 
-    # Run validate-overlays.sh in the temp directory
+    # Run validate-overlays.sh against the test-agent
     local actual_exit_code=0
-    local output
-    cd "${temp_dir}"
-    output=$("${VALIDATE_SCRIPT}" test-agent 2>&1) || actual_exit_code=$?
-    cd "${SCRIPT_DIR}"
+    local detail_output
+    detail_output=$("${VALIDATE_SCRIPT}" test-agent 2>&1) || actual_exit_code=$?
 
-    # Clean up temp directory
-    rm -rf "${temp_dir}"
+    # Derive status from exit code (single-agent mode doesn't print CLEAN/DRIFT)
+    local status_word
+    if [[ "$actual_exit_code" -eq 0 ]]; then
+        status_word="CLEAN"
+    else
+        status_word="DRIFT"
+    fi
+
+    # Clean up test agent directory
+    cleanup_test_agent
+
+    # Combine status line with detail output so all expected patterns are matchable
+    local output="test-agent ${status_word}"$'\n'"${detail_output}"
 
     # Check exit code
     local exit_code_match=false
