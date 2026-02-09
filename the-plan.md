@@ -41,6 +41,8 @@ model: opus  # or sonnet -- see individual agent specs
 memory: user
 # x-plan-version tracks the spec version from the-plan.md
 # x-build-date tracks when AGENT.md was last generated
+# x-fine-tuned (optional) indicates AGENT.md has hand-tuned overrides beyond
+# the generated baseline. Present when overlay files exist.
 # When x-plan-version < current spec version, the agent needs regeneration
 x-plan-version: "1.0"
 x-build-date: "YYYY-MM-DD"
@@ -154,10 +156,8 @@ because its system prompt enforces coordination-only behavior.
 
 **Invocation model**:
 
-Nefario operates in two modes depending on how it is invoked:
-
 Nefario is invoked via the `/nefario` skill from a normal Claude Code session.
-The skill orchestrates a three-phase planning process:
+The skill orchestrates a five-phase planning process:
 
 _Phase 1 -- Meta-plan (MODE: META-PLAN)_: Nefario is spawned as a subagent.
 It analyzes the task, consults the delegation table, and returns a meta-plan --
@@ -175,24 +175,31 @@ specialist contributions. It consolidates them into a final execution plan --
 resolving conflicts, filling gaps, and producing complete self-contained prompts
 for each execution task.
 
-After user approval, the calling session executes the plan (creates team, spawns
-teammates).
+_Phase 3.5 -- Architecture Review_: Cross-cutting agents review the plan before
+execution. Mandatory reviewers (security-minion, test-minion, ux-strategy-minion,
+software-docs-minion) always participate. Conditional reviewers
+(observability-minion, ux-design-minion) are triggered by task composition.
+Reviewers return APPROVE, ADVISE, or BLOCK verdicts. BLOCK triggers revision loop
+(capped at 2 rounds).
 
-_Shortcut (MODE: PLAN)_: For simpler tasks that don't need specialist
-consultation, nefario can be asked to produce an execution plan directly,
-skipping Phase 2.
+_Phase 4 -- Execution_: After user approval, the calling session executes the
+plan (creates team, spawns teammates, manages approval gates).
+
+_Alternative (MODE: PLAN)_: For when the user explicitly requests a simplified
+process. Nefario produces an execution plan directly, skipping Phase 2 and 3.5.
+This mode is only used when the user explicitly asks for it -- nefario does not
+shortcut to it on its own.
 
 _Fallback -- Direct main agent_: If invoked via `claude --agent nefario` and the
-Task tool is available, nefario can execute plans directly. Due to a current
-Claude Code platform constraint (as of 2.1.37), custom agents do NOT receive the
-Task tool, so this mode may not work. The `/nefario` skill is the reliable path.
+Task tool is available, nefario can execute plans directly. The `/nefario` skill
+is the primary and most reliable invocation path.
 
 **Research focus**: Multi-agent orchestration patterns, task decomposition
 strategies, agent team coordination in Claude Code, delegation patterns for
 specialist teams, work breakdown structure methodologies, Claude Code skill
-design for orchestration.
+design for orchestration, architecture review patterns.
 
-**spec-version**: 1.2
+**spec-version**: 1.4
 
 #### Delegation Table
 
@@ -258,58 +265,81 @@ How agents collaborate when working as a team:
 _These patterns are encoded in Nefario's system prompt as his core operating
 procedure._
 
-**The Plan-Execute-Verify Cycle**
+**Mode-Based Operation**
 
-Every non-trivial task follows this cycle. Never skip to execution.
+Nefario's behavior is determined by the MODE instruction it receives:
+- META-PLAN: Analyze task, consult delegation table, return which specialists to
+  consult and what to ask each one.
+- SYNTHESIS: Receive specialist contributions, resolve conflicts, fill gaps,
+  return execution plan with complete agent prompts.
+- PLAN: Shortcut when user explicitly requests it. Skip specialist consultation,
+  return execution plan directly.
 
-Phase 1 -- Decompose and Plan:
-1. Analyze the task against the delegation table
-2. Identify primary and supporting minions for each subtask
-3. Map dependencies (which subtasks block others?)
-4. Assign file ownership (no two minions touch the same file)
-5. Write the plan as a structured task list with dependencies
-6. Present the plan to the user and WAIT for approval
+**Cross-Cutting Concerns (Mandatory Checklist)**
 
-Phase 2 -- Return Output Per Mode:
-- META-PLAN mode: Return which specialists to consult and what to ask each
-- SYNTHESIS mode: Consolidate specialist contributions into execution plan
-- PLAN mode: Return execution plan directly (skipping specialist consultation)
-The calling session (which has the Task tool) handles spawning specialists
-for planning (Phase 2 of the skill) and executing the final plan.
+Every plan MUST evaluate these six dimensions. For each one, either include the
+relevant agent or explicitly state why it is not needed. Do not silently omit any
+dimension.
 
-Phase 3 -- Collect and Verify:
-1. Wait for all teammates to complete (do not proceed early)
-2. Synthesize results from all teammates
-3. Identify conflicts or integration issues
-4. Run verification checks (test suite, lint, type check)
-5. Report results to user with clear pass/fail status
+- **Testing** (test-minion): Does this task produce code, configuration, or
+  infrastructure that should be tested? Include unless the task is purely
+  research, documentation, or design with no executable output.
+- **Security** (security-minion): Does this task create attack surface, handle
+  authentication/authorization, process user input, manage secrets, or introduce
+  new dependencies? Include for any task that touches auth, APIs, user input, or
+  infrastructure.
+- **Usability -- Strategy** (ux-strategy-minion): ALWAYS include. Every plan
+  needs journey coherence review, cognitive load assessment, and simplification
+  audit. ux-strategy reviews WHAT is built and WHY, ensuring features serve real
+  user jobs-to-be-done.
+- **Usability -- Design** (ux-design-minion): Include when 1 or more tasks
+  produce user-facing interfaces. ux-design reviews HOW the interface works:
+  accessibility, visual hierarchy, interaction patterns.
+- **Documentation** (software-docs-minion and/or user-docs-minion): ALWAYS
+  include. software-docs-minion for any architectural or API surface changes.
+  user-docs-minion when end users will interact with the result.
+- **Observability** (observability-minion): Does this task create production
+  services, APIs, or background processes that need logging, metrics, or
+  tracing? Include for any runtime component.
 
-Phase 4 -- Iterate:
-1. If failures exist, reassign to appropriate minions
-2. Spawn replacement teammates if needed
-3. Repeat Phase 2-3 for failed items only
+Default: include the agent. Only exclude with explicit justification. "It was not
+mentioned in the task" is not sufficient justification.
+
+**Approval Gates**
+
+Classify each potential gate on two dimensions: reversibility (how hard to undo)
+and blast radius (how many downstream tasks depend on it).
+
+|  | Low Blast Radius (0-1 dependents) | High Blast Radius (2+ dependents) |
+|---|---|---|
+| Easy to Reverse | NO GATE | OPTIONAL gate |
+| Hard to Reverse | OPTIONAL gate | MUST gate |
+
+Gate budget: target 3-5 gates per plan. Present gates with progressive-disclosure
+decision brief format. Cap revision rounds at 2 before escalating to user.
+
+**Architecture Review (Phase 3.5)**
+
+After synthesis, before execution, cross-cutting agents review the plan:
+
+| Reviewer | Trigger |
+|----------|---------|
+| security-minion | ALWAYS |
+| test-minion | ALWAYS |
+| ux-strategy-minion | ALWAYS |
+| software-docs-minion | ALWAYS |
+| observability-minion | 2+ tasks produce runtime components |
+| ux-design-minion | 1+ tasks produce user-facing interfaces |
+
+Reviewers return APPROVE / ADVISE / BLOCK verdicts. BLOCK triggers revision loop
+capped at 2 rounds.
 
 **Model Selection for Spawned Tasks**
 
-When spawning minion tasks, select the model based on the task type:
-
-- **Planning and analysis tasks**: Use `opus` for deeper reasoning, regardless
-  of the minion's default model
-- **Execution tasks**: Use the minion's default model (usually `sonnet`)
-- **Override**: If the user explicitly requests a specific model, honor that
-
-This keeps planning quality high while controlling execution costs. Since you
-cannot change models mid-session, planning and execution are separate Task
-invocations -- plan first at opus, then execute at the minion's default.
-
-**Cross-Cutting Concerns**
-
-Always consider whether a task has secondary dimensions beyond the primary
-domain. Most tasks do. Check the delegation table for supporting agents --
-security, documentation, UX, and observability are almost always relevant,
-even when the task looks isolated. When in doubt, include the supporting
-agent rather than skipping it. A single subagent (no team) is appropriate
-only for pure research questions or trivial lookups.
+- Planning and analysis tasks: Use `opus` for deeper reasoning
+- Execution tasks: Use the minion's default model (usually `sonnet`)
+- Architecture review: Use `sonnet` (pattern-matching, not deep reasoning)
+- Override: If the user explicitly requests a specific model, honor that
 
 ---
 

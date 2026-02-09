@@ -6,6 +6,7 @@ Nefario (orchestrator), and 17 domain-specialist minions.
 ## Structure
 
 - `the-plan.md` -- canonical spec for all agents (source of truth, human-edited)
+- `docs/` -- architecture and design documentation (see [docs/architecture.md](docs/architecture.md))
 - `/lab` -- project-local skill to check and rebuild agents (`.claude/skills/lab/`)
 - `gru/` -- AI visionary / technology radar
 - `nefario/` -- task orchestrator (planning only, does not write code)
