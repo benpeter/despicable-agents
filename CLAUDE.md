@@ -17,10 +17,17 @@ Each agent directory contains:
 
 ## Key Rules
 
-- **Do NOT modify `the-plan.md`** unless you are the human owner
+- **Do NOT modify `the-plan.md`** unless you are the human owner or the human owner approves you making changes
 - All artifacts in **English**
 - **No PII**, no proprietary data -- agents must remain publishable (Apache 2.0)
 - Agent boundaries are strict: check "Does NOT do" sections for handoff points
+
+## Technology Preferences
+
+- **Prefer lightweight, vanilla solutions** -- vanilla JS/CSS/HTML over frameworks
+  unless a framework adds specific, demonstrable value.
+- For example, don't default to React, Vue, Tailwind CSS, jQuery, etc. just because they're popular.
+- Always ask: "What does this dependency give me that I can't do simply without it?"
 
 ## Versioning
 
