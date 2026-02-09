@@ -76,9 +76,9 @@ extract_frontmatter() {
 parse_yaml_frontmatter() {
   local file="$1"
   extract_frontmatter "$file" | \
-    grep -E '^\s*[a-zA-Z0-9_-]+:' | \
-    sed -E 's/^\s*([a-zA-Z0-9_-]+):\s*(.*)$/\1=\2/' | \
-    sed 's/^/FM_/'
+    grep -E '^[[:space:]]*[a-zA-Z0-9_-]+:' | \
+    sed -E 's/^[[:space:]]*([a-zA-Z0-9_-]+):[[:space:]]*(.*)/\1=\2/' | \
+    sed 's/^/FM_/' || true
 }
 
 # Extract markdown body (content after frontmatter)
@@ -192,92 +192,139 @@ extract_section() {
 # Usage: normalize_content <file> > normalized
 normalize_content() {
   local file="$1"
-  # Strip trailing whitespace from lines
+  # Strip trailing whitespace from lines, collapse consecutive blank lines,
+  # and remove trailing blank lines at end of file
   sed 's/[[:space:]]*$//' "$file" | \
-  # Collapse consecutive blank lines to single blank line
-  awk 'NF { blank=0; print } !NF { if (!blank) print; blank=1 }'
+  awk '
+    NF { blank=0; lines[++n] = $0; last_nonblank = n }
+    !NF { if (!blank) { lines[++n] = "" }; blank=1 }
+    END { for (i = 1; i <= last_nonblank; i++) print lines[i] }
+  '
 }
 
-# Merge frontmatter (shallow merge with x-fine-tuned injection)
+# Merge frontmatter (preserves multi-line YAML values)
+# Strategy: Output generated frontmatter as-is, then append x-fine-tuned if missing.
+# Override frontmatter keys are not currently used (overrides only affect body sections),
+# but if present, they would need multi-line YAML awareness to merge properly.
 # Usage: merge_frontmatter <generated-file> <overrides-file> > merged
 merge_frontmatter() {
   local gen_file="$1"
   local ovr_file="$2"
 
-  local gen_fm="${WORK_DIR}/gen_fm_tmp"
-  local ovr_fm="${WORK_DIR}/ovr_fm_tmp"
+  local gen_fm="${WORK_DIR}/gen_fm_raw"
+  extract_frontmatter "$gen_file" > "$gen_fm"
 
-  parse_yaml_frontmatter "$gen_file" > "$gen_fm"
-
-  if [[ -f "$ovr_file" ]] && [[ -s "$ovr_file" ]]; then
-    parse_yaml_frontmatter "$ovr_file" > "$ovr_fm"
+  # Check if x-fine-tuned already present in generated frontmatter
+  if grep -q '^x-fine-tuned:' "$gen_fm" 2>/dev/null; then
+    cat "$gen_fm"
   else
-    : > "$ovr_fm"
+    cat "$gen_fm"
+    echo "x-fine-tuned: true"
   fi
 
-  # Build merged frontmatter: start with generated, apply overrides, add x-fine-tuned
-  local merged="${WORK_DIR}/merged_fm_tmp"
-  : > "$merged"
-
-  # Add all generated keys
-  while IFS='=' read -r key value; do
-    echo "${key}=${value}" >> "$merged"
-  done < "$gen_fm"
-
-  # Apply overrides (remove existing key if present, add override)
-  if [[ -s "$ovr_fm" ]]; then
-    while IFS='=' read -r key value; do
-      # Extract actual key name (without FM_ prefix)
-      local key_name="${key#FM_}"
-      # Remove any existing entry for this key
-      grep -v "^FM_${key_name}=" "$merged" > "${merged}.tmp" || true
-      mv "${merged}.tmp" "$merged"
-      # Add override value
-      echo "${key}=${value}" >> "$merged"
-    done < "$ovr_fm"
-  fi
-
-  # Add x-fine-tuned if not present
-  if ! grep -q "^FM_x-fine-tuned=" "$merged"; then
-    echo "FM_x-fine-tuned=true" >> "$merged"
-  fi
-
-  # Output as YAML
-  while IFS='=' read -r key value; do
-    local key_name="${key#FM_}"
-    echo "${key_name}: ${value}"
-  done < "$merged"
-
-  rm -f "$gen_fm" "$ovr_fm" "$merged"
+  rm -f "$gen_fm"
 }
 
 # Merge sections (section-level replacement by H2 heading match)
+# Walks through the generated body preserving H1 headings and non-H2 content.
+# H2 sections are replaced with overrides when a matching heading exists.
 # Usage: merge_sections <generated-body> <overrides-body> > merged-body
 merge_sections() {
   local gen_body="$1"
   local ovr_body="$2"
 
-  # Get list of all H2 headings in generated
-  local headings="${WORK_DIR}/headings_tmp"
-  extract_h2_headings "$gen_body" > "$headings"
+  # Use awk to walk through generated body line by line.
+  # Non-H2 content (H1 headings, paragraphs between sections) passes through.
+  # H2 sections are buffered and checked for overrides before output.
+  #
+  # We pre-extract override section content into a temp file keyed by heading,
+  # then reference it from within the awk walk.
 
-  # For each section in generated, check if override exists
+  # Pre-extract all override H2 sections into individual temp files
+  local ovr_headings_file="${WORK_DIR}/merge_ovr_headings"
+  extract_h2_headings "$ovr_body" > "$ovr_headings_file"
+
   while IFS= read -r heading; do
-    # Check if this section exists in overrides
-    local override_section
-    override_section=$(extract_section "$ovr_body" "$heading")
+    local safe_name
+    safe_name=$(printf '%s' "$heading" | sed 's/[^a-zA-Z0-9]/_/g')
+    extract_section "$ovr_body" "$heading" > "${WORK_DIR}/ovr_sec_${safe_name}"
+  done < "$ovr_headings_file"
 
-    if [[ -n "$override_section" ]]; then
-      # Use override section
-      echo "$override_section"
-    else
-      # Use generated section
-      extract_section "$gen_body" "$heading"
-    fi
-    echo ""
-  done < "$headings"
+  # Walk through generated body, buffering H2 sections and replacing from overrides
+  awk -v work_dir="$WORK_DIR" '
+    BEGIN {
+      in_fence = 0
+      in_h2 = 0
+      section_buf = ""
+      current_heading = ""
+    }
 
-  rm -f "$headings"
+    function safe_name(s,    result) {
+      result = s
+      gsub(/[^a-zA-Z0-9]/, "_", result)
+      return result
+    }
+
+    function flush_h2(    ovr_file, line, has_ovr) {
+      if (!in_h2) return
+
+      ovr_file = work_dir "/ovr_sec_" safe_name(current_heading)
+      has_ovr = (getline line < ovr_file)
+      close(ovr_file)
+
+      if (has_ovr > 0) {
+        # Override exists — output the full override file (re-read from start)
+        while ((getline line < ovr_file) > 0) {
+          print line
+        }
+        close(ovr_file)
+      } else {
+        # No override — output the buffered generated section
+        printf "%s", section_buf
+      }
+
+      in_h2 = 0
+      section_buf = ""
+      current_heading = ""
+    }
+
+    /^```/ { in_fence = !in_fence }
+
+    /^# [^#]/ && !in_fence {
+      # H1 heading — flush any buffered H2 section, ensure blank line, pass through
+      flush_h2()
+      printf "\n"
+      print
+      next
+    }
+
+    /^## / && !in_fence {
+      # New H2 heading — flush any previous H2 section first
+      flush_h2()
+
+      in_h2 = 1
+      heading = substr($0, 4)
+      gsub(/  +/, " ", heading)
+      gsub(/^ | $/, "", heading)
+      current_heading = heading
+      section_buf = $0 "\n"
+      next
+    }
+
+    {
+      if (in_h2) {
+        section_buf = section_buf $0 "\n"
+      } else {
+        print
+      }
+    }
+
+    END {
+      flush_h2()
+    }
+  ' "$gen_body"
+
+  rm -f "$ovr_headings_file" "${WORK_DIR}"/ovr_sec_*
 }
 
 # Perform merge of generated + overrides to compute expected AGENT.md
@@ -291,7 +338,6 @@ compute_merge() {
   echo "---"
   merge_frontmatter "$generated" "$overrides"
   echo "---"
-  echo ""
 
   # Extract bodies
   local gen_body="${WORK_DIR}/gen_body"

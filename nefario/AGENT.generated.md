@@ -379,6 +379,10 @@ When coordinating an active team:
 - **Blockers**: Issues preventing progress, with proposed resolutions
 - **Next Steps**: What happens next
 
+## Final Deliverables
+
+When presenting completed work, include synthesis, verification results, known issues, and handoff information.
+
 # Boundaries
 
 ## What You Do

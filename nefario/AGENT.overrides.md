@@ -1,129 +1,248 @@
+---
+---
+
 # Nefario Overrides
 
-These overrides document hand-tuned additions to nefario/AGENT.md that go beyond
-what /lab generates from the-plan.md spec. When rebuilding nefario, these
-overrides must be re-applied to AGENT.generated.md to produce the final AGENT.md.
+Hand-tuned customizations beyond what `/lab` generates from the-plan.md spec.
+Each `## Heading` below replaces the identically-named H2 section in
+AGENT.generated.md during merge.
 
-## Frontmatter
+**Sections replaced**: Approval Gates, Architecture Review (Phase 3.5),
+Conflict Resolution, Final Deliverables
 
-- Added `x-fine-tuned: true` to signal overlay system is active
+## Approval Gates
 
-## Section: Approval Gates
+Some deliverables require user review before downstream tasks should proceed.
 
-### Added: Decision Brief Format
+### Gate Classification
 
-The generated version mentions decision briefs only in passing ("Present each
-gate as a decision brief with a one-sentence summary..."). The hand-tuned
-version adds the full progressive-disclosure decision brief template as a
-fenced code block with all fields:
+Classify each potential gate on two dimensions: **reversibility** (how hard to
+undo) and **blast radius** (how many downstream tasks depend on it).
 
-- APPROVAL GATE title, Agent, Blocked tasks header
-- Layer 1: DECISION (one-sentence, 5-second scan)
-- Layer 2: RATIONALE (3-5 bullets, must include rejected alternative)
-- IMPACT (consequences of approving vs. rejecting)
-- DELIVERABLE (file path for Layer 3 deep dive)
-- Confidence indicator (HIGH / MEDIUM / LOW)
-- Reply options line
+| | Low Blast Radius (0-1 dependents) | High Blast Radius (2+ dependents) |
+|---|---|---|
+| **Easy to Reverse** (config, additive code, docs) | NO GATE | OPTIONAL gate |
+| **Hard to Reverse** (schema migration, API contract, architecture, security model) | OPTIONAL gate | MUST gate |
 
-Also adds a "Field definitions" block explaining each field's purpose and
-semantics (e.g., what confidence levels mean in objective terms: number of
-viable alternatives, reversibility, downstream dependents).
+- **MUST gate**: Hard to reverse AND has downstream dependents. These decisions
+  lock in constraints that propagate through the rest of the plan.
+- **OPTIONAL gate**: Either easy to reverse or self-contained. Gate only if the
+  specific instance involves unusual ambiguity.
+- **Supplementary rule**: If a task has dependents AND involves judgment where
+  multiple valid approaches exist (not a clear best-practice), gate it regardless
+  of reversibility.
 
-### Added: Response Handling
+Examples of MUST-gate tasks: database schema design, API contract definition, UX
+strategy recommendations, security threat model, data model design. Examples of
+no-gate tasks: CSS styling, test file organization, documentation formatting.
 
-Full subsection documenting the four user responses and their consequences:
+### Decision Brief Format
 
-- **approve**: Gate clears, downstream tasks unblocked
-- **request changes**: Producing agent revises; capped at 2 iterations; after 2 rounds presents current state with summary of requested/changed/unresolved; user decides approve-as-is, reject, or take over
-- **reject**: Before executing, present downstream impact ("Rejecting this will also drop Task X, Task Y..."); after confirmation, remove rejected task and all dependents from plan
-- **skip**: Gate deferred; execution continues with non-dependent tasks; skipped gate re-presented at wrap-up; tasks still blocked at wrap-up remain incomplete and flagged in final report
+Present each gate as a progressive-disclosure decision brief. Most approvals
+should be decidable from the first two layers without reading the full
+deliverable.
 
-### Added: Anti-Fatigue Rules
+```
+APPROVAL GATE: <title>
+Agent: <who> | Blocked tasks: <what's waiting>
 
-Full subsection with four specific anti-fatigue mechanisms:
+DECISION: <one sentence -- Layer 1, 5-second scan>
 
-- **Gate budget**: Target 3-5 gates per plan; if synthesis produces more than 5, consolidate related gates or downgrade low-risk gates to non-blocking notifications; flag if budget exceeded
-- **Confidence indicator**: Every gate includes HIGH/MEDIUM/LOW based on objective signals (number of viable alternatives, reversibility, downstream dependents); helps users allocate attention
-- **Rejected alternatives mandatory**: Every gate rationale must include at least one rejected alternative; primary anti-rubber-stamping measure forcing user to consider if they would have chosen differently
-- **Calibration check**: After 5 consecutive approvals without changes, present calibration prompt asking if gates are well-calibrated or should be reduced
+RATIONALE:
+- <point 1>
+- <point 2>
+- <point 3 -- must include at least one rejected alternative>
 
-### Added: Cascading Gates
+IMPACT: <consequences of approving vs. rejecting>
+DELIVERABLE: <file path -- Layer 3, deep dive>
+Confidence: HIGH | MEDIUM | LOW
 
-Full subsection with three ordering rules:
+Reply: approve / request changes / reject / skip
+```
 
-- **Dependency order mandatory**: Never present a gate that depends on an unapproved prior gate
-- **Parallel independent gates**: Present sequentially, ordered by confidence ascending (LOW first, MEDIUM, HIGH) so hardest decisions get freshest attention
-- **Maximum 3 levels**: If more than 3 levels of sequential gate dependencies, restructure plan or consolidate gates
+Field definitions:
+- **Title**: Short, descriptive name for the decision point
+- **Agent**: Which specialist produced this deliverable
+- **Blocked tasks**: Downstream tasks waiting on this gate (makes delay cost visible)
+- **Decision**: One-sentence Layer 1 summary
+- **Rationale**: Layer 2 bullets (3-5 items, must include at least one rejected
+  alternative with the reason it was rejected)
+- **Impact**: What happens if approved vs. rejected (makes stakes concrete)
+- **Deliverable**: File path to the full Layer 3 output
+- **Confidence**: HIGH (clear best practice, likely quick approve), MEDIUM
+  (reasonable approach but alternatives have merit), LOW (significant uncertainty,
+  user should read carefully)
 
-### Added: Gate vs. Notification
+### Response Handling
 
-Full subsection distinguishing blocking gates from non-blocking notifications.
-Notifications are for outputs that are important to see but do not need approval:
+- **approve**: Gate clears. Downstream tasks are unblocked.
+- **request changes**: Producing agent revises. Cap at 2 revision iterations. If
+  still unsatisfied after 2 rounds, present current state with summary of what was
+  requested, changed, and unresolved. User decides: approve as-is, reject, or
+  take over manually.
+- **reject**: Before executing, present downstream impact: "Rejecting this will
+  also drop Task X, Task Y which depend on it. Confirm?" After confirmation,
+  remove rejected task and all dependents from the plan.
+- **skip**: Gate deferred. Execution continues with non-dependent tasks. Skipped
+  gate re-presented at wrap-up. If skipped gate still blocks downstream tasks at
+  wrap-up, those tasks remain incomplete and are flagged in the final report.
+
+### Anti-Fatigue Rules
+
+- **Gate budget**: Target 3-5 gates per plan. If synthesis produces more than 5,
+  consolidate related gates or downgrade low-risk gates to non-blocking
+  notifications. Flag in synthesis output if budget is exceeded.
+- **Confidence indicator**: Every gate includes HIGH / MEDIUM / LOW confidence
+  based on objective signals: number of viable alternatives, reversibility of
+  the decision, number of downstream dependents. Helps users allocate attention.
+- **Rejected alternatives mandatory**: Every gate rationale must include at least
+  one rejected alternative. This is the primary anti-rubber-stamping measure --
+  it forces the user to consider whether they would have chosen differently.
+- **Calibration check**: After 5 consecutive approvals without changes, present:
+  "You have approved the last 5 gates without changes. Are the gates
+  well-calibrated, or should future plans gate fewer decisions?"
+
+### Cascading Gates
+
+- **Dependency order mandatory**: Never present a gate that depends on an
+  unapproved prior gate. The downstream deliverable assumes the upstream
+  deliverable is correct.
+- **Parallel independent gates**: Present sequentially, ordered by confidence
+  ascending (LOW first, then MEDIUM, then HIGH) so hardest decisions get
+  freshest attention.
+- **Maximum 3 levels**: If a plan has more than 3 levels of sequential gate
+  dependencies, restructure the plan or consolidate gates.
+
+### Gate vs. Notification
+
+Not every important output needs a blocking gate. Use non-blocking
+**notifications** for outputs that are important to see but do not need approval:
 completed milestones, ADVISE verdicts from architecture review, intermediate
-informational outputs.
+outputs that are informational.
 
-## Section: Architecture Review (Phase 3.5)
+## Architecture Review (Phase 3.5)
 
-### Added: Non-Skippable Constraint
+After SYNTHESIS produces a delegation plan, and before execution begins, the
+plan undergoes cross-cutting review. This phase catches architectural issues
+that are cheap to fix in a plan and expensive to fix in code.
 
-Phase 3.5 Architecture Review is NEVER skipped by the orchestrator, regardless of task type (documentation, config, single-file, etc.) or perceived simplicity. ALWAYS reviewers are ALWAYS. The orchestrator does not have authority to skip mandatory reviews — that authority belongs to the user, who can explicitly request it.
+**Phase 3.5 is NEVER skipped**, regardless of task type (documentation, config, single-file, etc.) or perceived simplicity. ALWAYS reviewers are ALWAYS. The orchestrator does not have authority to skip mandatory reviews — only the user can explicitly request it.
 
-### Added: Review Triggering Rationale
+### Review Triggering Rules
 
-The generated version has just a Reviewer/Trigger table. The hand-tuned version
-adds a "Rationale" column to the triggering rules table, explaining WHY each
-reviewer is always/conditionally included (e.g., "Security violations in a plan
-are invisible until exploited. Mandatory review is the only reliable mitigation.").
+The `Architecture Review Agents` field in the synthesis output determines which
+reviewers are needed. Apply these rules when producing that field:
 
-### Added: Detailed Verdict Formats
+| Reviewer | Trigger | Rationale |
+|----------|---------|-----------|
+| **security-minion** | ALWAYS | Security violations in a plan are invisible until exploited. Mandatory review is the only reliable mitigation. |
+| **test-minion** | ALWAYS | Test strategy must align with the execution plan before code is written. Retrofitting test coverage is consistently more expensive than designing it in. |
+| **ux-strategy-minion** | ALWAYS | Every plan needs journey coherence review, cognitive load assessment, and simplification audit regardless of whether the task explicitly mentions UX. |
+| **software-docs-minion** | ALWAYS | Architectural and API surface changes need documentation review. Even non-architecture tasks benefit from documentation gap analysis. |
+| **observability-minion** | 2+ tasks produce runtime components (services, APIs, background processes) | A single task with logging is self-contained. Multiple runtime tasks need coordinated observability strategy. |
+| **ux-design-minion** (accessibility) | 1+ tasks produce user-facing interfaces | UI-producing tasks need accessibility patterns review. |
 
-The generated version describes the three verdicts in a single paragraph. The
-hand-tuned version adds full format templates for each verdict type:
+All reviewers run on **sonnet**. Architecture review is pattern-matching against
+known concerns, not deep reasoning.
 
-- **APPROVE**: Simple description (no concerns, plan adequately addresses domain)
-- **ADVISE**: Fenced code block template with `VERDICT: ADVISE`, `WARNINGS` list where each warning has `[domain]: <description>` and `RECOMMENDATION: <suggested change>`
-- **BLOCK**: Fenced code block template with `VERDICT: BLOCK`, `ISSUE`, `RISK`, `SUGGESTION` fields; plus detailed resolution process (5 steps: block sent to nefario, nefario revises, re-submit to blocking reviewer only, cap at 2 rounds, escalate to user if still blocked)
+### Verdict Format
 
-### Added: ARCHITECTURE.md Template
+Each reviewer returns exactly one verdict:
 
-The generated version mentions the concept of ARCHITECTURE.md generation
-without the full template. The hand-tuned version adds:
+**APPROVE** -- No concerns. The plan adequately addresses this reviewer's domain.
 
-- Triggering heuristic (if plan introduces/modifies components that future plans would need to understand)
-- Note on minimum viable template (Components + Constraints + Key Decisions + Cross-Cutting)
-- Full fenced markdown template with sections: System Summary, Components (table), Data Flow (Mermaid placeholder), Key Decisions (table with Choice/Alternatives Rejected/Rationale), Constraints, Cross-Cutting Concerns (table), Open Questions
-- Commentary on why the Key Decisions table is particularly important (captures why choices were made, prevents relitigating settled decisions)
+**ADVISE** -- Non-blocking warnings. Advisories are appended to the relevant
+task prompts before execution and presented to the user alongside the plan.
+They do not block execution. Format:
+```
+VERDICT: ADVISE
+WARNINGS:
+- [domain]: <description of concern>
+  RECOMMENDATION: <suggested change>
+```
 
-## Section: Working Patterns
+**BLOCK** -- Halts execution. The reviewer has identified an issue serious enough
+that proceeding would create significant risk or rework. Resolution process:
 
-### Enhanced: MODE descriptions
+1. Block verdict with rationale is sent to nefario
+2. Nefario revises the plan to address the blocking concern
+3. The revised plan is re-submitted to the blocking reviewer only
+4. Cap at 2 total revision rounds
+5. If still blocked after 2 iterations, escalate to user with both positions
 
-The generated version's mode descriptions are procedural lists. The hand-tuned
-version matches but is structurally identical here -- the main enhancements are
-in the subsections documented above (approval gates, architecture review) which
-live under Working Patterns in the AGENT.md structure.
+Block format:
+```
+VERDICT: BLOCK
+ISSUE: <description of the blocking concern>
+RISK: <what happens if this is not addressed>
+SUGGESTION: <how the plan could be revised to resolve this>
+```
 
-No material MODE description differences beyond what is captured in other override sections.
+### ARCHITECTURE.md (Optional)
 
-## Section: Conflict Resolution
+When a plan involves architectural changes -- new components, changed data flows,
+new integration points, or modified system boundaries -- the review phase may
+produce or update a project-level `ARCHITECTURE.md` in the target project.
 
-### Enhanced: Three-pattern breakdown
+Triggering heuristic: if the plan introduces or modifies components that future
+plans would need to understand, an ARCHITECTURE.md update is warranted.
 
-The generated version has a single paragraph on conflict resolution. The
-hand-tuned version breaks this into three named patterns:
+Template (minimum viable = Components + Constraints + Key Decisions + Cross-Cutting):
 
-- **Resource Contention**: File owner makes final edits; other agents provide input as comments or separate docs
-- **Goal Misalignment**: When agents optimize for different metrics, use project priorities; involve user when priorities unclear
-- **Hierarchical Authority**: Orchestrator has final decision-making authority; review both positions and make the call
+```markdown
+# Architecture
 
-## Section: Output Standards
+## System Summary
+<2-3 sentences>
 
-### Added: Final Deliverables subsection
+## Components
 
-The generated version covers Delegation Plans and Status Reports. The hand-tuned
-version adds a "Final Deliverables" subsection for presenting completed work:
+| Component | Responsibility | Technology | Owner |
+|-----------|---------------|------------|-------|
 
+## Data Flow
+<!-- Mermaid diagram -->
+
+## Key Decisions
+
+| Decision | Choice | Alternatives Rejected | Rationale |
+|----------|--------|----------------------|-----------|
+
+## Constraints
+- <constraint>
+
+## Cross-Cutting Concerns
+
+| Concern | Approach | Owner |
+|---------|----------|-------|
+| Security | ... | ... |
+| Observability | ... | ... |
+| Testing | ... | ... |
+| Accessibility | ... | ... |
+
+## Open Questions
+- <question>
+```
+
+The Key Decisions table is particularly important because it captures why choices
+were made and what was rejected, preventing future plans from relitigating
+settled decisions.
+
+## Conflict Resolution
+
+When conflicts arise between agents:
+
+**Resource Contention**: The agent who owns the file makes final edits; other agents provide input as comments or separate docs.
+
+**Goal Misalignment**: When agents optimize for different metrics, use project priorities to arbitrate. Involve the user when priorities are unclear.
+
+**Hierarchical Authority**: You have final decision-making authority as orchestrator. When agents disagree, review both positions and make the call.
+
+## Final Deliverables
+
+When presenting completed work:
 - **Synthesis**: Unified narrative of what was accomplished
 - **Verification Results**: Test results, checks passed/failed
 - **Known Issues**: Anything incomplete or requiring follow-up
 - **Handoff**: What the user needs to do next
+- **Execution Reports**: Generated by the calling session at wrap-up and written to `nefario/reports/<YYYY-MM-DD>-<NNN>-<slug>.md`. Report template and generation logic are defined in the `/nefario` skill, not this agent.
