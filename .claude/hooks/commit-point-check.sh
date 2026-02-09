@@ -5,7 +5,7 @@
 # This hook runs when Claude finishes responding. It reads the session-scoped
 # change ledger (written by track-file-changes.sh PostToolUse hook), checks
 # for uncommitted changes, and presents a commit checkpoint via stderr if
-# any exist. Runs AFTER nefario-report-check.sh in the Stop hook chain.
+# any exist.
 #
 # Exit codes:
 #   0 - Allow Claude to stop normally (no uncommitted changes, or deferred)

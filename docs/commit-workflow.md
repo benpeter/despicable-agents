@@ -121,7 +121,7 @@ A Stop hook detects uncommitted changes when the agent finishes and presents a c
 **Flow:**
 
 1. Agent completes work and signals stop.
-2. Stop hook runs (after the report-check hook; see Section 7).
+2. Stop hook runs (see Section 7).
 3. Hook reads the change ledger (see Section 6) to identify modified files.
 4. If the ledger is empty or all changes are already committed, exit 0 (allow stop).
 5. If uncommitted changes exist, present the commit checkpoint via stderr (exit 2 to block).
@@ -305,47 +305,23 @@ exit 0
 
 ## 7. Hook Composition
 
-The commit workflow adds a new Stop hook alongside the existing nefario-report-check hook. Both hooks share the Stop event and must compose correctly.
+The commit workflow uses a Stop hook for commit checkpoints. Report generation is handled by the SKILL.md wrap-up instructions, not by a hook.
 
 ### Execution Order
 
 ```mermaid
 flowchart TD
-    A[Claude signals stop] --> B[Stop Hook 1: nefario-report-check.sh]
-    B -->|exit 0: no report needed| C[Stop Hook 2: commit-check.sh]
-    B -->|exit 2: block, generate report| D[Claude generates report]
-    D --> E[Claude signals stop again]
-    E --> F[Stop Hook 1: nefario-report-check.sh]
-    F -->|exit 0: report exists now| G[Stop Hook 2: commit-check.sh]
+    A[Claude signals stop] --> C[Stop Hook: commit-point-check.sh]
 
     C -->|exit 0: no uncommitted changes| H[Session ends]
     C -->|exit 2: block, present commit| I[Claude presents commit checkpoint]
     I --> J[Claude signals stop again]
-    J --> K[Stop Hook 1: nefario-report-check.sh]
-    K -->|exit 0| L[Stop Hook 2: commit-check.sh]
+    J --> L[Stop Hook: commit-point-check.sh]
     L -->|exit 0: changes committed| H
 
-    G -->|exit 0: no uncommitted changes| H
-    G -->|exit 2: block, present commit| I2[Claude presents commit checkpoint]
-    I2 --> J2[Claude signals stop again]
-    J2 --> K2[Stop Hook 1: nefario-report-check.sh]
-    K2 -->|exit 0| L2[Stop Hook 2: commit-check.sh]
-    L2 -->|exit 0| H
-
-    style B fill:#e1f5ff
     style C fill:#ffe1f5
-    style F fill:#e1f5ff
-    style G fill:#ffe1f5
-    style K fill:#e1f5ff
     style L fill:#ffe1f5
-    style K2 fill:#e1f5ff
-    style L2 fill:#ffe1f5
 ```
-
-### Ordering Rationale
-
-1. **Report-check runs first.** Reports may generate new files that should be included in the commit. If commit-check ran first, the report files would be missed.
-2. **Commit-check runs second.** After report generation (or if no report is needed), commit-check proposes committing all session changes including any generated report.
 
 ### Settings Configuration
 
@@ -357,16 +333,7 @@ flowchart TD
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/nefario-report-check.sh",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/commit-check.sh",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/commit-point-check.sh",
             "timeout": 10
           }
         ]
@@ -374,13 +341,11 @@ flowchart TD
     ],
     "PostToolUse": [
       {
-        "matcher": {
-          "tool_name": "Write|Edit"
-        },
+        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/track-file-change.sh",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/track-file-changes.sh",
             "timeout": 5
           }
         ]
@@ -392,10 +357,7 @@ flowchart TD
 
 ### Infinite Loop Protection
 
-Both hooks must independently protect against infinite re-triggering:
-
-- **Report-check**: Already checks `stop_hook_active` flag (implemented).
-- **Commit-check**: Checks if the ledger is empty or all ledger entries are committed. After presenting a commit prompt (exit 2), the subsequent re-trigger finds either committed changes (exit 0) or an empty ledger (exit 0). If the user rejected the commit ("n"), the hook sets a session-scoped marker file (`/tmp/claude-commit-declined-<session-id>`) and checks for it on re-entry.
+The commit-check hook protects against infinite re-triggering: it checks if the ledger is empty or all ledger entries are committed. After presenting a commit prompt (exit 2), the subsequent re-trigger finds either committed changes (exit 0) or an empty ledger (exit 0). If the user rejected the commit ("n"), the hook sets a session-scoped marker file (`/tmp/claude-commit-declined-<session-id>`) and checks for it on re-entry.
 
 ---
 

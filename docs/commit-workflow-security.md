@@ -88,7 +88,7 @@ or incorrectly stage them.
 
 ## 3. The `exec @ARGV` Perl Timeout Pattern
 
-The existing `nefario-report-check.sh` (line 87) contains:
+A common pattern for implementing command timeout on macOS:
 
 ```bash
 timeout_cmd="perl -e 'alarm 5; exec @ARGV' --"

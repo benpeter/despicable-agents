@@ -432,14 +432,17 @@ For long-running orchestrations, write a partial report after Phase 3
 (synthesis). Include available data and mark sections as "In Progress".
 Overwrite with the complete report at wrap-up.
 
-### Updated Wrap-up Sequence
+### Wrap-up Sequence (MANDATORY)
 
-When all tasks are complete:
+When all tasks are complete, you MUST execute every step below. The execution
+report is not optional — it is as mandatory as the synthesis phase. Do not
+skip it, do not defer it, do not stop before it is written.
 
 1. Review all deliverables
 2. Present final commit checkpoint (or deferred batch) for uncommitted changes
-3. Write execution report to `nefario/reports/<YYYY-MM-DD>-<NNN>-<slug>.md`
-4. Update `nefario/reports/index.md`
+3. **Write execution report** to `nefario/reports/<YYYY-MM-DD>-<NNN>-<slug>.md`
+   — follow the template at `nefario/reports/TEMPLATE.md`
+4. **Update index** at `nefario/reports/index.md`
 5. Commit the report (auto-commit, no prompt needed)
 6. Offer PR creation if on a feature branch
 7. Present report path and key summary to user
