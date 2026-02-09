@@ -24,6 +24,32 @@ The workflow has five phases:
 3.5. **Architecture Review** — Cross-cutting agents review before execution
 4. **Execution** — You spawn agents and coordinate the work
 
+## Communication Protocol
+
+The orchestrator MUST minimize chat output. The user should only see:
+
+**SHOW** (these are the only things printed to chat):
+- Approval gate decision briefs (full structured format)
+- PR creation prompt
+- Final summary (report path, PR URL, branch name)
+- Warnings and errors
+
+**NEVER SHOW** (suppress entirely):
+- Phase transition announcements ("Starting Phase 2...")
+- Echoing prompts being sent to subagents
+- Agent spawning narration ("Spawning security-minion...")
+- Task status polling output
+- Agent completion acknowledgments
+- Review verdicts (unless BLOCK)
+
+**CONDENSE** to a single line:
+- Meta-plan result: "Planning: consulting devx-minion, security-minion, ..."
+- Review verdicts (if no BLOCK): "Review: 4 APPROVE, 0 BLOCK"
+- ADVISE notes: fold silently into relevant task prompts, do not print
+
+Heartbeat: for phases lasting more than 60 seconds with no output, print a
+single status line (e.g., "Waiting for 3 agents...") to confirm progress.
+
 ## Phase 1: Meta-Plan
 
 Spawn nefario as a planning subagent to analyze the task and determine
@@ -213,13 +239,17 @@ execution proceeds in batches separated by gate checkpoints.
 
 Before spawning any execution agents, isolate work on a feature branch.
 
-1. Check the current branch: `git branch --show-current`
-2. If on `main` or `master`, create a feature branch:
-   `git checkout -b nefario/<slug>` (reuse the slug generated in Phase 1).
-3. If already on a non-main branch, use it -- do not create a nested branch.
-4. Initialize commit tracking state:
-   - Set `commits_used = 0` and `commit_budget = <gate_count> + 1`.
-   - Set `defer_all = false`.
+1. Get current branch: `git branch --show-current`
+2. If already on a non-main feature branch, use it (do not create a nested
+   branch, do not switch to main).
+3. If on `main` or `master`:
+   a. Check working tree: `git status --porcelain`
+   b. If dirty, warn: "Working tree has uncommitted changes. Stash or commit
+      before proceeding." and STOP.
+   c. Pull latest: `git pull --rebase`
+   d. If pull fails, warn and STOP.
+   e. Create feature branch: `git checkout -b nefario/<slug>` (reuse the slug
+      generated in Phase 1).
 
 ### Setup
 
@@ -288,8 +318,8 @@ A batch contains all tasks that can run before the next gate.
    ```
 
    Response handling:
-   - **approve**: Present a commit checkpoint (see below), then continue
-     to next batch.
+   - **approve**: Auto-commit changes (see below), then continue to next
+     batch.
    - **request changes**: Send feedback to the agent for revision.
      Cap at 2 revision rounds. After 2 rounds, ask the user for more
      detailed direction.
@@ -298,30 +328,21 @@ A batch contains all tasks that can run before the next gate.
    - **skip**: Defer the gate. Continue with non-blocked tasks.
      Re-present skipped gates before the wrap-up phase.
 
-   **Commit checkpoint after gate approval**: If `defer_all` is false and
-   `commits_used < commit_budget`, present a commit checkpoint for files
-   changed since the last commit:
+   **Auto-commit after gate approval**: After a gate is approved, silently:
+   1. Identify files changed since the last commit (use the change ledger).
+   2. Filter against sensitive patterns (existing safety rails apply).
+   3. If no changes or all changes are sensitive, skip silently.
+   4. Stage and commit with conventional commit message:
+      `<type>(<scope>): <summary>` with
+      `Co-Authored-By: Claude <noreply@anthropic.com>`
+   5. Print ONE informational line:
+      `Committed N files: path1, path2, ...`
+      (list up to 5 files; if more, show first 4 and "+ N more").
+   6. If commit fails, print a warning and continue (do not block execution).
 
-   ```
-   Commit: "<type>(<scope>): <summary>"
-
-     - path/to/changed-file-1
-     - path/to/changed-file-2
-
-   Co-Authored-By: Claude <noreply@anthropic.com>
-   (Y/n)
-   ```
-
-   - **Y** (or Enter): Stage the listed files, commit, increment
-     `commits_used`.
-   - **n**: Leave changes uncommitted, continue.
-   - **defer-all**: Set `defer_all = true`. All subsequent commit prompts
-     are suppressed until wrap-up. Continue.
-   - Auto-defer (skip silently) if only `.md` files changed with < 5
-     lines total diff.
-   - Never use `git add -A`. Only stage files modified during this session.
-   - See [docs/commit-workflow.md](../docs/commit-workflow.md) for the
-     full protocol (sensitive file filtering, safety rails, edge cases).
+   Never use `git add -A` — only stage files from the change ledger.
+   See [docs/commit-workflow.md](../docs/commit-workflow.md) for the
+   full protocol (sensitive file filtering, safety rails, edge cases).
 
    Anti-fatigue guidelines:
    - Budget 3-5 approval gates per plan. If synthesis produces more,
@@ -338,21 +359,9 @@ A batch contains all tasks that can run before the next gate.
 
 ### Wrap-up
 
-7. **Final commit checkpoint** — before generating the report, check for
-   uncommitted changes. If any exist (and `defer_all` was not set to true
-   with zero prior commits), present a commit checkpoint. If `defer_all`
-   is true, present a single batch commit covering all deferred changes:
-
-   ```
-   Commit (deferred batch): "<type>: <overall summary>"
-
-     - path/to/file-1
-     - path/to/file-2
-     + N more
-
-   Co-Authored-By: Claude <noreply@anthropic.com>
-   (Y/n)
-   ```
+7. **Auto-commit remaining changes** — silently commit any uncommitted files
+   from the change ledger before generating the report. Print the informational
+   commit line (`Committed N files: ...`).
 
 8. **Verify and report** — follow the wrap-up sequence documented in the
    "Report Generation" section below (review deliverables, write report,
@@ -362,13 +371,17 @@ A batch contains all tasks that can run before the next gate.
    offer to create a pull request:
 
    ```
-   Create PR: "<plan title>" (Y/n)
+   Create PR for nefario/<slug>? (Y/n)
    ```
 
    If approved: `git push -u origin <branch>` then `gh pr create`.
    Auto-generate the PR body from gate summaries and the execution report.
    If `gh` is unavailable, print the manual push command instead.
    See [docs/commit-workflow.md](../docs/commit-workflow.md) for details.
+
+10. **Return to main** — after PR creation (or if declined):
+    `git checkout main && git pull --rebase`. Include branch name in
+    final summary.
 
 ### Troubleshooting: Orchestrator Not Progressing
 
@@ -439,14 +452,15 @@ report is not optional — it is as mandatory as the synthesis phase. Do not
 skip it, do not defer it, do not stop before it is written.
 
 1. Review all deliverables
-2. Present final commit checkpoint (or deferred batch) for uncommitted changes
+2. Auto-commit remaining changes (silent, informational line only)
 3. **Write execution report** to `nefario/reports/<YYYY-MM-DD>-<NNN>-<slug>.md`
    — follow the template at `nefario/reports/TEMPLATE.md`
 4. **Update index** at `nefario/reports/index.md`
 5. Commit the report (auto-commit, no prompt needed)
 6. Offer PR creation if on a feature branch
-7. Present report path and key summary to user
-8. Send shutdown_request to teammates
-9. TeamDelete
-10. Report final status to user
+7. Return to main: `git checkout main && git pull --rebase`
+8. Present report path, PR URL, and branch name to user
+9. Send shutdown_request to teammates
+10. TeamDelete
+11. Report final status to user
 
