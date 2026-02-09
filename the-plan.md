@@ -142,19 +142,57 @@ spans multiple domains, assign a primary and identify supporting minions.
 The goal is to make the team more effective than any individual minion.
 
 **Does NOT do**: Write code, design systems, make strategic decisions
-(-> gru), or perform any specialist work (-> appropriate minion)
+(-> gru), or perform any specialist work (-> appropriate minion).
+Does NOT spawn agents directly -- returns structured plans for the calling
+session to execute.
 
-**Tools**: Task, Read, Glob, Grep (coordination and context-reading only)
-
-**permissionMode**: delegate
+**Tools**: Omit the `tools:` field from frontmatter (grants full access to
+whatever the runtime provides). Nefario does not need a restrictive allowlist
+because its system prompt enforces coordination-only behavior.
 
 **Model**: sonnet
 
+**Invocation model**:
+
+Nefario operates in two modes depending on how it is invoked:
+
+Nefario is invoked via the `/nefario` skill from a normal Claude Code session.
+The skill orchestrates a three-phase planning process:
+
+_Phase 1 -- Meta-plan (MODE: META-PLAN)_: Nefario is spawned as a subagent.
+It analyzes the task, consults the delegation table, and returns a meta-plan --
+which specialist agents should be consulted for planning, and what specific
+planning question to ask each one.
+
+_Phase 2 -- Specialist planning_: The skill spawns each recommended specialist
+as a subagent (in parallel, at opus). Each specialist contributes their domain
+expertise to the plan: recommendations, proposed tasks, risks, and whether
+additional agents should be involved. If specialists recommend new agents, those
+are consulted too.
+
+_Phase 3 -- Synthesis (MODE: SYNTHESIS)_: Nefario is spawned again with all
+specialist contributions. It consolidates them into a final execution plan --
+resolving conflicts, filling gaps, and producing complete self-contained prompts
+for each execution task.
+
+After user approval, the calling session executes the plan (creates team, spawns
+teammates).
+
+_Shortcut (MODE: PLAN)_: For simpler tasks that don't need specialist
+consultation, nefario can be asked to produce an execution plan directly,
+skipping Phase 2.
+
+_Fallback -- Direct main agent_: If invoked via `claude --agent nefario` and the
+Task tool is available, nefario can execute plans directly. Due to a current
+Claude Code platform constraint (as of 2.1.37), custom agents do NOT receive the
+Task tool, so this mode may not work. The `/nefario` skill is the reliable path.
+
 **Research focus**: Multi-agent orchestration patterns, task decomposition
 strategies, agent team coordination in Claude Code, delegation patterns for
-specialist teams, work breakdown structure methodologies.
+specialist teams, work breakdown structure methodologies, Claude Code skill
+design for orchestration.
 
-**spec-version**: 1.0
+**spec-version**: 1.2
 
 #### Delegation Table
 
@@ -232,13 +270,12 @@ Phase 1 -- Decompose and Plan:
 5. Write the plan as a structured task list with dependencies
 6. Present the plan to the user and WAIT for approval
 
-Phase 2 -- Delegate and Execute:
-1. Spawn teammates per the approved plan
-2. Use `plan_mode_required` for any teammate that will modify
-   production code, infrastructure, or security-sensitive files
-3. Review and approve/reject per-teammate plans
-4. Monitor progress via task list
-5. Redirect approaches that are not working
+Phase 2 -- Return Output Per Mode:
+- META-PLAN mode: Return which specialists to consult and what to ask each
+- SYNTHESIS mode: Consolidate specialist contributions into execution plan
+- PLAN mode: Return execution plan directly (skipping specialist consultation)
+The calling session (which has the Task tool) handles spawning specialists
+for planning (Phase 2 of the skill) and executing the final plan.
 
 Phase 3 -- Collect and Verify:
 1. Wait for all teammates to complete (do not proceed early)
@@ -1024,6 +1061,8 @@ project-root/
 After building, symlink all agents (edits are immediately live):
 
 ```bash
+mkdir -p ~/.claude/agents
+
 # Deploy gru and nefario
 for agent in gru/AGENT.md nefario/AGENT.md; do
   name=$(basename $(dirname "$agent"))
