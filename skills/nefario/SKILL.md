@@ -209,6 +209,18 @@ Task:
 After user approval, execute the plan. If the plan contains **approval gates**,
 execution proceeds in batches separated by gate checkpoints.
 
+### Branch Creation
+
+Before spawning any execution agents, isolate work on a feature branch.
+
+1. Check the current branch: `git branch --show-current`
+2. If on `main` or `master`, create a feature branch:
+   `git checkout -b nefario/<slug>` (reuse the slug generated in Phase 1).
+3. If already on a non-main branch, use it -- do not create a nested branch.
+4. Initialize commit tracking state:
+   - Set `commits_used = 0` and `commit_budget = <gate_count> + 1`.
+   - Set `defer_all = false`.
+
 ### Setup
 
 1. **Create a team** using TeamCreate with the team name from the plan.
@@ -276,7 +288,8 @@ A batch contains all tasks that can run before the next gate.
    ```
 
    Response handling:
-   - **approve**: Continue to next batch.
+   - **approve**: Present a commit checkpoint (see below), then continue
+     to next batch.
    - **request changes**: Send feedback to the agent for revision.
      Cap at 2 revision rounds. After 2 rounds, ask the user for more
      detailed direction.
@@ -284,6 +297,31 @@ A batch contains all tasks that can run before the next gate.
      also be dropped. Then remove from plan and continue.
    - **skip**: Defer the gate. Continue with non-blocked tasks.
      Re-present skipped gates before the wrap-up phase.
+
+   **Commit checkpoint after gate approval**: If `defer_all` is false and
+   `commits_used < commit_budget`, present a commit checkpoint for files
+   changed since the last commit:
+
+   ```
+   Commit: "<type>(<scope>): <summary>"
+
+     - path/to/changed-file-1
+     - path/to/changed-file-2
+
+   Co-Authored-By: Claude <noreply@anthropic.com>
+   (Y/n)
+   ```
+
+   - **Y** (or Enter): Stage the listed files, commit, increment
+     `commits_used`.
+   - **n**: Leave changes uncommitted, continue.
+   - **defer-all**: Set `defer_all = true`. All subsequent commit prompts
+     are suppressed until wrap-up. Continue.
+   - Auto-defer (skip silently) if only `.md` files changed with < 5
+     lines total diff.
+   - Never use `git add -A`. Only stage files modified during this session.
+   - See [docs/commit-workflow.md](../docs/commit-workflow.md) for the
+     full protocol (sensitive file filtering, safety rails, edge cases).
 
    Anti-fatigue guidelines:
    - Budget 3-5 approval gates per plan. If synthesis produces more,
@@ -300,9 +338,37 @@ A batch contains all tasks that can run before the next gate.
 
 ### Wrap-up
 
-7. **Verify and report** — after all complete, follow the wrap-up sequence
-   documented in the "Report Generation" section below (review deliverables,
-   write report, update index, present to user, shutdown teammates, final status).
+7. **Final commit checkpoint** — before generating the report, check for
+   uncommitted changes. If any exist (and `defer_all` was not set to true
+   with zero prior commits), present a commit checkpoint. If `defer_all`
+   is true, present a single batch commit covering all deferred changes:
+
+   ```
+   Commit (deferred batch): "<type>: <overall summary>"
+
+     - path/to/file-1
+     - path/to/file-2
+     + N more
+
+   Co-Authored-By: Claude <noreply@anthropic.com>
+   (Y/n)
+   ```
+
+8. **Verify and report** — follow the wrap-up sequence documented in the
+   "Report Generation" section below (review deliverables, write report,
+   update index, present to user, shutdown teammates, final status).
+
+9. **PR creation** — after the report is committed, if on a feature branch,
+   offer to create a pull request:
+
+   ```
+   Create PR: "<plan title>" (Y/n)
+   ```
+
+   If approved: `git push -u origin <branch>` then `gh pr create`.
+   Auto-generate the PR body from gate summaries and the execution report.
+   If `gh` is unavailable, print the manual push command instead.
+   See [docs/commit-workflow.md](../docs/commit-workflow.md) for details.
 
 ### Troubleshooting: Orchestrator Not Progressing
 
@@ -371,10 +437,13 @@ Overwrite with the complete report at wrap-up.
 When all tasks are complete:
 
 1. Review all deliverables
-2. Write execution report to `nefario/reports/<YYYY-MM-DD>-<NNN>-<slug>.md`
-3. Update `nefario/reports/index.md`
-4. Present report path and key summary to user
-5. Send shutdown_request to teammates
-6. TeamDelete
-7. Report final status to user
+2. Present final commit checkpoint (or deferred batch) for uncommitted changes
+3. Write execution report to `nefario/reports/<YYYY-MM-DD>-<NNN>-<slug>.md`
+4. Update `nefario/reports/index.md`
+5. Commit the report (auto-commit, no prompt needed)
+6. Offer PR creation if on a feature branch
+7. Present report path and key summary to user
+8. Send shutdown_request to teammates
+9. TeamDelete
+10. Report final status to user
 

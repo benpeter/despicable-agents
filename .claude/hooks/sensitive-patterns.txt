@@ -1,0 +1,57 @@
+# Sensitive file patterns for commit checkpoint filtering
+# One pattern per line, glob syntax. Matched against filenames and paths.
+# The commit-check hook excludes matching files from staging and warns the user.
+#
+# Fail-closed: if this file cannot be read, no files are staged.
+
+# Environment files
+.env
+.env.*
+*.env
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# SSH keys
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+
+# Credential and secret files
+credentials.json
+*credentials*
+secrets.json
+secrets.yaml
+secrets.yml
+*secret*
+*token*
+*.htpasswd
+
+# API key files
+*apikey*
+*api_key*
+*api-key*
+
+# Cloud provider credentials
+.aws/credentials
+.gcloud/*.json
+kubeconfig
+*.tfvars
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Claude Code local config (may contain private preferences)
+CLAUDE.local.md
+
+# OS-generated files
+.DS_Store
+Thumbs.db
