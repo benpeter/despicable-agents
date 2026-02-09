@@ -1,6 +1,6 @@
 # Despicable Agents
 
-[![93% Vibe_Coded](https://img.shields.io/badge/93%25-Vibe_Coded-ff69b4?style=for-the-badge&logo=claude&logoColor=white)](https://github.com/trieloff/vibe-coded-badge-action)
+[![94% Vibe_Coded](https://img.shields.io/badge/94%25-Vibe_Coded-ff69b4?style=for-the-badge&logo=claude&logoColor=white)](https://github.com/trieloff/vibe-coded-badge-action)
 
 19 specialist agents for [Claude Code](https://code.claude.com). Deep domain experts that work alone or as a coordinated team -- install once, use everywhere.
 
