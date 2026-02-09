@@ -460,12 +460,11 @@ test_commit_sensitive_file_filtered() {
     fi
 }
 
-test_commit_after_report_check_block() {
-    local test_name="Commit: Hook ordering -- works correctly after report-check"
+test_commit_standalone_stop_hook() {
+    local test_name="Commit: Works correctly as standalone Stop hook"
 
-    # This test verifies that commit-point-check.sh works as a standalone Stop hook,
-    # independent of nefario-report-check.sh execution order. The hook only reads
-    # its own stdin JSON and ledger files, so ordering doesn't affect correctness.
+    # This test verifies that commit-point-check.sh works as a standalone Stop hook.
+    # The hook only reads its own stdin JSON and ledger files.
 
     # Create uncommitted changes on a feature branch
     git -C "$TEMP_DIR/repo" checkout -b feature/ordering-test >/dev/null 2>&1
@@ -598,7 +597,7 @@ main() {
     setup; test_commit_branch_safety_main; teardown
     setup; test_commit_stop_hook_active; teardown
     setup; test_commit_sensitive_file_filtered; teardown
-    setup; test_commit_after_report_check_block; teardown
+    setup; test_commit_standalone_stop_hook; teardown
 
     echo ""
     echo -e "${YELLOW}--- Integration Tests ---${NC}\n"

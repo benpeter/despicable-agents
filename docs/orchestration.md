@@ -408,40 +408,16 @@ All reports are cataloged in `nefario/reports/index.md`, a table listing date, s
 
 Reports are generated at wrap-up, after execution completes but before team cleanup. For long-running orchestrations, a partial report may be written after synthesis (Phase 3) and overwritten with the complete report at wrap-up. Interrupted orchestrations may leave partial reports in place -- these are marked with `outcome: partial` in the frontmatter.
 
-### Automatic Report Generation
+### Report Enforcement
 
-A Stop hook (`.claude/hooks/nefario-report-check.sh`) automatically detects orchestration sessions and enforces report generation. The hook runs when Claude finishes responding and performs a fast scan of the conversation transcript:
-
-**Detection mechanism**: The hook searches for `MODE: META-PLAN` or `MODE: SYNTHESIS` strings in the transcript. These strings appear only in nefario orchestration Task calls, making detection highly specific.
-
-**Enforcement flow**: If orchestration is detected but no report was written (no Write tool calls to `nefario/reports/*.md`), the hook blocks Claude's exit with exit code 2 and feeds generation instructions via stderr. Claude receives the instructions and generates the report before the session ends.
-
-**User experience**: When the hook triggers, you'll see a message: "**Generating orchestration report...**" followed by the report generation process. The hook adds less than 1 second of overhead to session exit.
-
-**Defense-in-depth**: The CLAUDE.md project file includes a standing instruction to generate reports after orchestration. This serves as a fallback for sessions where hooks are disabled or fail.
-
-**Infinite loop protection**: The hook checks the `stop_hook_active` flag to prevent blocking indefinitely. If the flag is true (indicating Claude is continuing from a prior hook block), the hook allows normal exit.
+Report generation is enforced by the nefario SKILL.md wrap-up sequence. The wrap-up steps are marked as mandatory and the orchestrator is instructed to never skip or defer the report. This is the same mechanism that enforces all other orchestration steps (synthesis, architecture review, etc.) — the skill instructions govern the process end-to-end.
 
 ### Troubleshooting
 
-**Hook not triggering:**
-- Verify `.claude/settings.json` exists in the project directory
-- Check that hooks are enabled in your Claude Code user settings
-- Ensure the hook script has execute permissions: `chmod +x .claude/hooks/nefario-report-check.sh`
-
-**Script execution errors:**
-- Install jq if not present: `brew install jq` (macOS) or `apt-get install jq` (Linux)
-- macOS users: The script uses a perl-based timeout fallback if GNU timeout is unavailable
-- Check script output in Claude Code's developer console for specific error messages
-
-**Report not generated despite hook firing:**
-- Review the transcript for error messages from the Write tool
-- Verify the `nefario/reports/` directory exists and is writable
-- Check that the report template path in the hook matches your project structure
-
-**Hook blocks but should not:**
-- If the hook incorrectly detects orchestration in a non-orchestration session, check for MODE strings in your conversation (e.g., in code snippets or examples)
-- Disable the hook temporarily by removing `.claude/settings.json` or commenting out the Stop hook entry
+**Report not generated:**
+- Verify the nefario skill is loaded (invoked via `/nefario`)
+- Check that `nefario/reports/` directory exists and is writable
+- Review the conversation for error messages from the Write tool
 
 **Reports generated multiple times:**
 - This indicates the infinite loop protection failed. Check the `stop_hook_active` flag logic in the script.
