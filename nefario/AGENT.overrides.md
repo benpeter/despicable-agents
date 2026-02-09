@@ -64,6 +64,10 @@ informational outputs.
 
 ## Section: Architecture Review (Phase 3.5)
 
+### Added: Non-Skippable Constraint
+
+Phase 3.5 Architecture Review is NEVER skipped by the orchestrator, regardless of task type (documentation, config, single-file, etc.) or perceived simplicity. ALWAYS reviewers are ALWAYS. The orchestrator does not have authority to skip mandatory reviews — that authority belongs to the user, who can explicitly request it.
+
 ### Added: Review Triggering Rationale
 
 The generated version has just a Reviewer/Trigger table. The hand-tuned version

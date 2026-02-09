@@ -369,3 +369,41 @@ When a plan has multiple gates with dependencies between them:
 - **Maximum 3 levels of dependent gates.** If a plan has more than 3 levels of sequential gate dependencies, nefario restructures the plan or consolidates gates.
 
 **Gate vs. notification.** Not every important output needs a blocking gate. Non-blocking notifications are used for completed milestones, ADVISE verdicts from architecture review, and intermediate outputs that are informational but do not require approval.
+
+---
+
+## 5. Execution Reports
+
+Every `/nefario` orchestration produces a decision log documenting the agents involved, key decisions, and outcomes. Reports serve three use cases: immediate confirmation ("what just happened?"), future decision reference ("why did we choose X six months ago?"), and process comparison ("are gates being overused?").
+
+### Report Location and Naming
+
+Reports are written to `nefario/reports/<YYYY-MM-DD>-<NNN>-<slug>.md`:
+
+- `<YYYY-MM-DD>`: Orchestration date
+- `<NNN>`: Zero-padded sequence number (001, 002, etc.) -- first report of the day is 001
+- `<slug>`: Kebab-case task summary derived from the task description (max 40 characters)
+
+Example: `nefario/reports/2026-02-09-001-build-mcp-server-with-oauth.md`
+
+The `nefario/reports/` directory is created automatically on first use.
+
+### Report Structure
+
+Reports use three-layer progressive disclosure to respect reading time:
+
+**Layer 1 -- Header Block (5-second scan)**: A markdown table with key metrics: date, task summary, duration, outcome, agent counts, gates presented/approved, files changed, outstanding items. Enough information to answer "did this work?" at a glance.
+
+**Layer 2 -- Executive Summary + Decisions (2-minute read)**: A 2-3 sentence summary of what was accomplished, followed by structured decision sections. Each decision includes the decision statement, rationale (2-5 key points), and alternatives that were rejected. Conflict resolutions between specialists are documented here if any occurred.
+
+**Layer 3 -- Process Detail (deep dive)**: Detailed breakdowns by phase, including which agents ran in each phase, files created or modified (with descriptions), approval gate outcomes (with confidence levels and revision rounds), outstanding items as a markdown checklist, and timing breakdown. This layer is for future debugging and process calibration.
+
+The full template is maintained in the `/nefario` skill. Do not reproduce it here -- the skill is the authoritative source.
+
+### Index
+
+All reports are cataloged in `nefario/reports/index.md`, a table listing date, sequence number, task summary (as a link to the report), outcome, and agent count. The index is updated automatically at wrap-up. It provides a chronological view of all orchestration runs for cross-run analysis.
+
+### When Reports Are Generated
+
+Reports are generated at wrap-up, after execution completes but before team cleanup. For long-running orchestrations, a partial report may be written after synthesis (Phase 3) and overwritten with the complete report at wrap-up. Interrupted orchestrations may leave partial reports in place -- these are marked with `outcome: partial` in the frontmatter.

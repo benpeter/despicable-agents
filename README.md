@@ -27,7 +27,7 @@ git clone https://github.com/benpeter/despicable-agents.git
 cd despicable-agents && ./install.sh
 ```
 
-This symlinks all 19 agents to `~/.claude/agents/` so they are available in every Claude Code session. To remove them: `./install.sh uninstall`.
+This symlinks all 19 agents to `~/.claude/agents/` and the `/nefario` skill to `~/.claude/skills/` so they are available in every Claude Code session. To remove them: `./install.sh uninstall`.
 
 ## Agent Roster
 

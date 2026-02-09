@@ -12,8 +12,9 @@ set -euo pipefail
 # Determine script directory (absolute path)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Target directory for Claude Code agents
+# Target directories
 AGENTS_DIR="${HOME}/.claude/agents"
+SKILLS_DIR="${HOME}/.claude/skills"
 
 # Color output for better readability
 COLOR_GREEN='\033[0;32m'
@@ -28,7 +29,7 @@ print_msg() {
   echo -e "${color}${message}${COLOR_RESET}"
 }
 
-# Install agents by creating symlinks
+# Install agents and skills by creating symlinks
 install_agents() {
   print_msg "$COLOR_GREEN" "Installing despicable-agents to ${AGENTS_DIR}/"
 
@@ -36,6 +37,12 @@ install_agents() {
   if [[ ! -d "$AGENTS_DIR" ]]; then
     mkdir -p "$AGENTS_DIR"
     print_msg "$COLOR_YELLOW" "Created directory: ${AGENTS_DIR}"
+  fi
+
+  # Create skills directory if it doesn't exist
+  if [[ ! -d "$SKILLS_DIR" ]]; then
+    mkdir -p "$SKILLS_DIR"
+    print_msg "$COLOR_YELLOW" "Created directory: ${SKILLS_DIR}"
   fi
 
   local installed_count=0
@@ -66,12 +73,19 @@ install_agents() {
     fi
   done
 
-  print_msg "$COLOR_GREEN" "\nInstalled ${installed_count} agents successfully."
+  # Install nefario skill
+  if [[ -d "${SCRIPT_DIR}/skills/nefario" ]]; then
+    ln -sf "${SCRIPT_DIR}/skills/nefario" "${SKILLS_DIR}/nefario"
+    print_msg "$COLOR_GREEN" "  ✓ nefario skill"
+    ((installed_count++))
+  fi
+
+  print_msg "$COLOR_GREEN" "\nInstalled ${installed_count} agents and skills successfully."
 }
 
-# Uninstall agents by removing symlinks
+# Uninstall agents and skills by removing symlinks
 uninstall_agents() {
-  print_msg "$COLOR_YELLOW" "Uninstalling despicable-agents from ${AGENTS_DIR}/"
+  print_msg "$COLOR_YELLOW" "Uninstalling despicable-agents from ${AGENTS_DIR}/ and ${SKILLS_DIR}/"
 
   local removed_count=0
 
@@ -118,10 +132,21 @@ uninstall_agents() {
     fi
   done
 
+  # Remove nefario skill
+  if [[ -L "${SKILLS_DIR}/nefario" ]]; then
+    local target
+    target=$(readlink "${SKILLS_DIR}/nefario")
+    if [[ "$target" == "${SCRIPT_DIR}/skills/nefario" ]]; then
+      rm "${SKILLS_DIR}/nefario"
+      print_msg "$COLOR_YELLOW" "  ✗ nefario skill"
+      ((removed_count++))
+    fi
+  fi
+
   if [[ $removed_count -eq 0 ]]; then
-    print_msg "$COLOR_YELLOW" "\nNo agents were installed (nothing to remove)."
+    print_msg "$COLOR_YELLOW" "\nNo agents or skills were installed (nothing to remove)."
   else
-    print_msg "$COLOR_YELLOW" "\nRemoved ${removed_count} agents successfully."
+    print_msg "$COLOR_YELLOW" "\nRemoved ${removed_count} agents and skills successfully."
   fi
 }
 

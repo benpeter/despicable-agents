@@ -165,6 +165,32 @@ These decisions were implemented in the nefario v1.4 update.
 
 ---
 
+## Reporting (Decision 14)
+
+### Decision 14: Execution Report Generation
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-02-09 |
+| **Choice** | Report generation is a SKILL.md responsibility, not a nefario agent mode. The calling session accumulates structured data at phase boundaries and writes a markdown report at wrap-up. Reports use progressive disclosure (header block, executive summary + decisions, process detail) with 10-field YAML frontmatter. Written to `nefario/reports/<YYYY-MM-DD>-<NNN>-<slug>.md`. Index maintained at `nefario/reports/index.md`. |
+| **Alternatives rejected** | (1) **New nefario MODE: REPORT** where nefario generates the report as a subagent: rejected because nefario's modes are stateless single-turn invocations, a report mode would need all phase data passed in, and the calling session already has this data. (2) **Separate template file** (`nefario/reports/.template.md`): rejected because it creates a coordination point that must stay in sync with SKILL.md; template is small enough to embed directly. (3) **Continue ad-hoc reports** (like report.md and report-v2.md): rejected because inconsistent structure undermines findability and cross-report comparison. |
+| **Rationale** | Reports serve three personas: immediate confirmation (5-second header scan), precedent seeking (findable decisions table), and process comparison (consistent YAML frontmatter). SKILL.md is the right home because it controls the operational workflow. Reporting is operational, not spec-level — no the-plan.md change or version bump needed. |
+| **Consequences** | Every `/nefario` run produces a report. Reports accumulate in `nefario/reports/`. SKILL.md grows by ~150 lines. Reports tracked in git as decision logs. |
+
+### Decision 15: Phase 3.5 Architecture Review Is Non-Skippable
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-02-09 |
+| **Choice** | Phase 3.5 Architecture Review is never skipped by the orchestrator, regardless of task type (documentation-only, config-only, single-file) or perceived simplicity. ALWAYS reviewers are always invoked. Only the user can explicitly request skipping Phase 3.5. |
+| **Alternatives rejected** | **Orchestrator-judged skip** where nefario assesses whether review is warranted based on task type: rejected because the whole point of mandatory review is that the orchestrator should not be the sole judge. SKILL.md changes are "documentation" but drive all future orchestrations — skipping review for them is precisely the wrong call. |
+| **Rationale** | The orchestrator skipped Phase 3.5 twice for "documentation-only" tasks, which the user corrected. ALWAYS means ALWAYS — the authority to skip belongs to the user, not the system. The cost of unnecessary review (~$0.10) is trivial compared to the cost of a missed issue in a workflow-controlling file. |
+| **Consequences** | Every `/nefario` run incurs review cost (4 ALWAYS + 0-2 conditional reviewers). No exceptions without explicit user opt-out. Constraint encoded in AGENT.overrides.md and AGENT.md. |
+
+---
+
 ## Deferred
 
 Nefario-gated complexity classification -- revisit after 20+ full-process runs.

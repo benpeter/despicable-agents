@@ -7,6 +7,7 @@ Nefario (orchestrator), and 17 domain-specialist minions.
 
 - `the-plan.md` -- canonical spec for all agents (source of truth, human-edited)
 - `docs/` -- architecture and design documentation (see [docs/architecture.md](docs/architecture.md))
+- `skills/nefario/` -- nefario orchestration skill (symlinked to `~/.claude/skills/nefario`)
 - `/lab` -- project-local skill to check and rebuild agents (`.claude/skills/lab/`)
 - `gru/` -- AI visionary / technology radar
 - `nefario/` -- task orchestrator (planning only, does not write code)
@@ -38,13 +39,5 @@ has `x-plan-version` in its frontmatter. When they diverge, use `/lab` to regene
 ## Deployment
 
 ```bash
-# Symlink all agents to ~/.claude/agents/
-for agent in gru/AGENT.md nefario/AGENT.md; do
-  name=$(basename $(dirname "$agent"))
-  ln -sf "$(realpath "$agent")" ~/.claude/agents/"$name".md
-done
-for agent in minions/*/AGENT.md; do
-  name=$(basename $(dirname "$agent"))
-  ln -sf "$(realpath "$agent")" ~/.claude/agents/"$name".md
-done
+./install.sh  # Symlinks all agents to ~/.claude/agents/ and /nefario skill to ~/.claude/skills/
 ```
