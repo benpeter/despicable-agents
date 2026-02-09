@@ -4,5 +4,7 @@ Reports from nefario orchestration runs, newest first.
 
 | Date | Seq | Task | Outcome | Agents |
 |------|-----|------|---------|--------|
+| 2026-02-09 | 004 | [stop-hook-report-automation](2026-02-09-004-stop-hook-report-automation.md) | completed | 7 |
+| 2026-02-09 | 003 | [overlay-drift-detection](2026-02-09-003-overlay-drift-detection.md) | completed | 3 |
 | 2026-02-09 | 002 | [nefario-v14-update](2026-02-09-002-nefario-v14-update.md) | completed | 4 |
 | 2026-02-09 | 001 | [orchestration-system-updates](2026-02-09-001-orchestration-system-updates.md) | completed | 4 |

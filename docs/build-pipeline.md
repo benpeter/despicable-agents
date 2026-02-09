@@ -89,10 +89,12 @@ All 19 agents are built in parallel. Each agent runs a two-step sequential pipel
 
 After the build step produces `AGENT.generated.md`, a merge step produces the deployable `AGENT.md`.
 
-- If `AGENT.overrides.md` exists in the agent's directory, the merge combines the generated baseline with the hand-tuned overrides to produce `AGENT.md`.
-- If `AGENT.overrides.md` does not exist, `AGENT.generated.md` is copied directly to `AGENT.md`.
+- **Without overrides**: If `AGENT.overrides.md` does not exist, `/lab` writes `AGENT.md` directly from the generated content.
+- **With overrides**: If `AGENT.overrides.md` exists, `/lab` writes `AGENT.generated.md` and **stops**. The human user must manually merge `AGENT.generated.md` + `AGENT.overrides.md` → `AGENT.md` following the merge rules documented in [Agent Anatomy and Overlay System](agent-anatomy.md).
 
-The overlay mechanism (file structure, merge rules, `x-fine-tuned` flag) is documented in [Agent Anatomy and Overlay System](agent-anatomy.md). Most agents have no overrides file -- for these, the generated output and the deployed file are identical.
+**Why manual?** Automated merging would require LLM-based semantic understanding of override descriptions (see docs/decisions.md Decision 16). Manual merging keeps the process deterministic and preserves human intent.
+
+**Drift detection**: Run `./validate-overlays.sh` to check if merged agents have drifted from their expected merge state (orphaned overrides, stale merges, frontmatter inconsistencies).
 
 ## Phase 2: Cross-Check (Sequential)
 
@@ -146,14 +148,13 @@ flowchart LR
 
 ## Build Triggers
 
-The `/lab` skill supports four invocation modes:
+The `/lab` skill supports three invocation modes:
 
 | Command | Behavior |
 |---------|----------|
-| `/lab --check` | Check all agents for version divergence. Reports a table of agent name, current version, spec version, and status. Does not rebuild. |
-| `/lab <agent-name> ...` | Regenerate the named agents, even if already up-to-date. Accepts one or more agent names. |
+| `/lab --check` | Check all agents for version divergence and overlay drift. Reports a table of agent name, current version, spec version, and status. Runs `./validate-overlays.sh --summary` to detect drift. Does not rebuild. |
+| `/lab <agent-name> ...` | Regenerate the named agents, even if already up-to-date. Accepts one or more agent names. For agents with overrides, writes `AGENT.generated.md` and reports "Manual merge required". |
 | `/lab --all` | Force-rebuild all 19 agents regardless of version status. |
-| `/lab --diff [agent-name]` | Audit what overlay customizations exist. With an agent name, shows that agent's overrides in detail. Without a name, shows a summary across all agents. |
 
 ### Typical Workflow
 
@@ -171,8 +172,9 @@ The skill:
 
 - Parses arguments to determine which agents to rebuild.
 - Checks versions by comparing `x-plan-version` against `spec-version` for each agent.
+- Runs `./validate-overlays.sh --summary` during `--check` mode to detect overlay drift.
 - Executes the two-step research-and-build pipeline per agent, running pipelines in parallel when multiple agents need rebuilding.
-- Runs the merge step to produce `AGENT.md` from `AGENT.generated.md` (and `AGENT.overrides.md` if present).
+- For agents without overrides, writes `AGENT.md` directly. For agents with overrides, writes `AGENT.generated.md` and reports "Manual merge required".
 - Runs cross-check verification after all builds complete.
 - Reports results with a version status table and summary of changes.
 

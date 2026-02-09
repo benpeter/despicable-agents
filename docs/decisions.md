@@ -191,6 +191,36 @@ These decisions were implemented in the nefario v1.4 update.
 
 ---
 
+## Overlay System (Decision 16)
+
+### Decision 16: Validation-Only Approach for Overlay Drift Detection
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-02-09 |
+| **Choice** | Implement drift detection with `validate-overlays.sh` that identifies orphaned overrides, merge staleness, and frontmatter inconsistencies. Manual merge remains the workflow. No automated merge, no LLM-based semantic analysis. |
+| **Alternatives rejected** | (1) **LLM-based automated merge**: Parse `AGENT.overrides.md` as natural language instructions, use LLM to apply them to `AGENT.generated.md`. Rejected due to non-determinism (different LLM runs produce different outputs), prompt injection risk (overrides file content is executed as instructions), and opacity (hard to predict/review what merge will produce). (2) **Validation + automated merge**: Add `--fix` mode to auto-merge after detecting drift. Rejected because it couples detection (low-risk, read-only) with modification (high-risk, alters deployed agents). (3) **Description + content hybrid format**: Overlay file contains both descriptions AND literal replacement content. Rejected as "way over the top" complexity for current needs. |
+| **Rationale** | The core problem is detection, not automation. Manual merge works -- users requested a safety net to catch mistakes, not a replacement for the merge process. Validation-only keeps the script simple, deterministic, and trustworthy. LLM-based merge introduces non-determinism into a build artifact (AGENT.md), which violates the deterministic build principle. Drift detection runs in 1 second and integrates cleanly into `/lab --check`. |
+| **Consequences** | Drift detection catches orphaned sections (removed from spec but still in overrides), stale merges (manual edit in AGENT.md), and frontmatter errors. Merge remains manual for agents with overrides (currently only nefario). Script requires bash 4.0+ (macOS users: `brew install bash`). Test infrastructure (10 fixtures, test harness) exists but requires redesign to match script architecture. |
+
+---
+
+## Reporting Automation (Decision 17)
+
+### Decision 17: Stop Hook for Automatic Report Detection
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-02-09 |
+| **Choice** | Use a Stop hook (`.claude/hooks/nefario-report-check.sh`) to detect orchestration sessions via transcript scanning and instruct Claude to generate reports. Detection searches for `MODE: META-PLAN` or `MODE: SYNTHESIS` strings. CLAUDE.md instruction serves as defense-in-depth. Hook blocks with exit code 2 and provides generation instructions via stderr. |
+| **Alternatives rejected** | (1) **SessionEnd hook with marker file recovery flow**: Rejected because SessionEnd hooks cannot instruct Claude directly (no stdin/stderr mechanism), requiring a two-session workflow (marker file written in current session, detected and processed in next session). This creates user friction and cannot enforce reporting in the orchestration session itself. (2) **CLAUDE.md instruction only**: Rejected as unreliable without enforcement. Instructions can be missed or ignored during complex orchestrations. No mechanism to verify compliance. (3) **Manual reporting only**: The previous state. Rejected because reports were inconsistently generated, especially when `/nefario` skill was not explicitly invoked. |
+| **Rationale** | Stop hooks can block Claude's exit and feed instructions via stderr, enabling enforcement in the current session. Detection via MODE strings is highly specific (only appears in nefario orchestration Task calls) and fast (simple grep scan). Built-in infinite loop protection via `stop_hook_active` flag prevents hook from blocking indefinitely. CLAUDE.md provides defense-in-depth for sessions where hooks fail or are disabled. macOS compatibility achieved via perl-based timeout fallback when GNU timeout is unavailable. |
+| **Consequences** | Reports are now generated automatically for all orchestration sessions, not just `/nefario` skill invocations. User sees "**Generating orchestration report...**" message when hook triggers. Hook adds <1s overhead to session exit (fast grep + jq parsing). Requires `.claude/settings.json` to be present and hook script to be executable (`chmod +x`). jq dependency required for JSON parsing. Hook can be bypassed by removing `.claude/settings.json` or disabling hooks in user settings. |
+
+---
+
 ## Deferred
 
 Nefario-gated complexity classification -- revisit after 20+ full-process runs.

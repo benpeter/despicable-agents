@@ -34,6 +34,29 @@ For each agent directory in gru/, nefario/, minions/*/:
   - Report: table of agent name, current version, spec version, status
 ```
 
+After version check, also run **overlay drift detection**:
+
+```bash
+./validate-overlays.sh --summary
+```
+
+This checks whether agents with overrides (`x-fine-tuned: true`) have drifted from their expected merge state. If drift is detected, append the affected agents to the status report with **drift details**.
+
+Example:
+```
+AGENT           VERSION    SPEC       STATUS
+-------------------------------------------
+nefario         1.4        1.4        ✓ up-to-date
+gru             1.0        1.0        ✓ up-to-date
+...
+-------------------------------------------
+DRIFT DETECTED: 1 agent
+
+nefario: 10 issues
+  - Run ./validate-overlays.sh nefario for details
+  - Run /lab nefario to regenerate and re-merge
+```
+
 ## File Locations
 
 | Agent Type | Spec Location | Build Location |
@@ -66,13 +89,20 @@ need rebuilding, run all pipelines in parallel.
    structure (Identity, Core Knowledge, Working Patterns, Output Standards,
    Boundaries).
 2. Read the completed `RESEARCH.md`.
-3. Write `AGENT.md` following the frontmatter pattern. The system prompt should
-   encode the essential knowledge from RESEARCH.md -- dense, actionable,
-   no fluff.
-4. Set frontmatter values:
-   - `model` to the value specified in the agent's **Model** field
-   - `x-plan-version` to the current spec version
-   - `x-build-date` to today's date
+3. **For agents WITHOUT overrides** (no `AGENT.overrides.md`):
+   - Write `AGENT.md` following the frontmatter pattern. The system prompt should
+     encode the essential knowledge from RESEARCH.md -- dense, actionable,
+     no fluff.
+   - Set frontmatter values:
+     - `model` to the value specified in the agent's **Model** field
+     - `x-plan-version` to the current spec version
+     - `x-build-date` to today's date
+4. **For agents WITH overrides** (`AGENT.overrides.md` exists):
+   - Write `AGENT.generated.md` (same as above, but to the `.generated.md` file)
+   - **STOP** -- do NOT write `AGENT.md` directly
+   - **Manual merge required**: The human user must manually merge
+     `AGENT.generated.md` + `AGENT.overrides.md` → `AGENT.md`
+   - Report: "Agent regenerated. Manual merge required (see docs/agent-anatomy.md)"
 
 ### Step 3 -- Cross-check
 

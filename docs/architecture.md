@@ -116,7 +116,7 @@ Most tasks have secondary dimensions beyond the primary domain. Nefario's planni
 | Document | Covers |
 |----------|--------|
 | [Agent Anatomy and Overlay System](agent-anatomy.md) | AGENT.md structure, frontmatter schema, five-section prompt template, RESEARCH.md role, overlay files |
-| [Orchestration and Delegation](orchestration.md) | Five-phase planning process, delegation flow, boundary enforcement, escalation paths |
+| [Orchestration and Delegation](orchestration.md) | Five-phase planning process, delegation flow, boundary enforcement, escalation paths, execution reports, automatic report generation |
 | [Build Pipeline and Versioning](build-pipeline.md) | Research and build phases, version tracking, `/lab` skill, cross-check verification |
 | [Deployment](deployment.md) | Symlink-based deployment, `install.sh`, development workflow |
-| [Design Decisions](decisions.md) | Architectural tradeoffs: hierarchy vs. flat, strict boundaries, two-file agents, model selection, memory scope, versioning strategy |
+| [Design Decisions](decisions.md) | Architectural tradeoffs: hierarchy vs. flat, strict boundaries, two-file agents, model selection, memory scope, versioning strategy, reporting automation |

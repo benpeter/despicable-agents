@@ -100,12 +100,12 @@ flowchart LR
     A["the-plan.md"] --> C["/lab"]
     B["RESEARCH.md"] --> C
     C --> D["AGENT.generated.md"]
-    D --> F["merge"]
+    D --> F["manual merge<br/>(human)"]
     E["AGENT.overrides.md<br/>(optional)"] --> F
     F --> G["AGENT.md<br/>(deployed)"]
 ```
 
-When no `AGENT.overrides.md` exists, the merge step copies `AGENT.generated.md` to `AGENT.md` unchanged.
+When no `AGENT.overrides.md` exists, `/lab` directly writes `AGENT.md` unchanged. When `AGENT.overrides.md` exists, `/lab` writes `AGENT.generated.md` and stops -- the human user must manually merge generated + overrides → deployed following the merge rules below.
 
 ### Merge Rules
 
@@ -164,37 +164,70 @@ Heading matching is exact string comparison. If a heading in the overrides file 
 - `AGENT.md` always reflects the latest merge result. Its `x-plan-version` may differ from `AGENT.generated.md` if the overrides file sets it explicitly.
 - `x-fine-tuned: true` appears in `AGENT.md` frontmatter whenever overrides are present. This flag is never set in `AGENT.generated.md` or `AGENT.overrides.md` -- it is injected during merge.
 
-### Auditing Overrides
+### Merging Process
 
-The `/lab --diff` command shows what customizations exist for an agent:
+**The merge is currently a manual process**. When `/lab` regenerates an agent with overrides:
+
+1. `/lab` writes `AGENT.generated.md` (never touches `AGENT.overrides.md`)
+2. `/lab` reports: "Manual merge required. See docs/agent-anatomy.md for merge rules."
+3. Human user manually merges `AGENT.generated.md` + `AGENT.overrides.md` → `AGENT.md` following the merge rules above
+4. Human user updates `x-fine-tuned: true` in the merged `AGENT.md` frontmatter
+
+**Why manual?** Automated merging would require LLM-based semantic understanding of override descriptions (see docs/decisions.md Decision 16). Manual merging keeps the process deterministic and preserves human intent.
+
+### Drift Detection
+
+The `validate-overlays.sh` script detects drift in the overlay system. Run it to check for:
+
+- **Orphan overrides**: Sections claimed in `AGENT.overrides.md` that no longer exist in `AGENT.generated.md` (e.g., heading was renamed or removed from spec)
+- **Merge staleness**: `AGENT.md` does not reflect the current expected merge of generated + overrides
+- **Frontmatter inconsistency**: Merged frontmatter has incorrect key values or missing `x-fine-tuned` flag
+- **Configuration mismatches**: Agent has overrides file but no `x-fine-tuned` flag, or vice versa
+
+Usage:
+
+```bash
+# Check all agents, show summary + details
+./validate-overlays.sh
+
+# Check one agent
+./validate-overlays.sh nefario
+
+# Machine-friendly summary (for /lab integration)
+./validate-overlays.sh --summary
+```
+
+Example output:
 
 ```
-/lab --diff nefario
+AGENT                STATUS     ISSUES
+-----------------------------------------
+gru                  CLEAN      0
+nefario              DRIFT      4
+ai-modeling-minion   CLEAN      0
+[...]
+-----------------------------------------
+TOTAL: 19 agents, 1 with drift
 
-nefario:
-  Overrides file: nefario/AGENT.overrides.md
-  Frontmatter overrides:
-    x-plan-version: "1.2" -> "1.3"
-  Section overrides:
-    ## Cross-Cutting Concerns (Mandatory Checklist)  (42 lines)
-    ## Approval Gates  (28 lines)
-  Sections using generated output:
-    ## Identity
-    ## Invocation Modes
-    ## Core Knowledge
-    ...
+=== nefario ===
+
+ORPHAN_OVERRIDE: Section claimed in overrides does not exist in generated
+File: nefario/AGENT.overrides.md
+Section: ## Working Patterns
+Action: Review AGENT.overrides.md and remove or rename the orphaned section claim.
+
+[... more issues ...]
+---
 ```
 
-Without an agent name, `--diff` reports a summary across all agents:
+The script returns:
+- Exit code `0` if all agents are clean
+- Exit code `1` if drift is detected
+- Exit code `2` on script error
 
-```
-/lab --diff
+**Integration**: `/lab --check` automatically runs `validate-overlays.sh --summary` and reports drift alongside version mismatches.
 
-Agents with overrides:
-  nefario       2 frontmatter keys, 2 sections
-
-Agents without overrides: 18
-```
+**Requirements**: The script requires bash 4.0+ (macOS ships with bash 3.2). Install via Homebrew: `brew install bash`
 
 ### Real-World Example: Nefario Overrides
 

@@ -41,3 +41,9 @@ has `x-plan-version` in its frontmatter. When they diverge, use `/lab` to regene
 ```bash
 ./install.sh  # Symlinks all agents to ~/.claude/agents/ and /nefario skill to ~/.claude/skills/
 ```
+
+## Orchestration Reports
+
+After completing nefario orchestration (conversations involving META-PLAN or SYNTHESIS phases),
+generate an execution report following the template at `nefario/reports/TEMPLATE.md` and update
+the index at `nefario/reports/index.md`.
