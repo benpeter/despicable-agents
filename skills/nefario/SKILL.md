@@ -703,7 +703,7 @@ not part of the default flow.
 
 9. **Verify and report** — follow the wrap-up sequence documented in the
    "Report Generation" section below (review deliverables, write report,
-   update index, present to user, shutdown teammates, final status).
+   present to user, shutdown teammates, final status).
 
 10. **PR creation** — after the report is committed, if on a feature branch,
     offer to create a pull request using AskUserQuestion:
@@ -856,12 +856,11 @@ skip it, do not defer it, do not stop before it is written.
    — follow the template at `docs/history/nefario-reports/TEMPLATE.md`
    — include a Verification section with Phase 5-8 outcomes
    — include a Working Files section linking to the companion directory
-7. **Regenerate index** by running `docs/history/nefario-reports/build-index.sh`
-8. Commit the report and companion directory together (auto-commit, no prompt needed)
-9. Offer PR creation if on a feature branch
-10. Return to main: `git checkout main && git pull --rebase`
-11. Present report path, PR URL, branch name, and Verification summary to user
-12. Send shutdown_request to teammates
-13. TeamDelete
-14. Report final status to user
+7. Commit the report and companion directory together (auto-commit, no prompt needed)
+8. Offer PR creation if on a feature branch
+9. Return to main: `git checkout main && git pull --rebase`
+10. Present report path, PR URL, branch name, and Verification summary to user
+11. Send shutdown_request to teammates
+12. TeamDelete
+13. Report final status to user
 

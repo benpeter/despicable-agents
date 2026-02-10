@@ -338,20 +338,17 @@ Reference data table (same fields as v1 Layer 1 header block).
 | Outstanding Items | N items |
 ```
 
-## Index File Update
+## Index File
 
-After writing the report, regenerate the index by running:
+The report index (`docs/history/nefario-reports/index.md`) is a derived view
+generated automatically by CI on push to main. It is not committed from branches
+and is not part of the orchestration workflow.
 
-    docs/history/nefario-reports/build-index.sh
+The index is built by `docs/history/nefario-reports/build-index.sh`, which reads
+YAML frontmatter from all report files and produces a chronological table. The
+script is idempotent -- running it multiple times produces the same output.
 
-This script reads YAML frontmatter from all report files and produces
-a complete `docs/history/nefario-reports/index.md`. It is idempotent -- running it
-multiple times produces the same output. The index is a derived view,
-not primary state.
-
-If the script is unavailable, the index can be regenerated later by
-any session that runs the script. A stale index is a soft failure --
-all report files remain intact.
+To preview the index locally before pushing (optional): `docs/history/nefario-reports/build-index.sh`
 
 ## Incremental Writing
 
@@ -374,5 +371,4 @@ When generating a report:
 11. Write Process Detail (collapsible, includes Verification)
 12. Write Working Files section (collapsible, list all files in companion directory with phase labels; or "None" if no companion directory)
 13. Write Metrics
-14. Regenerate index by running docs/history/nefario-reports/build-index.sh
-15. Present report path to user
+14. Present report path to user
