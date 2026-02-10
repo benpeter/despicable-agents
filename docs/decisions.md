@@ -16,7 +16,7 @@ These decisions were made during the initial system design and are implemented a
 |-------|-------|
 | **Status** | Implemented |
 | **Date** | 2026-01-01 |
-| **Choice** | Three-tier hierarchy: Boss (gru), Foreman (nefario), Minions (17 specialists) |
+| **Choice** | Four-tier hierarchy: Boss (gru), Foreman (nefario), Governance (lucy, margo), Minions (23 specialists) |
 | **Alternatives rejected** | Flat peer structure where Claude Code delegates directly to any specialist. Rejected because coordination logic would be duplicated across multiple agents, and there would be no clear owner for multi-agent task decomposition. |
 | **Rationale** | Complex tasks need an orchestration layer to decompose and coordinate. Strategic technology decisions need a different perspective than execution. A flat structure creates ambiguity about who coordinates multi-agent tasks. |
 | **Consequences** | Enables deterministic task routing and clear separation of concerns. Adds complexity to the delegation flow (user -> nefario -> specialists). Nefario becomes a single point of coordination, which is a bottleneck but also a single source of truth for routing. |
@@ -125,7 +125,7 @@ These decisions were implemented in the nefario v1.4 update.
 |-------|-------|
 | **Status** | Implemented |
 | **Date** | 2026-02-09 |
-| **Choice** | Insert a new Architecture Review phase between Synthesis (Phase 3) and Execution (Phase 4). Cross-cutting specialists review the synthesized plan before work begins. Four ALWAYS reviewers (security-minion, test-minion, ux-strategy-minion, software-docs-minion) and two conditional reviewers (observability-minion at 2+ runtime tasks, ux-design-minion at 1+ UI tasks). Structured verdict format: APPROVE / ADVISE (non-blocking) / BLOCK (halts, 2-iteration revision cap, then escalate to user). |
+| **Choice** | Insert a new Architecture Review phase between Synthesis (Phase 3) and Execution (Phase 4). Cross-cutting specialists review the synthesized plan before work begins. Six ALWAYS reviewers (security-minion, test-minion, ux-strategy-minion, software-docs-minion, lucy, margo) and four conditional reviewers (observability-minion at 2+ runtime tasks, ux-design-minion at 1+ UI tasks, accessibility-minion at 1+ web UI tasks, sitespeed-minion at 1+ web runtime tasks). Structured verdict format: APPROVE / ADVISE (non-blocking) / BLOCK (halts, 2-iteration revision cap, then escalate to user). |
 | **Alternatives rejected** | No structured review phase -- rely on cross-cutting checklist during planning only. Rejected because consideration during planning is not the same as review of the synthesized plan. Emergent issues from combining multiple specialists' contributions are only visible after synthesis. |
 | **Rationale** | Catches architectural issues that are cheap to fix before execution and expensive to fix after. Security violations in a plan are invisible until exploited. Test strategy must align before code is written. The 2-iteration cap on BLOCK revisions prevents infinite loops while still allowing substantive disagreements to reach human judgment. |
 | **Consequences** | Adds $0.10-0.20 per plan (15-30% overhead). Extends planning by 2-5 reviewer spawns. All plans get security and test review regardless of scope. Reduces rework during execution. |
@@ -150,7 +150,7 @@ These decisions were implemented in the nefario v1.4 update.
 | **Choice** | Expand the cross-cutting checklist from 5 to 6 dimensions by splitting "Accessibility" into two: "Usability -- Strategy" (ux-strategy-minion, ALWAYS: journey coherence, cognitive load, simplification audit) and "Usability -- Design" (ux-design-minion, conditional at 1+ UI tasks: accessibility, visual hierarchy, interaction patterns). Promote "Documentation" (software-docs-minion) to ALWAYS. |
 | **Alternatives rejected** | Both UX agents as ALWAYS reviewers (proposed by ux-strategy-minion). Rejected for ux-design-minion because many plans have no UI component, and design review of non-UI plans adds cost without value. The strategy/design split gives clear non-overlapping boundaries: WHAT/WHY (strategy) vs. HOW (design). |
 | **Rationale** | The previous "Accessibility" dimension conflated strategic usability concerns (journey coherence, cognitive load) with tactical design concerns (visual hierarchy, interaction patterns). These require different expertise and different trigger conditions. Documentation promoted to ALWAYS because even non-architecture tasks benefit from documentation gap analysis. |
-| **Consequences** | 4 ALWAYS reviewers instead of 2, increasing minimum review cost. Cleaner separation between UX strategy and UX design responsibilities. Every plan gets documentation review. |
+| **Consequences** | 6 ALWAYS reviewers (expanded from 4 with lucy and margo in v1.5), increasing minimum review cost. Cleaner separation between UX strategy and UX design responsibilities. Every plan gets documentation review. |
 
 ### Decision 13: MODE: PLAN Restricted to User-Explicit-Only
 
@@ -187,7 +187,7 @@ These decisions were implemented in the nefario v1.4 update.
 | **Choice** | Phase 3.5 Architecture Review is never skipped by the orchestrator, regardless of task type (documentation-only, config-only, single-file) or perceived simplicity. ALWAYS reviewers are always invoked. Only the user can explicitly request skipping Phase 3.5. |
 | **Alternatives rejected** | **Orchestrator-judged skip** where nefario assesses whether review is warranted based on task type: rejected because the whole point of mandatory review is that the orchestrator should not be the sole judge. SKILL.md changes are "documentation" but drive all future orchestrations — skipping review for them is precisely the wrong call. |
 | **Rationale** | The orchestrator skipped Phase 3.5 twice for "documentation-only" tasks, which the user corrected. ALWAYS means ALWAYS — the authority to skip belongs to the user, not the system. The cost of unnecessary review (~$0.10) is trivial compared to the cost of a missed issue in a workflow-controlling file. |
-| **Consequences** | Every `/nefario` run incurs review cost (4 ALWAYS + 0-2 conditional reviewers). No exceptions without explicit user opt-out. Constraint encoded in AGENT.overrides.md and AGENT.md. |
+| **Consequences** | Every `/nefario` run incurs review cost (6 ALWAYS + 0-4 conditional reviewers). No exceptions without explicit user opt-out. Constraint encoded in AGENT.overrides.md and AGENT.md. |
 
 ---
 
@@ -243,7 +243,22 @@ These decisions were implemented in the nefario v1.4 update.
 | **Choice** | Defer git-minion creation. The commit workflow is implemented as hooks and orchestration integration, not as a specialist agent. |
 | **Alternatives rejected** | **Create git-minion now** as a specialist for branching strategy, PR workflow, commit hook maintenance, and merge conflict resolution. Rejected based on 4-to-1 specialist consensus: the job-to-be-done is workflow integration (hooks + orchestration), not git domain expertise. Adding an agent inflates the team without a clear expertise gap that existing agents cannot cover. |
 | **Rationale** | Hook scripts are infrastructure (devx-minion/iac-minion territory), not a specialist domain. Branching conventions are simple enough to encode in documentation and orchestration prompts. Revisit when concrete demand emerges for deep git expertise -- complex branching strategies, PR workflow automation, or commit hook maintenance that exceeds what infrastructure agents handle. |
-| **Consequences** | Agent count stays at 19. Git workflow knowledge is distributed across documentation and hook scripts rather than concentrated in a specialist. If git complexity grows, a future decision can introduce git-minion without breaking existing architecture. |
+| **Consequences** | Git workflow knowledge is distributed across documentation and hook scripts rather than concentrated in a specialist. If git complexity grows, a future decision can introduce git-minion without breaking existing architecture. |
+
+---
+
+## Agent Team Expansion (Decision 20)
+
+### Decision 20: Eight New Agents (19 → 27)
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-02-10 |
+| **Choice** | Expand from 19 to 27 agents by adding 8 new agents: 2 governance agents (lucy, margo) as top-level directories alongside gru/nefario, and 6 new minions (accessibility-minion, seo-minion, sitespeed-minion, api-spec-minion, code-review-minion, product-marketing-minion). Governance agents are ALWAYS reviewers in Phase 3.5. Existing agents updated: api-design-minion (v1.1, boundary narrowed for api-spec-minion handoff), ux-design-minion (v1.1, a11y deep work to accessibility-minion), frontend-minion (v1.1, perf measurement to sitespeed-minion). Nefario updated to v1.5 (expanded roster, delegation table, reviewer table). |
+| **Alternatives rejected** | (1) **Fewer agents, broader remits**: Combine accessibility + sitespeed into ux-design-minion; combine api-spec into api-design-minion. Rejected because it violates the strict-boundary principle (Decision 2) and creates agents with too many concerns. (2) **All agents as minions**: Make lucy and margo minions rather than top-level. Rejected because governance agents serve a structurally different role -- they review every plan rather than executing domain work. Top-level directories signal this distinction. |
+| **Rationale** | Coverage gaps identified in web quality (no WCAG specialist, no SEO specialist, no performance measurement specialist), API lifecycle (no spec authoring specialist), code quality (no review specialist), product messaging (no marketing specialist), and governance (no intent alignment or simplicity enforcement). Each new agent fills a gap that existing agents explicitly disclaimed in their "Does NOT do" sections. |
+| **Consequences** | Agent count increases by 42% (19→27). Build pipeline parallelism increases. Phase 3.5 minimum review cost increases (6 ALWAYS reviewers). Delegation table grows by 35 rows. Three existing agents receive boundary adjustments (minor version bumps). |
 
 ---
 

@@ -211,10 +211,7 @@ React Spectrum is a TypeScript-first component library implementing a modern des
 - Enhanced styling flexibility with style macros
 
 **Sources:**
-- [React Spectrum Official](https://react-spectrum.adobe.com/)
 - [GitHub: React Spectrum](https://github.com/adobe/react-spectrum)
-- [React Spectrum Architecture](https://react-spectrum.adobe.com/architecture.html)
-- [Spectrum 2 v1.0 Release](https://react-spectrum.adobe.com/releases/v1-0-0)
 
 ### Radix UI Primitives
 

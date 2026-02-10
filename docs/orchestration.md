@@ -145,10 +145,14 @@ Before execution begins, cross-cutting specialists review the synthesized plan. 
 | test-minion | ALWAYS | Retrofitting test coverage is consistently more expensive than designing it in |
 | ux-strategy-minion | ALWAYS | Every plan needs journey coherence and cognitive load assessment |
 | software-docs-minion | ALWAYS | Architectural and API surface changes need documentation review |
+| lucy | ALWAYS | Every plan must align with human intent, repo conventions, and CLAUDE.md compliance |
+| margo | ALWAYS | Every plan must pass YAGNI/KISS/simplicity enforcement |
 | observability-minion | Conditional: 2+ tasks produce runtime components | Multiple runtime tasks need coordinated observability strategy |
 | ux-design-minion | Conditional: 1+ tasks produce user-facing interfaces | UI-producing tasks need accessibility patterns review |
+| accessibility-minion | Conditional: 1+ tasks produce web-facing UI | WCAG compliance must be reviewed before UI code is written |
+| sitespeed-minion | Conditional: 1+ tasks produce web-facing runtime components | Performance budgets must be established before implementation |
 
-All reviewers run on **sonnet**. Architecture review is pattern-matching against known concerns, not deep reasoning.
+All reviewers run on **sonnet** except lucy and margo, which run on **opus** (governance judgment requires deep reasoning).
 
 **Verdict format:**
 
@@ -280,9 +284,9 @@ Every plan is evaluated against a six-dimension checklist. For each dimension, n
 | Testing | test-minion | Include unless the task is purely research or design with no executable output |
 | Security | security-minion | Include for any task touching auth, APIs, user input, or infrastructure |
 | Usability -- Strategy | ux-strategy-minion | ALWAYS include |
-| Usability -- Design | ux-design-minion | Include when tasks produce user-facing interfaces |
+| Usability -- Design | ux-design-minion, accessibility-minion | Include when tasks produce user-facing interfaces |
 | Documentation | software-docs-minion / user-docs-minion | ALWAYS include |
-| Observability | observability-minion | Include for any runtime component (services, APIs, background processes) |
+| Observability | observability-minion, sitespeed-minion | Include for any runtime component; sitespeed-minion for web-facing components |
 
 The checklist applies in all modes (META-PLAN, SYNTHESIS, PLAN). The default is to include; exclusion requires justification.
 

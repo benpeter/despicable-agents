@@ -61,6 +61,20 @@ install_agents() {
     ((installed_count++))
   fi
 
+  # Install lucy
+  if [[ -f "${SCRIPT_DIR}/lucy/AGENT.md" ]]; then
+    ln -sf "${SCRIPT_DIR}/lucy/AGENT.md" "${AGENTS_DIR}/lucy.md"
+    print_msg "$COLOR_GREEN" "  ✓ lucy.md"
+    ((installed_count++))
+  fi
+
+  # Install margo
+  if [[ -f "${SCRIPT_DIR}/margo/AGENT.md" ]]; then
+    ln -sf "${SCRIPT_DIR}/margo/AGENT.md" "${AGENTS_DIR}/margo.md"
+    print_msg "$COLOR_GREEN" "  ✓ margo.md"
+    ((installed_count++))
+  fi
+
   # Install all minions
   for agent_file in "${SCRIPT_DIR}"/minions/*/AGENT.md; do
     if [[ -f "$agent_file" ]]; then
@@ -108,6 +122,28 @@ uninstall_agents() {
     if [[ "$target" == "${SCRIPT_DIR}/nefario/AGENT.md" ]]; then
       rm "${AGENTS_DIR}/nefario.md"
       print_msg "$COLOR_YELLOW" "  ✗ nefario.md"
+      ((removed_count++))
+    fi
+  fi
+
+  # Remove lucy
+  if [[ -L "${AGENTS_DIR}/lucy.md" ]]; then
+    local target
+    target=$(readlink "${AGENTS_DIR}/lucy.md")
+    if [[ "$target" == "${SCRIPT_DIR}/lucy/AGENT.md" ]]; then
+      rm "${AGENTS_DIR}/lucy.md"
+      print_msg "$COLOR_YELLOW" "  ✗ lucy.md"
+      ((removed_count++))
+    fi
+  fi
+
+  # Remove margo
+  if [[ -L "${AGENTS_DIR}/margo.md" ]]; then
+    local target
+    target=$(readlink "${AGENTS_DIR}/margo.md")
+    if [[ "$target" == "${SCRIPT_DIR}/margo/AGENT.md" ]]; then
+      rm "${AGENTS_DIR}/margo.md"
+      print_msg "$COLOR_YELLOW" "  ✗ margo.md"
       ((removed_count++))
     fi
   fi
