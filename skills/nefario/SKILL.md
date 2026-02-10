@@ -137,6 +137,16 @@ Versus 500-2000+ for full contributions.
 alphanumeric and hyphens only). Create the scratch directory:
 `mkdir -p nefario/scratch/{slug}/`.
 
+Extract a status summary from the first line of the user's task description.
+Truncate to 51 characters; if truncated, append "..." (so "Nefario: " prefix +
+summary stays within 60 chars). Write the sentinel file:
+```sh
+echo "$summary" > /tmp/nefario-status-${slug}
+chmod 600 /tmp/nefario-status-${slug}   # Status file: read from custom statusline scripts
+```
+Use this summary text in Task `description` fields and TaskCreate `activeForm`
+fields throughout the orchestration (see per-phase instructions below).
+
 Capture the verbatim user task description (the text that will be inserted at
 `<insert the user's task description>`) and retain it in session context as
 `original-prompt`. This is the text that appears in the report's Original Prompt section.
@@ -154,7 +164,7 @@ which specialists should be consulted for planning.
 ```
 Task:
   subagent_type: nefario
-  description: "Create meta-plan"
+  description: "Nefario: meta-plan"
   model: opus
   prompt: |
     MODE: META-PLAN
@@ -195,7 +205,7 @@ Each specialist gets:
 ```
 Task:
   subagent_type: <agent-name from meta-plan>
-  description: "<agent> planning input"
+  description: "Nefario: <agent> planning"
   model: opus  # planning = opus
   prompt: |
     You are contributing to the PLANNING phase of a multi-agent project.
@@ -254,7 +264,7 @@ final execution plan.
 ```
 Task:
   subagent_type: nefario
-  description: "Synthesize execution plan"
+  description: "Nefario: synthesis"
   model: opus
   prompt: |
     MODE: SYNTHESIS
@@ -338,7 +348,7 @@ Spawn all identified reviewers in parallel. Use opus for lucy and margo
 ```
 Task:
   subagent_type: <reviewer agent>
-  description: "<agent> architecture review"
+  description: "Nefario: <agent> review"
   model: opus  # for lucy, margo; sonnet for all other reviewers
   prompt: |
     You are reviewing a delegation plan before execution begins.
@@ -573,6 +583,9 @@ create the orchestrated-session marker to suppress commit hook noise:
 
 2. **Create tasks** using TaskCreate for each task in the plan.
    Set dependencies via TaskUpdate.
+   Set `activeForm` to `"Nefario: <summary> -- <task-specific activeForm>"`.
+   If the combined string exceeds 80 characters, use just the task-specific
+   activeForm.
 
 ### Execution Loop
 
@@ -748,7 +761,7 @@ Spawn three reviewers **in parallel**:
 ```
 Task:
   subagent_type: <code-review-minion | lucy | margo>
-  description: "Phase 5 code review"
+  description: "Nefario: <agent> code review"
   model: <sonnet for code-review-minion, opus for lucy/margo>
   prompt: |
     You are reviewing code produced during an orchestrated execution.
@@ -963,8 +976,9 @@ not part of the default flow.
     See [docs/commit-workflow.md](../docs/commit-workflow.md) for details.
 
 11. **Return to main** — after PR creation (or if declined):
-    Remove the orchestrated-session marker:
+    Remove the orchestrated-session marker and status sentinel:
     `rm -f /tmp/claude-commit-orchestrated-${CLAUDE_SESSION_ID}`
+    `rm -f /tmp/nefario-status-${slug}`
     Then: `git checkout main && git pull --rebase`. Include branch name in
     final summary.
 
