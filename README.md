@@ -2,34 +2,74 @@
 
 [![97% Vibe_Coded](https://img.shields.io/badge/97%25-Vibe_Coded-ff69b4?style=for-the-badge&logo=claude&logoColor=white)](https://github.com/trieloff/vibe-coded-badge-action)
 
-27 specialist agents for [Claude Code](https://code.claude.com). Deep domain experts that work alone or as a coordinated team -- install once, use everywhere.
+A team of domain specialists, an orchestrator that coordinates them, and a governance layer that reviews every plan before execution -- for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
-## What you get
+## Examples
+
+Single-domain work goes to the specialist. Multi-domain work goes to `/nefario`.
+
+In any Claude Code session:
 
 ```
-@gru Should we adopt A2A or double down on MCP?
-
+# Need to validate your auth flow?
 @security-minion Review this auth flow for vulnerabilities
+# → threat model, specific findings, remediation steps
 
+# Leaking memory under load?
 @debugger-minion This function leaks memory under load -- find the root cause
+# → root cause analysis, fix, verification approach
 
-@frontend-minion Refactor this component to use web components instead of React
-
-/nefario Build an MCP server with OAuth, tests, and user docs
+# Multi-domain task? Nefario plans across specialists and coordinates execution.
+/nefario Build an OAuth-secured API with tests and user docs
+# → orchestrated plan across api-design, oauth, test, and user-docs specialists
+#   reviewed by governance before execution
 ```
-
-Single-domain work goes directly to the specialist. Multi-domain work goes to `/nefario`, which plans across specialists and coordinates execution.
 
 ## Install
+
+Requires [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
 ```bash
 git clone https://github.com/benpeter/despicable-agents.git
 cd despicable-agents && ./install.sh
 ```
 
-This symlinks all 27 agents to `~/.claude/agents/` and the `/nefario` skill to `~/.claude/skills/` so they are available in every Claude Code session. To remove them: `./install.sh uninstall`.
+Symlinks all 27 agents to `~/.claude/agents/` and the `/nefario` skill to `~/.claude/skills/`. Available in every Claude Code session. To remove: `./install.sh uninstall`.
 
-## Agent Roster
+## Try It
+
+Agents are invoked with `@name`. The `/nefario` skill coordinates multiple agents for complex tasks.
+
+Start with a single specialist:
+
+```
+@security-minion Check this endpoint for injection vulnerabilities
+```
+
+The security specialist returns a structured review: threat model, findings by severity, and remediation guidance.
+
+For work spanning multiple domains, use the orchestrator:
+
+```
+/nefario Add rate limiting to the API with monitoring and updated docs
+```
+
+Nefario consults the relevant specialists, synthesizes a plan, runs it through governance review (intent alignment, simplicity, security, testing), then executes across agents in parallel.
+
+## How It Works
+
+**Gru** sets technology direction. **Nefario** orchestrates complex tasks through a nine-phase process -- from planning through execution to post-execution verification. **Lucy** and **Margo** are governance: every plan is reviewed for intent alignment and over-engineering before execution. **23 minions** are the domain specialists that do the work.
+
+Six mandatory reviewers check every plan. Plans that drift from what you asked for are caught. Over-engineering is flagged. See [Using Nefario](docs/using-nefario.md) for the full orchestration guide.
+
+## Agents
+
+4 named roles (Gru, Nefario, Lucy, Margo) and 23 minions across 7 domain groups.
+
+See [Agent Catalog](docs/agent-catalog.md) for per-agent details.
+
+<details>
+<summary>Full agent roster</summary>
 
 | Group | Agent | Focus |
 |-------|-------|-------|
@@ -61,30 +101,28 @@ This symlinks all 27 agents to `~/.claude/agents/` and the `/nefario` skill to `
 | | `seo-minion` | SEO, structured data, generative engine optimization |
 | | `sitespeed-minion` | Core Web Vitals, performance budgets |
 
-## How It Works
-
-Four tiers. **Gru** is the strategic brain -- ask it whether to adopt a technology. **Nefario** is the orchestrator -- give it a complex task and it decomposes, delegates, and coordinates across specialists. **Lucy** and **Margo** are governance agents -- Lucy ensures plans align with human intent and repo conventions, Margo enforces simplicity and prevents over-engineering. **Minions** are the 23 domain experts that do the actual work.
-
-When you invoke `/nefario`, it runs a nine-phase process: meta-planning (which specialists to consult), specialist planning (parallel domain input), synthesis (unified execution plan with tasks and owners), architecture review (cross-cutting concerns like security and testing), execution (parallel task dispatch to specialists), then post-execution verification -- code review, test execution, optional deployment, and documentation updates.
-
-See [Orchestration](docs/orchestration.md) for the full guide.
+</details>
 
 ## Documentation
 
+**Using the agents:**
+- [Using Nefario](docs/using-nefario.md) -- orchestration workflow, phases, when to use `/nefario` vs `@agent`
+- [Agent Catalog](docs/agent-catalog.md) -- per-agent capabilities, boundaries, and usage
+
+**Contributing and extending:**
 - [Architecture Overview](docs/architecture.md) -- system design, hierarchy, agent groups
-- [Agent Anatomy](docs/agent-anatomy.md) -- file structure, frontmatter, overlay mechanism
-- [Orchestration](docs/orchestration.md) -- nine-phase process, delegation, nefario usage
-- [Build Pipeline](docs/build-pipeline.md) -- building agents, versioning, the `/despicable-lab` skill
-- [Deployment](docs/deployment.md) -- symlink deployment, `install.sh`
-- [Design Decisions](docs/decisions.md) -- architectural tradeoffs and rationale
+- [Design Decisions](docs/decisions.md) -- architectural tradeoffs with rationale and rejected alternatives
+
+## Current Limitations
+
+- **Claude Code dependency.** Agents are AGENT.md files consumed by Claude Code's agent loading. They are not standalone tools.
+- **No subagent nesting.** Claude Code does not allow subagents to spawn other subagents. Only the main session dispatches to agents.
+- **Context window pressure.** Complex orchestrations with many specialists can approach context limits. The project uses scratch files and compaction checkpoints, but very large plans may require manual intervention.
+- **97% vibe-coded.** The research is real and the architecture is deliberate, but the system prompt prose was generated with AI assistance and refined, not hand-written from scratch.
 
 ## Contributing
 
-All content must be in English. No PII, no proprietary data -- agents are published under Apache 2.0 and must stay that way.
-
-`the-plan.md` is the canonical spec and source of truth for all agents. Propose changes there via pull request. Respect agent boundaries: each agent's "Does NOT do" section defines where its responsibility ends and another's begins.
-
-Prefer lightweight, vanilla solutions. Do not reach for frameworks unless they earn their weight.
+All content in English. No PII, no proprietary data -- agents are published under Apache 2.0. `the-plan.md` is the canonical spec and source of truth. Propose changes there via pull request. Respect agent boundaries: each agent's "Does NOT do" section defines where its scope ends.
 
 ## License
 

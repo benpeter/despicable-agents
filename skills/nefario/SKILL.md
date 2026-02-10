@@ -679,8 +679,48 @@ not part of the default flow.
 3. **Sub-step 8a** (parallel): spawn software-docs-minion + user-docs-minion
    with their respective checklist items and paths to execution artifacts.
 
-4. **Sub-step 8b** (sequential, after 8a): if checklist includes README or
-   user-facing docs, spawn product-marketing-minion to review. Otherwise skip.
+4. **Sub-step 8b -- Marketing lens** (sequential, after 8a): if checklist
+   includes README or user-facing docs, spawn product-marketing-minion with
+   the following inputs and instructions. Otherwise skip.
+
+   **Inputs to product-marketing-minion**:
+   - The Phase 8 checklist (`nefario/scratch/{slug}/phase8-checklist.md`)
+   - The execution summary (what changed and why)
+   - Current `README.md`
+
+   **Instructions**: Classify each user-visible change into one of three tiers
+   using the decision criteria below. Return a tier classification for each
+   change and the corresponding recommendation.
+
+   **Tier definitions**:
+
+   | Tier | Name | Criteria | Action |
+   |------|------|----------|--------|
+   | 1 | Headline Feature | New capability (user can do something new) AND strengthens a core differentiator (orchestration, governance, specialist depth, install-once) OR changes the user's mental model | Recommend specific README changes with proposed copy. Flag if core positioning needs update. |
+   | 2 | Notable Enhancement | Improves existing capability in a user-visible way, OR removes a friction point in getting-started or daily-use, OR is a breaking change | Recommend where to mention in existing docs. Include in release notes. For breaking changes: flag migration guide need. |
+   | 3 | Document Only | Internal improvement, bug fix, refactor, or maintenance. User experience unchanged. | Confirm documentation coverage is sufficient. No README or positioning changes. |
+
+   **Decision criteria** (evaluate in order, stop at first match):
+   1. Does this change what the project can do? (new capability = Tier 1 candidate)
+   2. Would a user notice during normal usage? (yes = Tier 2 minimum; no = Tier 3)
+   3. Does it strengthen a core differentiator? (if yes, promote one tier)
+   4. Does it change the user's mental model? (if yes = Tier 1)
+   5. Is it a breaking change? (always Tier 2 minimum)
+
+   **Output format**: For each change, return:
+   - Change description (one line)
+   - Tier classification (1, 2, or 3) with rationale (one sentence)
+   - Recommendation per the action column above
+
+   Write output to: `nefario/scratch/{slug}/phase8-marketing-review.md`
+
+   **Example triage** (reference test case):
+   - Change: "Added accessibility-minion as conditional Phase 3.5 reviewer"
+   - Tier: 2 (Notable Enhancement). Improves governance coverage for web UI
+     tasks -- user-visible when working on web projects -- but does not
+     introduce a new capability or change the mental model.
+   - Recommendation: Mention in docs/orchestration.md reviewer table. Include
+     in release notes. No README change needed.
 
 5. Non-blocking by default. Exception: new project requires README before PR.
 
