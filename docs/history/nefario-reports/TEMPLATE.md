@@ -66,16 +66,18 @@ manual index mutation with an idempotent build script. This eliminates both the
 TOCTOU race and merge conflicts during parallel orchestration.
 ```
 
-### 3. Task
+### 3. Original Prompt
 
 The verbatim user request in a blockquote. Use the text that was passed to nefario (may already be cleaned by despicable-prompter).
+
+The PR description inherits this section automatically, since the PR body is derived from the report body (stripped frontmatter). Renaming here propagates to the PR.
 
 **SECURITY NOTE**: Before including the verbatim prompt, remove any secrets, tokens, API keys, or credentials that may have been in the original text. Replace with `[REDACTED]`.
 
 **Short prompts (<20 lines)** -- inline blockquote:
 
 ```markdown
-## Task
+## Original Prompt
 
 > Eliminate merge conflicts when multiple nefario sessions generate reports
 > in parallel. The current sequence-number approach has a TOCTOU race.
@@ -84,10 +86,10 @@ The verbatim user request in a blockquote. Use the text that was passed to nefar
 **Long prompts (>=20 lines)** -- collapsible:
 
 ```markdown
-## Task
+## Original Prompt
 
 <details>
-<summary>Original task (expand)</summary>
+<summary>Original prompt (expand)</summary>
 
 > Full verbatim prompt here, redacted of any secrets.
 > Can span many lines.
@@ -311,7 +313,8 @@ Important notes for the template:
   directory -- not a fixed set
 - Label convention: `Phase N: description` where description is derived from
   filename (phase1-metaplan -> "Meta-plan", phase2-{agent} -> agent name,
-  phase3-synthesis -> "Synthesis", phase3.5-{agent} -> agent name)
+  phase3-synthesis -> "Synthesis", phase3.5-{agent} -> agent name,
+  prompt.md -> "Original Prompt")
 - N in the summary line is the actual file count
 - Blank line after `<summary>` and before `</details>` for GitHub rendering
 - Section is ABSENT for existing/older reports (backward compatibility:
@@ -338,20 +341,17 @@ Reference data table (same fields as v1 Layer 1 header block).
 | Outstanding Items | N items |
 ```
 
-## Index File Update
+## Index File
 
-After writing the report, regenerate the index by running:
+The report index (`docs/history/nefario-reports/index.md`) is a derived view
+generated automatically by CI on push to main. It is not committed from branches
+and is not part of the orchestration workflow.
 
-    docs/history/nefario-reports/build-index.sh
+The index is built by `docs/history/nefario-reports/build-index.sh`, which reads
+YAML frontmatter from all report files and produces a chronological table. The
+script is idempotent -- running it multiple times produces the same output.
 
-This script reads YAML frontmatter from all report files and produces
-a complete `docs/history/nefario-reports/index.md`. It is idempotent -- running it
-multiple times produces the same output. The index is a derived view,
-not primary state.
-
-If the script is unavailable, the index can be regenerated later by
-any session that runs the script. A stale index is a soft failure --
-all report files remain intact.
+To preview the index locally before pushing (optional): `docs/history/nefario-reports/build-index.sh`
 
 ## Incremental Writing
 
@@ -365,14 +365,14 @@ When generating a report:
 2. Generate filename slug (kebab-case, strip articles, max 40 chars)
 3. Capture current local time as HHMMSS for filename
 4. Sanitize verbatim prompt (redact secrets/tokens/keys)
+4a. Write sanitized prompt to scratch directory as prompt.md
 5. Write YAML frontmatter with all 10 fields (version: 2)
 6. Write Summary
-7. Write Task (verbatim prompt, inline if <20 lines, collapsible if >=20 lines)
+7. Write Original Prompt (verbatim prompt, inline if <20 lines, collapsible if >=20 lines)
 8. Write Decisions (with enriched gate briefs including rationale + rejected alternatives)
 9. Write Agent Contributions (collapsible, 2 groups: Planning + Architecture Review)
 10. Write Execution (files + gates)
 11. Write Process Detail (collapsible, includes Verification)
 12. Write Working Files section (collapsible, list all files in companion directory with phase labels; or "None" if no companion directory)
 13. Write Metrics
-14. Regenerate index by running docs/history/nefario-reports/build-index.sh
-15. Present report path to user
+14. Present report path to user
