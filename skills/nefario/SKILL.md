@@ -59,7 +59,9 @@ The orchestrator MUST minimize chat output. The user should only see:
 - Post-execution reviewer spawning and auto-fix iterations
 
 **CONDENSE** to a single line:
-- Meta-plan result: "Planning: consulting devx-minion, security-minion, ..."
+- Meta-plan result: "Planning: consulting devx-minion, security-minion, ... | Scratch: <actual resolved path>"
+  The scratch path must be the ACTUAL resolved path (e.g., `/tmp/nefario-scratch-a3F9xK/my-slug/`),
+  not a template with variables.
 - Review verdicts (if no BLOCK): "Review: 4 APPROVE, 0 BLOCK"
 - ADVISE notes: fold into relevant task prompts. Show at execution plan
   approval gate using advisory delta format. Do not print during mid-execution.
@@ -69,17 +71,62 @@ The orchestrator MUST minimize chat output. The user should only see:
 Heartbeat: for phases lasting more than 60 seconds with no output, print a
 single status line (e.g., "Waiting for 3 agents...") to confirm progress.
 
-## Scratch File Convention
+## Path Resolution
 
-Phase outputs are written to scratch files to prevent context accumulation.
-The main session retains compact summaries; full outputs live on disk.
+At Phase 1 start, resolve all session paths. These paths are used throughout
+the orchestration and must be included in every CONDENSE checkpoint.
 
-### Directory Structure
+### Scratch Directory (secure creation, mandatory)
 
-Each orchestration session uses a subdirectory under `nefario/scratch/`:
+Create with:
+```sh
+SCRATCH_DIR=$(mktemp -d "${TMPDIR:-/tmp}/nefario-scratch-XXXXXX") && chmod 700 "$SCRATCH_DIR"
+```
+
+The `XXXXXX` suffix is randomized by mktemp, preventing symlink attacks and
+directory enumeration. `chmod 700` restricts access to the owning user only.
+
+Create a subdirectory for the slug:
+```sh
+mkdir "$SCRATCH_DIR/${slug}"
+```
+
+All scratch file writes within the session use `$SCRATCH_DIR/${slug}/` as the
+base path. The `{slug}` reuses the report slug generated in Phase 1 (kebab-case,
+lowercase, max 40 chars, strip articles, alphanumeric and hyphens only).
+
+### Report Directory (cwd-relative detection)
+
+Detection order (first match wins):
+1. `docs/nefario-reports/` relative to cwd (if exists)
+2. `docs/history/nefario-reports/` relative to cwd (if exists)
+3. Default: create `docs/history/nefario-reports/` relative to cwd
+
+Create with `mkdir -p` on first use. When the report directory is first CREATED
+(not detected), include a single-line note in the wrap-up output:
+"Created report directory: <path>"
+
+### Git Operations
+
+Before branch creation, commits, or PR:
+```sh
+git rev-parse --is-inside-work-tree 2>/dev/null
+```
+
+If no git repo: skip branch creation, commits, PR creation. Print:
+"No git repo detected. Run `git init` if you want automatic branching and commits."
+
+For default branch detection (replaces hardcoded `main`):
+```sh
+git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'
+```
+Fall back to `main` if the command fails (e.g., no remote configured).
+
+### Scratch Directory Structure
 
 ```
-nefario/scratch/{slug}/
+$SCRATCH_DIR/{slug}/
+  prompt.md
   phase1-metaplan.md
   phase2-{agent-name}.md        # one per specialist
   phase3-synthesis.md
@@ -95,10 +142,6 @@ nefario/scratch/{slug}/
   phase8-marketing-review.md    # if sub-step 8b ran
 ```
 
-The `{slug}` reuses the report slug generated in Phase 1 (kebab-case, lowercase,
-max 40 chars, strip articles, alphanumeric and hyphens only). Create the directory
-with `mkdir -p` at the start of Phase 1.
-
 ### Inline Summary Template
 
 After writing a specialist's full output to a scratch file, record a compact
@@ -112,7 +155,7 @@ Tasks: {N} -- {one-line each, semicolons}
 Risks: {critical only, 1-2 bullets}
 Conflicts: {cross-domain conflicts, or "none"}
 Verdict: {APPROVE | ADVISE(details) | BLOCK(details)} (Phase 3.5 reviewers only)
-Full output: nefario/scratch/{slug}/phase2-{agent-name}.md
+Full output: $SCRATCH_DIR/{slug}/phase2-{agent-name}.md
 ```
 
 The `Phase` field groups agents in the report's Agent Contributions section.
@@ -124,18 +167,25 @@ Versus 500-2000+ for full contributions.
 
 ### Lifecycle
 
-- **Creation**: `mkdir -p nefario/scratch/{slug}/` at Phase 1 start.
-- **Overwrites**: If the same slug directory exists, overwrite silently (retry).
-- **Cleanup**: Never auto-delete. Scratch files persist for debugging.
-  Manual cleanup: `rm -rf nefario/scratch/*/`
-- **Git**: `nefario/scratch/` is gitignored (except `.gitkeep`).
+- **Creation**: `mktemp -d` + `mkdir` at Phase 1 start (see above).
+- **Overwrites**: Each session gets a unique temp directory (no collisions).
+- **Cleanup**: Removed at wrap-up (`rm -rf "$SCRATCH_DIR"`). Interrupted
+  sessions leave files in temp, cleaned on reboot.
+- **Git**: Not in the working tree. No gitignore entry needed.
 
 ## Phase 1: Meta-Plan
 
 **Before spawning nefario**: Generate the session slug from the task description
 (same rules as report slug: kebab-case, lowercase, max 40 chars, strip articles,
 alphanumeric and hyphens only). Create the scratch directory:
-`mkdir -p nefario/scratch/{slug}/`.
+
+```sh
+SCRATCH_DIR=$(mktemp -d "${TMPDIR:-/tmp}/nefario-scratch-XXXXXX") && chmod 700 "$SCRATCH_DIR"
+mkdir "$SCRATCH_DIR/${slug}"
+```
+
+Detect the report directory (see Path Resolution above). Resolve both paths
+before proceeding. Both resolved paths must be included in CONDENSE checkpoints.
 
 Capture the verbatim user task description (the text that will be inserted at
 `<insert the user's task description>`) and retain it in session context as
@@ -143,7 +193,7 @@ Capture the verbatim user task description (the text that will be inserted at
 Before including in the report, sanitize: remove any secrets, tokens, API keys,
 or credentials. Replace with `[REDACTED]`.
 
-Write the **already-sanitized** original prompt to `nefario/scratch/{slug}/prompt.md`
+Write the **already-sanitized** original prompt to `$SCRATCH_DIR/{slug}/prompt.md`
 as plain markdown (no YAML frontmatter). This file flows to the report's companion
 directory via the existing `cp -r` at wrap-up, providing a standalone record of the
 original request.
@@ -176,7 +226,7 @@ Task:
     4. For each specialist, write a specific planning question that
        draws on their unique expertise.
     5. Return the meta-plan in the structured format.
-    6. Write your complete meta-plan to `nefario/scratch/{slug}/phase1-metaplan.md`
+    6. Write your complete meta-plan to `$SCRATCH_DIR/{slug}/phase1-metaplan.md`
 ```
 
 Nefario will return a meta-plan listing which specialists to consult
@@ -234,7 +284,7 @@ Task:
     ### Additional Agents Needed
     <any specialists not yet involved who should be, and why>
     (or "None" if the current team is sufficient)
-    6. Write your complete contribution to `nefario/scratch/{slug}/phase2-{your-name}.md`
+    6. Write your complete contribution to `$SCRATCH_DIR/{slug}/phase2-{your-name}.md`
 ```
 
 **After each specialist returns**: Write their full output to the scratch file
@@ -268,7 +318,7 @@ Task:
     ## Specialist Contributions
 
     Read the following scratch files for full specialist contributions:
-    <list each file path: nefario/scratch/{slug}/phase2-{agent}.md>
+    <list each file path: $SCRATCH_DIR/{slug}/phase2-{agent}.md>
 
     ## Key consensus across specialists:
     <paste the inline summaries collected during Phase 2>
@@ -279,11 +329,11 @@ Task:
     3. Incorporate risks and concerns into the plan
     4. Create the final execution plan in structured format
     5. Ensure every task has a complete, self-contained prompt
-    6. Write your complete delegation plan to `nefario/scratch/{slug}/phase3-synthesis.md`
+    6. Write your complete delegation plan to `$SCRATCH_DIR/{slug}/phase3-synthesis.md`
 ```
 
 Nefario will return a structured delegation plan. **After synthesis returns**:
-Write the full execution plan to `nefario/scratch/{slug}/phase3-synthesis.md`
+Write the full execution plan to `$SCRATCH_DIR/{slug}/phase3-synthesis.md`
 (if nefario did not already do so). Record a compact summary (task count, gate
 count, execution order) in session context. **Proceed to Phase 3.5
 (Architecture Review)** before presenting the plan to the user.
@@ -345,7 +395,7 @@ Task:
     Your role: identify gaps, risks, or concerns from your domain.
 
     ## Delegation Plan
-    Read the full plan from: nefario/scratch/{slug}/phase3-synthesis.md
+    Read the full plan from: $SCRATCH_DIR/{slug}/phase3-synthesis.md
 
     ## Your Review Focus
     <domain-specific: security gaps / test coverage / observability gaps / etc.>
@@ -369,7 +419,7 @@ Task:
   present the impasse to the user for decision.
 
 **After all reviews complete**: Write any BLOCK or ADVISE verdicts to
-`nefario/scratch/{slug}/phase3.5-{reviewer}.md`. APPROVE verdicts do not
+`$SCRATCH_DIR/{slug}/phase3.5-{reviewer}.md`. APPROVE verdicts do not
 need scratch files.
 
 ### Compaction Checkpoint
@@ -444,7 +494,7 @@ ADVISORIES:
 Advisory principles:
 - Two-field format (CHANGE, WHY) makes each advisory self-contained
 - Maximum 3 lines per advisory. If more complex, add:
-  "Details: nefario/scratch/{slug}/phase3.5-{reviewer}.md"
+  "Details: $SCRATCH_DIR/{slug}/phase3.5-{reviewer}.md"
 - Maximum 5 advisories explained individually. Beyond 5, group related advisories
 - Beyond 7, the plan needs rework (too many course corrections)
 - If an advisory did NOT change the task (informational only), say:
@@ -467,7 +517,7 @@ REVIEW: N APPROVE, N ADVISE, N BLOCK
 
 **Full plan reference**:
 ```
-FULL PLAN: nefario/scratch/{slug}/phase3-synthesis.md
+FULL PLAN: $SCRATCH_DIR/{slug}/phase3-synthesis.md
 ```
 
 **Line budget guidance**: Target 25-40 lines for the complete gate output
@@ -512,10 +562,17 @@ execution proceeds in batches separated by gate checkpoints.
 
 Before spawning any execution agents, isolate work on a feature branch.
 
+**Git repo check**: If not in a git repo (see Path Resolution), skip branch
+creation entirely. Print: "No git repo detected. Run `git init` if you want
+automatic branching and commits." Proceed directly to Setup.
+
 1. Get current branch: `git branch --show-current`
-2. If already on a non-main feature branch, use it (do not create a nested
-   branch, do not switch to main).
-3. If on `main` or `master`:
+2. Detect default branch:
+   `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'`
+   (fall back to `main`).
+3. If already on a non-default feature branch, use it (do not create a nested
+   branch, do not switch to the default branch).
+4. If on the default branch:
    a. Check working tree: `git status --porcelain`
    b. If dirty, warn: "Working tree has uncommitted changes. Stash or commit
       before proceeding." and STOP.
@@ -651,8 +708,6 @@ A batch contains all tasks that can run before the next gate.
    6. If commit fails, print a warning and continue (do not block execution).
 
    Never use `git add -A` — only stage files from the change ledger.
-   See [docs/commit-workflow.md](../docs/commit-workflow.md) for the
-   full protocol (sensitive file filtering, safety rails, edge cases).
 
    Anti-fatigue guidelines:
    - Budget 3-5 approval gates per plan. If synthesis produces more,
@@ -718,7 +773,7 @@ Task:
     <list files created/modified during Phase 4, from the change ledger>
 
     ## Execution Context
-    Read scratch files for context: nefario/scratch/{slug}/phase3-synthesis.md
+    Read scratch files for context: $SCRATCH_DIR/{slug}/phase3-synthesis.md
 
     ## Your Review Focus
     <code-review-minion: code quality, correctness, bug patterns,
@@ -736,7 +791,7 @@ Task:
       AGENT: <producing-agent>
       FIX: <specific fix>
 
-    Write findings to: nefario/scratch/{slug}/phase5-{your-name}.md
+    Write findings to: $SCRATCH_DIR/{slug}/phase5-{your-name}.md
 ```
 
 **Process verdicts**:
@@ -790,7 +845,7 @@ tests exist AND Phase 4 did not produce tests. Note the skip.
    - Pre-existing failures: document as non-blocking ADVISE.
    - No test infrastructure found: ADVISE with note, not a silent pass.
 
-5. Write output to: `nefario/scratch/{slug}/phase6-test-results.md`
+5. Write output to: `$SCRATCH_DIR/{slug}/phase6-test-results.md`
 
 #### Phase 7: Deployment (Conditional)
 
@@ -799,7 +854,7 @@ not part of the default flow.
 
 1. Run deployment command (e.g., `./install.sh`). Report pass/fail.
 2. If command fails: BLOCK and escalate to user.
-3. Write output to: `nefario/scratch/{slug}/phase7-deployment.md`
+3. Write output to: `$SCRATCH_DIR/{slug}/phase7-deployment.md`
 
 #### Phase 8: Documentation (Conditional)
 
@@ -818,7 +873,7 @@ not part of the default flow.
    | Breaking change | Migration guide | user-docs-minion |
    | Config changed | Config reference | software-docs-minion |
 
-   Write checklist to: `nefario/scratch/{slug}/phase8-checklist.md`
+   Write checklist to: `$SCRATCH_DIR/{slug}/phase8-checklist.md`
 
 2. If checklist is empty, skip entirely.
 
@@ -830,7 +885,7 @@ not part of the default flow.
    the following inputs and instructions. Otherwise skip.
 
    **Inputs to product-marketing-minion**:
-   - The Phase 8 checklist (`nefario/scratch/{slug}/phase8-checklist.md`)
+   - The Phase 8 checklist (`$SCRATCH_DIR/{slug}/phase8-checklist.md`)
    - The execution summary (what changed and why)
    - Current `README.md`
 
@@ -858,7 +913,7 @@ not part of the default flow.
    - Tier classification (1, 2, or 3) with rationale (one sentence)
    - Recommendation per the action column above
 
-   Write output to: `nefario/scratch/{slug}/phase8-marketing-review.md`
+   Write output to: `$SCRATCH_DIR/{slug}/phase8-marketing-review.md`
 
    **Example triage** (reference test case):
    - Change: "Added accessibility-minion as conditional Phase 3.5 reviewer"
@@ -870,7 +925,7 @@ not part of the default flow.
 
 5. Non-blocking by default. Exception: new project requires README before PR.
 
-6. Write output to: `nefario/scratch/{slug}/phase8-software-docs.md`,
+6. Write output to: `$SCRATCH_DIR/{slug}/phase8-software-docs.md`,
    `phase8-user-docs.md`, `phase8-marketing-review.md`
 
 ### Wrap-up
@@ -886,16 +941,16 @@ not part of the default flow.
    The "Skipped:" suffix tracks user-requested skips only. Phases skipped
    by existing conditionals (e.g., "no code files") are not listed.
 
-8. **Auto-commit remaining changes** — silently commit any uncommitted files
-   from the change ledger before generating the report. Print the informational
-   commit line (`Committed N files: ...`).
+8. **Auto-commit remaining changes** — if in a git repo, silently commit any
+   uncommitted files from the change ledger before generating the report. Print
+   the informational commit line (`Committed N files: ...`). Skip if no git repo.
 
 9. **Verify and report** — follow the wrap-up sequence documented in the
    "Report Generation" section below (review deliverables, write report,
    present to user, shutdown teammates, final status).
 
-10. **PR creation** — after the report is committed, if on a feature branch,
-    offer to create a pull request using AskUserQuestion:
+10. **PR creation** — after the report is committed, if in a git repo and on
+    a feature branch, offer to create a pull request using AskUserQuestion:
 
     - `header`: "PR"
     - `question`: "Create PR for nefario/<slug>?"
@@ -921,13 +976,16 @@ not part of the default flow.
     The `--title` comes from the frontmatter `task` field. If the temp file
     is empty or starts with `---`, warn and fall back to the executive summary only.
     If `gh` is unavailable, print the manual push command instead.
-    See [docs/commit-workflow.md](../docs/commit-workflow.md) for details.
 
-11. **Return to main** — after PR creation (or if declined):
+11. **Return to default branch** — after PR creation (or if declined),
+    if in a git repo:
     Remove the orchestrated-session marker:
     `rm -f /tmp/claude-commit-orchestrated-${CLAUDE_SESSION_ID}`
-    Then: `git checkout main && git pull --rebase`. Include branch name in
-    final summary.
+    Detect default branch:
+    `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'`
+    (fall back to `main`). Then: `git checkout <default-branch> && git pull --rebase`.
+    Include branch name in final summary.
+    If not in a git repo, skip this step.
 
 ### Troubleshooting: Orchestrator Not Progressing
 
@@ -999,13 +1057,14 @@ Track data at phase boundaries:
 
 **Fallback for compacted summaries**: If inline summaries or gate decision
 briefs were lost to compaction, read scratch files from
-`nefario/scratch/{slug}/phase2-*.md` and `nefario/scratch/{slug}/phase3.5-*.md`
+`$SCRATCH_DIR/{slug}/phase2-*.md` and `$SCRATCH_DIR/{slug}/phase3.5-*.md`
 at wrap-up to reconstruct agent contribution summaries and gate briefs for
 the report.
 
 ### Report Template
 
-See `docs/history/nefario-reports/TEMPLATE.md` for the complete report format, including YAML frontmatter schema, body structure, file naming convention, and index update instructions.
+The report format is defined inline below in the Wrap-up Sequence section.
+No external template file dependency is required.
 
 ### Incremental Writing
 
@@ -1034,14 +1093,19 @@ skip it, do not defer it, do not stop before it is written.
    The "Skipped:" suffix tracks user-requested skips only. Phases skipped
    by existing conditionals (e.g., "no code files") are not listed.
 4. Auto-commit remaining changes (silent, informational line only)
-5. **Collect working files** — if the scratch directory
-   `nefario/scratch/{slug}/` exists and contains files, copy them to a
-   companion directory alongside the report:
+5. **Collect working files** — if `$SCRATCH_DIR/{slug}/` exists and
+   contains files, copy them to a companion directory alongside the report:
    - Derive the companion directory name from the report filename:
-     `docs/history/nefario-reports/<YYYY-MM-DD>-<HHMMSS>-<slug>/`
+     `<REPORT_DIR>/<YYYY-MM-DD>-<HHMMSS>-<slug>/`
      (report filename without `.md` extension)
+   - **Sanitization before copy**: scan scratch files for common credential
+     patterns: `sk-`, `-----BEGIN.*PRIVATE KEY`, `AKIA`, `ghp_`,
+     `github_pat_`, `token:`, `bearer`, `password:`, `passwd:`,
+     long base64 strings (40+ chars of `[A-Za-z0-9+/=]`).
+     If matches are found, warn the user and request confirmation before
+     copying. Provide option to skip companion directory creation entirely.
    - Create the companion directory: `mkdir -p <companion-dir>`
-   - Copy all files: `cp -r nefario/scratch/{slug}/* <companion-dir>/`
+   - Copy all files: `cp -r $SCRATCH_DIR/{slug}/* <companion-dir>/`
    - Record the list of copied filenames for the report's Working Files section
    - **Security check before committing**: scan copied files for secrets.
      Look for: API keys (`sk-`, `key-`, `AKIA`), tokens (`token:`,
@@ -1051,14 +1115,19 @@ skip it, do not defer it, do not stop before it is written.
      Remove or redact any matches before proceeding.
    - If the scratch directory does not exist or is empty, skip this step.
      The report's Working Files section will say "None".
-6. **Write execution report** to `docs/history/nefario-reports/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`
+   - **Scratch cleanup**: After copying (or skipping), remove the scratch
+     directory: `rm -rf "$SCRATCH_DIR"`. Interrupted orchestrations leave
+     scratch files in temp, cleaned on reboot.
+6. **Write execution report** to `<REPORT_DIR>/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`
    — use the HHMMSS captured in step 2
-   — follow the template at `docs/history/nefario-reports/TEMPLATE.md`
+   — follow the report format defined in this skill (see Data Accumulation above)
    — include a Verification section with Phase 5-8 outcomes
    — include a Working Files section linking to the companion directory
-7. Commit the report and companion directory together (auto-commit, no prompt needed)
-8. Offer PR creation if on a feature branch
-9. Return to main: `git checkout main && git pull --rebase`
+7. Commit the report and companion directory together (auto-commit, no prompt needed; skip if no git repo)
+8. Offer PR creation if on a feature branch (skip if no git repo)
+9. Return to default branch (if git repo): detect with
+   `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'`
+   (fall back to `main`), then `git checkout <default-branch> && git pull --rebase`
 10. Present report path, PR URL, branch name, and Verification summary to user
 11. Send shutdown_request to teammates
 12. TeamDelete
