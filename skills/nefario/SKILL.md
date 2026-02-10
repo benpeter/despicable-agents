@@ -273,6 +273,8 @@ COMPACT: Phase 3 complete. Specialist details are now in the synthesis.
 
 Run: /compact focus="Preserve: current phase (3.5 review next), synthesized execution plan, task list, approval gates, team name, branch name, scratch directory path. Discard: individual specialist contributions from Phase 2."
 
+After compaction, type `continue` to resume at Phase 3.5 (Architecture Review).
+
 Skipping is fine if context is short. Risk: auto-compaction in later phases may lose orchestration state.
 ---
 ```
@@ -354,6 +356,8 @@ After processing all review verdicts, present a compaction prompt:
 COMPACT: Phase 3.5 complete. Review verdicts are folded into the plan.
 
 Run: /compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, task list with dependencies, approval gates, team name, branch name, scratch directory path. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."
+
+After compaction, type `continue` to resume at Phase 4 (Execution).
 
 Skipping is fine if context is short. Risk: auto-compaction during execution may lose task/agent tracking.
 ---
