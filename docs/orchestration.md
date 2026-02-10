@@ -2,108 +2,13 @@
 
 # Orchestration and Delegation
 
-This document covers how to use nefario for multi-agent tasks (Section 1), the architecture of the nine-phase orchestration process (Section 2), the delegation model that routes work to specialists (Section 3), and the approval gate mechanism that keeps the user in control of high-impact decisions (Section 4).
+For the user-facing orchestration guide, see [Using Nefario](using-nefario.md).
+
+This document covers the architecture of the nine-phase orchestration process (Section 1), the delegation model that routes work to specialists (Section 2), the approval gate mechanism that keeps the user in control of high-impact decisions (Section 3), execution reports (Section 4), and commit points in the execution flow (Section 5).
 
 ---
 
-## 1. Using Nefario
-
-Nefario is the orchestrator for complex, multi-domain tasks. When a task spans multiple specialist areas, nefario decomposes it, routes work to the right experts, and coordinates their collaboration.
-
-### When to Use Nefario
-
-Use `/nefario` when your task requires multiple specialists working together. Use individual agents directly for single-domain work.
-
-**Use `/nefario` for:**
-
-- "Build an MCP server with OAuth, tests, and user documentation" -- spans mcp-minion, oauth-minion, test-minion, user-docs-minion
-- "Create a new REST API with security review, observability, and API docs" -- spans api-design-minion, security-minion, observability-minion, software-docs-minion
-- "Add edge caching to our app with monitoring and performance testing" -- spans edge-minion, observability-minion, test-minion
-- "Design and implement a user onboarding flow with UI, docs, and analytics" -- spans ux-strategy-minion, ux-design-minion, frontend-minion, user-docs-minion, observability-minion
-
-**Call specialists directly for:**
-
-- "Fix this CSS layout bug in the header component" -- `@frontend-minion`
-- "Review this API design for REST best practices" -- `@api-design-minion`
-- "Should we adopt the new Agent-to-Agent protocol?" -- `@gru`
-- "Write a troubleshooting guide for this error message" -- `@user-docs-minion`
-- "Debug why this function is leaking memory" -- `@debugger-minion`
-
-**Rule of thumb**: If you can name the single specialist who should handle it, call them directly. If you need to say "we'll need X, Y, and Z working together," use `/nefario`.
-
-### How to Invoke
-
-```
-/nefario <describe your task>
-```
-
-Be specific in your task description. More context leads to better planning.
-
-**Good examples:**
-```
-/nefario Build an MCP server that provides GitHub repository tools with OAuth
-authentication. Include tests and user documentation. Target users are
-developers integrating GitHub into their Claude workflows.
-
-/nefario Create a REST API for user management (CRUD operations) with JWT
-authentication, rate limiting, comprehensive error handling, OpenAPI
-documentation, and observability instrumentation.
-
-/nefario Design and implement a developer onboarding tutorial for our CLI tool.
-The tutorial should walk through installation, basic usage, and common
-workflows. Include interactive examples and troubleshooting tips.
-```
-
-**Less helpful examples:**
-```
-/nefario Build something with MCP
-/nefario Make the API better
-/nefario Fix the docs
-```
-
-### What Happens: The Nine Phases
-
-Nefario uses a structured process that taps into specialist expertise before execution, then verifies quality after execution completes.
-
-**Phase 1 -- Meta-Planning.** Nefario reads your codebase and analyzes the task against its delegation table to figure out which specialists should contribute to planning. You see the list of specialists and what each will be asked. No approval needed -- this is informational.
-
-**Phase 2 -- Specialist Planning.** Each identified specialist is spawned as a subagent and asked for domain-specific planning input. This happens in parallel. Specialists contribute recommendations, proposed tasks, and risk assessments from their area of expertise.
-
-**Phase 3 -- Synthesis.** Nefario takes all specialist input and consolidates it into a single execution plan with specific tasks, owners, dependencies, and complete agent prompts. Conflicts between specialists are resolved here. Cross-cutting concerns (security, testing, documentation, usability, observability) are verified -- if a specialist did not raise them, nefario adds them.
-
-**Phase 3.5 -- Architecture Review.** Cross-cutting reviewers examine the synthesized plan before any code is written. Security and testing reviews are mandatory; others trigger conditionally based on plan scope. Reviewers return APPROVE, ADVISE (non-blocking warnings), or BLOCK (halts execution until resolved). This catches architectural issues that are cheap to fix in a plan and expensive to fix in code.
-
-**Phase 4 -- Execution.** After you approve the plan, the main session creates a team and spawns specialist agents with the prompts from the plan. Independent tasks run in parallel. Tasks with dependencies run in sequence. Approval gates pause execution at high-impact decision points (see Section 4). When all tasks finish, post-execution verification begins.
-
-**Phase 5 -- Code Review (conditional).** Runs when Phase 4 produced or modified code files. Three parallel reviewers -- code-review-minion, lucy, and margo -- examine the code for quality, convention adherence, and over-engineering. BLOCK findings are routed back to the original producing agent for fix (capped at 2 rounds). Runs silently ("dark kitchen" pattern).
-
-**Phase 6 -- Test Execution (conditional).** Runs when tests exist in the project, even if Phase 5 was skipped. Discovers tests from project configuration, then executes in layers: lint/type-check, unit tests, integration/E2E. Failures are routed to the producing agent. Pre-existing failures are non-blocking. Runs silently.
-
-**Phase 7 -- Deployment (conditional).** Only runs when you explicitly request deployment at plan approval time. Runs existing deployment commands (e.g., `./install.sh`). Runs silently.
-
-**Phase 8 -- Documentation (conditional).** Runs when execution outcomes trigger documentation needs (new APIs, architecture changes, user-facing features). software-docs-minion and user-docs-minion work in parallel, with optional product-marketing-minion review for README and user-facing content. Runs silently.
-
-After all applicable post-execution phases complete, results are consolidated and presented to you in the wrap-up summary.
-
-### Tips for Success
-
-**Be specific in your task description.** Include context about target users, required features, and constraints. "Build an MCP server with auth" is vague. "Build an MCP server for GitHub integration with OAuth device flow, targeting developers using Claude Code" gives nefario and the specialists clear direction.
-
-**Review the plan before approving.** The synthesis phase presents a complete execution plan. If something looks wrong or incomplete, ask for modifications before execution begins.
-
-**For simple tasks, skip nefario.** If you know exactly which specialist you need and the scope is clear, call them directly with `@specialist-name`. Orchestration overhead is unnecessary for single-domain work.
-
-**Trust the specialists.** Nefario consults domain experts for planning, which catches issues early. If oauth-minion says "device flow is better than web redirect for CLI tools," that is domain expertise you benefit from.
-
-**Use MODE: PLAN for simpler multi-agent tasks.** The skill supports a simplified mode that skips specialist consultation and has nefario plan directly. This works well when you know which 2-3 agents you need and the handoffs are straightforward.
-
-### Platform Constraint
-
-Custom agents invoked via `claude --agent` do not receive the Task tool from the Claude Code runtime. This means nefario cannot spawn specialist agents directly. The `/nefario` skill works around this by keeping the main session (which has the Task tool) as the executor, while nefario provides the planning intelligence. If the Task tool becomes available to custom agents in a future Claude Code version, nefario automatically switches to direct orchestration.
-
----
-
-## 2. Nine-Phase Orchestration Architecture
+## 1. Nine-Phase Orchestration Architecture
 
 The orchestration system implements a nine-phase process that separates planning intelligence from execution capability, then verifies quality through automated post-execution phases. Nefario provides the planning; the main Claude Code session provides the spawning.
 
@@ -368,7 +273,7 @@ sequenceDiagram
 
 ---
 
-## 3. Delegation Model
+## 2. Delegation Model
 
 The delegation model ensures every piece of work has exactly one primary agent, with clear supporting roles and no overlaps.
 
@@ -417,7 +322,7 @@ The checklist applies in all modes (META-PLAN, SYNTHESIS, PLAN). The default is 
 
 ---
 
-## 4. Approval Gates
+## 3. Approval Gates
 
 Approval gates pause execution to get user input on a deliverable before downstream work proceeds. The mechanism is designed to gate high-impact decisions without creating approval fatigue.
 
@@ -495,7 +400,7 @@ When a plan has multiple gates with dependencies between them:
 
 ---
 
-## 5. Execution Reports
+## 4. Execution Reports
 
 Every `/nefario` orchestration produces a decision log documenting the agents involved, key decisions, and outcomes. Reports serve three use cases: immediate confirmation ("what just happened?"), future decision reference ("why did we choose X six months ago?"), and process comparison ("are gates being overused?").
 
@@ -550,7 +455,7 @@ Report generation is enforced by the nefario SKILL.md wrap-up sequence. The wrap
 
 ---
 
-## 6. Commit Points in Execution Flow
+## 5. Commit Points in Execution Flow
 
 Execution sessions produce file changes that need version control. Commit checkpoints are integrated into the orchestration flow at natural pause points, so committing work does not introduce separate interruptions.
 

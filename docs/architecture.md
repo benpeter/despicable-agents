@@ -2,6 +2,8 @@
 
 despicable-agents is a specialist agent team for Claude Code: 27 agents organized into a four-tier hierarchy. Complex tasks are decomposed and routed to specialists, each with deep expertise in a single domain and strict boundaries that prevent overlap.
 
+New to the project? See [Using Nefario](using-nefario.md) for how to use the orchestrator, or [Agent Catalog](agent-catalog.md) for per-agent reference.
+
 ## Design Philosophy
 
 Four principles shape every agent:
@@ -104,20 +106,7 @@ graph TB
 
 **Tier 3 (Minions)** -- 23 specialists grouped by domain. Each has deep expertise encoded in its system prompt, strict "Does NOT do" boundaries, and clear handoff points.
 
-## Agent Groups
-
-| Group | Agents | Focus |
-|-------|--------|-------|
-| **Boss** | gru | Strategic technology decisions |
-| **Foreman** | nefario | Multi-agent coordination |
-| **Governance** | lucy, margo | Intent alignment, simplicity enforcement |
-| **Protocol & Integration** | mcp-minion, oauth-minion, api-design-minion, api-spec-minion | How systems communicate |
-| **Infrastructure & Data** | iac-minion, edge-minion, data-minion | Where things run, where data lives |
-| **Intelligence** | ai-modeling-minion | AI/LLM integration |
-| **Development & Quality** | frontend-minion, test-minion, debugger-minion, devx-minion, code-review-minion | Building and verifying code |
-| **Security & Observability** | security-minion, observability-minion | Keeping systems safe and visible |
-| **Design & Documentation** | ux-strategy-minion, ux-design-minion, software-docs-minion, user-docs-minion, product-marketing-minion | How things look and are explained |
-| **Web Quality** | accessibility-minion, seo-minion, sitespeed-minion | Accessibility, SEO, performance |
+For per-agent details, see [Agent Catalog](agent-catalog.md).
 
 ## Cross-Cutting Concerns
 
@@ -132,10 +121,19 @@ Most tasks have secondary dimensions beyond the primary domain. Nefario's planni
 
 ## Sub-Documents
 
+### User-Facing
+
 | Document | Covers |
 |----------|--------|
+| [Using Nefario](using-nefario.md) | Orchestration workflow, phases, when to use `/nefario` vs `@agent`, tips for success |
+| [Agent Catalog](agent-catalog.md) | Per-agent capabilities, model tiers, example invocations, boundaries |
+
+### Contributor / Architecture
+
+| Document | Covers |
+|----------|--------|
+| [Orchestration and Delegation](orchestration.md) | Nine-phase architecture, delegation flow, boundary enforcement, escalation paths, approval gates, execution reports, commit points |
 | [Agent Anatomy and Overlay System](agent-anatomy.md) | AGENT.md structure, frontmatter schema, five-section prompt template, RESEARCH.md role, overlay files |
-| [Orchestration and Delegation](orchestration.md) | Nine-phase process (planning through post-execution), delegation flow, boundary enforcement, escalation paths, execution reports, automatic report generation, commit points in execution flow |
 | [Context Management](compaction-strategy.md) | Scratch file pattern for phase outputs, user-prompted compaction at phase boundaries, context window management during orchestration |
 | [Build Pipeline and Versioning](build-pipeline.md) | Research and build phases, version tracking, `/despicable-lab` skill, cross-check verification |
 | [Deployment](deployment.md) | Symlink-based deployment, `install.sh`, hook deployment, development workflow |
