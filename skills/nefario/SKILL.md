@@ -275,19 +275,24 @@ From the delegation plan, determine which cross-cutting agents should review:
   - test-minion
   - ux-strategy-minion
   - software-docs-minion
+  - lucy
+  - margo
 - **Conditional**:
   - observability-minion: 2+ tasks produce runtime components, services, or APIs
   - ux-design-minion: 1+ tasks produce user-facing interfaces
+  - accessibility-minion: 1+ tasks produce web-facing UI
+  - sitespeed-minion: 1+ tasks produce web-facing runtime components
 
 ### Spawn Reviewers
 
-Spawn all identified reviewers in parallel on sonnet:
+Spawn all identified reviewers in parallel. Use opus for lucy and margo
+(governance reviewers requiring deeper reasoning); use sonnet for all others:
 
 ```
 Task:
   subagent_type: <reviewer agent>
   description: "<agent> architecture review"
-  model: sonnet
+  model: opus  # for lucy, margo; sonnet for all other reviewers
   prompt: |
     You are reviewing a delegation plan before execution begins.
     Your role: identify gaps, risks, or concerns from your domain.
