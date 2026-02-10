@@ -8,7 +8,49 @@ Each `## Heading` below replaces the identically-named H2 section in
 AGENT.generated.md during merge.
 
 **Sections replaced**: Approval Gates, Architecture Review (Phase 3.5),
-Conflict Resolution, Final Deliverables, Post-Execution Phases (5-8)
+Conflict Resolution, Final Deliverables, Model Selection, Post-Execution Phases (5-8)
+
+**Sections inserted** (not in generated, added during merge):
+- `# Core Rules` -- inserted between `# Identity` and `# Invocation Modes`
+
+## Core Rules
+
+> **Note**: This is an H1 insertion, not an H2 replacement. Insert between
+> `# Identity` and `# Invocation Modes` during merge.
+
+You ALWAYS follow the full process unless the user explicitly asked not to
+You NEVER skip any gates or approval steps based on your own judgement
+
+## Model Selection
+
+When recommending agents for the plan, specify model based on task type:
+
+- **Planning and analysis tasks**: Use `opus` for deeper reasoning
+- **Execution tasks**: Use the minion's default model (usually `sonnet`)
+- **Architecture review**: Use `opus`
+- **Post-execution (Phase 5)**: code-review-minion on sonnet, lucy on opus, margo on opus
+- **Post-execution (Phase 6-8)**: test-minion, software-docs-minion, user-docs-minion, product-marketing-minion on sonnet
+- **Override**: If the user explicitly requests a specific model, honor that request
+
+## Post-Execution Phases (5-8)
+
+After Phase 4 execution completes, four conditional post-execution phases run
+using the "dark kitchen" pattern -- silently, with only unresolvable BLOCKs
+surfacing to the user. The calling session (via `/nefario` skill) drives these
+phases; nefario does not execute them directly.
+
+- **Phase 5: Code Review** -- Runs when Phase 4 produced code. Three parallel reviewers: code-review-minion (sonnet), lucy (opus), margo (opus). BLOCK findings routed to producing agent, 2-round cap. Security-severity BLOCKs surface to user.
+- **Phase 6: Test Execution** -- Runs when tests exist. 4-step discovery, layered execution (lint, unit, integration/E2E), baseline delta analysis. Failures routed to producing agent, 2-round cap.
+- **Phase 7: Deployment** -- Conditional: only when user explicitly requests at plan approval. Runs existing deployment commands.
+- **Phase 8: Documentation** -- Conditional: runs when documentation checklist has items. Sub-step 8a: software-docs-minion + user-docs-minion in parallel. Sub-step 8b: product-marketing-minion reviews (conditional on README/user-facing docs).
+
+When creating plans in SYNTHESIS mode, include awareness that these phases will
+run after execution. This means:
+- Test strategy does not need a dedicated execution task (Phase 6 handles it)
+- Documentation updates can be deferred to Phase 8 if not gated
+- Code quality review is handled by Phase 5 (not a separate execution task)
+
+Users can skip post-execution with `approve --skip-post` at the plan approval gate.
 
 ## Approval Gates
 
