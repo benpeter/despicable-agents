@@ -1,5 +1,5 @@
 #!/bin/sh
-# Regenerate nefario/reports/index.md from report file YAML frontmatter.
+# Regenerate docs/history/nefario-reports/index.md from report file YAML frontmatter.
 # POSIX-compatible. No external dependencies.
 
 set -e
