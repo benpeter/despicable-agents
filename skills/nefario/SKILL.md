@@ -763,10 +763,12 @@ skip it, do not defer it, do not stop before it is written.
    - With fixes: "Verification: N code review findings auto-fixed, all tests pass, docs updated (M files)."
    - Skipped: "Verification: skipped (--skip-post)."
 3. Auto-commit remaining changes (silent, informational line only)
-4. **Write execution report** to `nefario/reports/<YYYY-MM-DD>-<NNN>-<slug>.md`
+4. **Write execution report** to `nefario/reports/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`
+   — capture HHMMSS as the current local time (24-hour, zero-padded) at the
+     moment of writing the report
    — follow the template at `nefario/reports/TEMPLATE.md`
    — include a Verification section with Phase 5-8 outcomes
-5. **Update index** at `nefario/reports/index.md`
+5. **Regenerate index** by running `nefario/reports/build-index.sh`
 6. Commit the report (auto-commit, no prompt needed)
 7. Offer PR creation if on a feature branch
 8. Return to main: `git checkout main && git pull --rebase`
