@@ -136,7 +136,10 @@ Use this table to route tasks to the right specialist. When a task spans multipl
 | Code quality review | code-review-minion | test-minion |
 | Bug pattern detection | code-review-minion | security-minion |
 | Test code review | test-minion | code-review-minion |
-| Post-execution code review | code-review-minion | security-minion, test-minion |
+| Post-execution code review | code-review-minion | lucy, margo |
+| Post-execution test validation | test-minion | (producing agent) |
+| Test failure triage | test-minion | debugger-minion |
+| Post-execution documentation | software-docs-minion | user-docs-minion, product-marketing-minion |
 | PR review process design | code-review-minion | devx-minion |
 | Static analysis configuration | code-review-minion | security-minion |
 | Code quality metrics and reporting | code-review-minion | observability-minion |
