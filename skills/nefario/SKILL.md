@@ -15,6 +15,11 @@ You are executing the Nefario orchestration workflow. This skill coordinates
 a multi-phase planning process that leverages specialist domain expertise
 before execution.
 
+## Core Rules
+
+You ALWAYS follow the full workflow described above. You NEVER skip any phase based on your own judgement, EVEN if it appears to be only a single-file or simple thing, EVEN if it violates YAGNI or KISS. There are NO exceptions to this, only the user can override this.
+You NEVER skip any gates or approval steps based on your own judgement, EVEN if it appears to be only a single-file or simple thing, EVEN if it violates YAGNI or KISS. There are NO exceptions to this, only the user can override this.
+
 ## Overview
 
 The workflow has nine phases:
