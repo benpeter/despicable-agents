@@ -104,7 +104,13 @@ Table showing which phases ran and which agents participated:
 | Synthesis | nefario |
 | Architecture Review | reviewer1, reviewer2 |
 | Execution | executor1, executor2 |
+| Code Review | code-review-minion, lucy, margo |
+| Test Execution | test-minion |
+| Deployment | (skipped -- not requested) |
+| Documentation | software-docs-minion, user-docs-minion |
 ```
+
+Conditional phases that did not run use the format: `(skipped -- <reason>)` in the Agents column. Common reasons: "not requested", "no code produced", "no tests exist", "no checklist items".
 
 #### Files Created/Modified
 
@@ -132,6 +138,21 @@ Table of gates presented during execution:
 
 If no gates: "None"
 
+#### Verification
+
+Summary of post-execution phase outcomes:
+
+```markdown
+| Phase | Result |
+|-------|--------|
+| Code Review | 0 BLOCK, 2 ADVISE, 3 NIT -- all resolved |
+| Test Execution | 42 pass, 0 fail, 2 skip |
+| Deployment | (skipped -- not requested) |
+| Documentation | 2 files created, 1 modified |
+```
+
+For phases that did not run, use the skipped format: `(skipped -- <reason>)`.
+
 #### Outstanding Items
 
 Markdown checklist of items not completed:
@@ -155,7 +176,11 @@ Table with approximate phase durations (use `~` prefix):
 | Synthesis | ~3m |
 | Architecture Review | ~5m |
 | Execution | ~15m |
-| **Total** | **~33m** |
+| Code Review | ~4m |
+| Test Execution | ~3m |
+| Deployment | (skipped) |
+| Documentation | ~5m |
+| **Total** | **~45m** |
 ```
 
 ## Index File Update

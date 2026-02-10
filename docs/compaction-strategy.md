@@ -2,7 +2,7 @@
 
 # Context Management During Orchestration
 
-Nefario orchestrations accumulate specialist outputs, synthesis results, and review verdicts across five phases. Without intervention, this context growth can exceed session limits or trigger automatic compaction that discards orchestration state (phase position, task list, branch name). This document describes the two-pronged mitigation: **scratch files** externalize full outputs to disk while retaining compact summaries in session, and **user-prompted compaction checkpoints** at phase boundaries reclaim context space when information has been superseded.
+Nefario orchestrations accumulate specialist outputs, synthesis results, and review verdicts across nine phases (five planning/execution phases plus four post-execution phases). Without intervention, this context growth can exceed session limits or trigger automatic compaction that discards orchestration state (phase position, task list, branch name). This document describes the two-pronged mitigation: **scratch files** externalize full outputs to disk while retaining compact summaries in session, and **user-prompted compaction checkpoints** at phase boundaries reclaim context space when information has been superseded.
 
 For the operational implementation, see the [nefario skill](../skills/nefario/SKILL.md). This document covers the design rationale.
 
@@ -124,7 +124,7 @@ The orchestrator does **not** re-prompt at subsequent boundaries. Nagging underm
 
 ## 5. Integration with Orchestration Flow
 
-Scratch file writes and compaction checkpoints map to specific points in the [five-phase orchestration flow](orchestration.md):
+Scratch file writes and compaction checkpoints map to specific points in the [nine-phase orchestration flow](orchestration.md):
 
 ```
 Phase 1: Meta-Plan
@@ -150,6 +150,21 @@ Phase 3.5: Architecture Review
 Phase 4: Execution
   - No compaction checkpoints (too disruptive mid-execution)
   - Scratch files available for recovery if auto-compaction fires
+  >>> OPTIONAL COMPACTION CHECKPOINT (execution outputs superseded by results)
+
+Phase 5: Code Review
+  - Write review findings to scratch files (phase5-{reviewer}.md)
+  - Dark kitchen: only unresolvable BLOCKs surface to session
+
+Phase 6: Test Execution
+  - Write test results to scratch files (phase6-test-results.md)
+  - Dark kitchen: only failures surface to session
+
+Phase 7: Deployment (conditional)
+  - Write deployment log to scratch files (phase7-deployment.md)
+
+Phase 8: Documentation (conditional)
+  - Write documentation checklist and outcomes to scratch files (phase8-docs.md)
 ```
 
 The scratch file convention and compaction checkpoints are defined in the [nefario skill](../skills/nefario/SKILL.md), which is the operational specification. This document provides the design rationale for the choices made there.

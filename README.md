@@ -65,7 +65,7 @@ This symlinks all 27 agents to `~/.claude/agents/` and the `/nefario` skill to `
 
 Four tiers. **Gru** is the strategic brain -- ask it whether to adopt a technology. **Nefario** is the orchestrator -- give it a complex task and it decomposes, delegates, and coordinates across specialists. **Lucy** and **Margo** are governance agents -- Lucy ensures plans align with human intent and repo conventions, Margo enforces simplicity and prevents over-engineering. **Minions** are the 23 domain experts that do the actual work.
 
-When you invoke `/nefario`, it runs a five-phase process: meta-planning (which specialists to consult), specialist planning (parallel domain input), synthesis (unified execution plan with tasks and owners), architecture review (cross-cutting concerns like security and testing), and execution (parallel task dispatch to specialists).
+When you invoke `/nefario`, it runs a nine-phase process: meta-planning (which specialists to consult), specialist planning (parallel domain input), synthesis (unified execution plan with tasks and owners), architecture review (cross-cutting concerns like security and testing), execution (parallel task dispatch to specialists), then post-execution verification -- code review, test execution, optional deployment, and documentation updates.
 
 See [Orchestration](docs/orchestration.md) for the full guide.
 
@@ -73,7 +73,7 @@ See [Orchestration](docs/orchestration.md) for the full guide.
 
 - [Architecture Overview](docs/architecture.md) -- system design, hierarchy, agent groups
 - [Agent Anatomy](docs/agent-anatomy.md) -- file structure, frontmatter, overlay mechanism
-- [Orchestration](docs/orchestration.md) -- five-phase planning, delegation, nefario usage
+- [Orchestration](docs/orchestration.md) -- nine-phase process, delegation, nefario usage
 - [Build Pipeline](docs/build-pipeline.md) -- building agents, versioning, the `/lab` skill
 - [Deployment](docs/deployment.md) -- symlink deployment, `install.sh`
 - [Design Decisions](docs/decisions.md) -- architectural tradeoffs and rationale

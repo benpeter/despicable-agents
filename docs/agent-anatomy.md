@@ -236,6 +236,7 @@ The nefario agent is the first agent to use the overlay mechanism. Its `AGENT.ov
 - **Frontmatter**: Sets `x-plan-version` ahead of the generated value
 - **Approval Gates section**: Adds the full decision brief template, response handling rules (approve/request changes/reject/skip), anti-fatigue mechanisms (gate budget, confidence indicators, calibration checks), cascading gate ordering, and gate-vs-notification distinction
 - **Architecture Review section**: Adds rationale column to reviewer triggering rules, detailed verdict format templates (APPROVE/ADVISE/BLOCK), and an ARCHITECTURE.md generation template
+- **Post-Execution Phases section**: Adds Code Review, Test Execution, Deployment, and Documentation phase details (verdict routing, dark kitchen rules, conditional triggers)
 - **Conflict Resolution section**: Expands a single paragraph into three named patterns (resource contention, goal misalignment, hierarchical authority)
 - **Output Standards section**: Adds a Final Deliverables subsection for presenting completed work
 

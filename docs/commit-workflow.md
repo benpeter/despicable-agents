@@ -72,6 +72,7 @@ sequenceDiagram
 
     Note over Main: Phases 1-3.5 (Planning)
     Note over Main: Phase 4 (Execution)
+    Note over Main: Phases 5-8 (Post-Execution)
 
     loop For each approval gate
         Main->>User: Gate decision brief
@@ -140,15 +141,16 @@ A Stop hook detects uncommitted changes when the agent finishes and presents a c
 
 ### Orchestrated Sessions
 
-Auto-commits are co-located with gate approvals. They happen silently after each gate is approved and once more at wrap-up.
+Auto-commits are co-located with gate approvals. They happen silently after each gate is approved, after post-execution phases complete, and once more at wrap-up.
 
 **Flow:**
 
 1. Approval gate is presented and approved by the user.
 2. Auto-commit happens silently (informational line only).
-3. One auto-commit at wrap-up for remaining changes.
-4. PR creation offered at wrap-up.
-5. Return to main after PR creation (or decline).
+3. Post-execution phases (5-8) may produce additional changes (code review fixes, documentation).
+4. One auto-commit at wrap-up for remaining changes.
+5. PR creation offered at wrap-up.
+6. Return to main after PR creation (or decline).
 
 Auto-commits are co-located with gate approvals because each gate represents a semantic unit of reviewed work.
 

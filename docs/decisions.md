@@ -277,6 +277,45 @@ These decisions were implemented in the nefario v1.4 update.
 
 ---
 
+## Post-Execution Phases (Decisions 22-24)
+
+These decisions were made during the nefario v2.0 update, extending orchestration with post-execution quality verification.
+
+### Decision 22: Post-Execution Phases (Phases 5-8)
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-02-10 |
+| **Choice** | Extend orchestration with four post-execution phases: Phase 5 (Code Review), Phase 6 (Test Execution), Phase 7 (Deployment, conditional), Phase 8 (Documentation, conditional). All follow the "dark kitchen" pattern -- run silently, surface only unresolvable issues. |
+| **Alternatives rejected** | (1) **Fold into wrap-up sub-steps** (margo): Rejected because the user explicitly requested distinct phases. Wrap-up sub-steps provide less structure and no iteration protocol. (2) **Single "Phase 5: Verification"** (margo merge recommendation): Rejected for the same reason -- user specified four phases, not one. (3) **Mandatory phases** (no conditionality): Rejected per margo -- phases should only run when relevant (code exists, tests exist, deployment requested, docs needed). |
+| **Rationale** | Post-execution quality verification catches implementation issues that plan review (Phase 3.5) cannot -- runtime bugs, cross-agent integration mismatches, test failures, documentation gaps. Conditionality and dark kitchen pattern minimize overhead. |
+| **Consequences** | Phase count increases from 5 to 9. SKILL.md grows by ~150 lines. Context window pressure increases (mitigated by scratch files). Nefario spec-version bumped to 2.0. |
+
+### Decision 23: Dark Kitchen Communication Pattern for Post-Execution
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-02-10 |
+| **Choice** | Post-execution phases run silently by default. User sees one line at start ("Verifying...") and consolidated results in wrap-up. Only unresolvable BLOCKs surface to user. |
+| **Alternatives rejected** | (1) **Per-finding visibility** (code-review-minion): Rejected because it creates engagement loss. Users are psychologically "done" after execution; detailed findings feel like bureaucracy. (2) **Fully silent** (no start line): Rejected because total silence after execution creates anxiety -- users need confirmation that verification is happening. |
+| **Rationale** | UX strategy analysis showed post-execution is a "descending arc" -- the exciting work is done. The dark kitchen pattern maintains engagement by treating verification as invisible quality assurance, not another round of review. Findings are still written to scratch files for full traceability. |
+| **Consequences** | Users do not interact with Phases 5-8 unless escalation occurs. Scratch files provide audit trail. Wrap-up summary gains a "Verification" section. |
+
+### Decision 24: Autonomous Fix Resolution in Post-Execution
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-02-10 |
+| **Choice** | BLOCK findings in Phase 5/6 are automatically routed back to the original producing agent for fix. 2-round cap. User only involved if auto-fix fails. Security-severity BLOCKs are an exception: they surface to user before auto-fix. |
+| **Alternatives rejected** | (1) **Manual approval per finding**: Rejected because it exceeds the gate budget (3-5 gates) and pushes complexity back to the user. (2) **No fix iteration** (document and proceed): Rejected because known bugs should not be shipped to the user. |
+| **Rationale** | Consistent with Phase 3.5 BLOCK resolution pattern (2-round cap, then escalate). Producing agents have the context to fix their own code. Code-review-minion and test-minion validate but do not write application code. |
+| **Consequences** | Fix iterations are invisible to the user unless they fail twice or involve security. Producing agents bear the cost of their own rework. 2-round cap prevents infinite loops while allowing substantive fixes. |
+
+---
+
 ## Deferred
 
 - Nefario-gated complexity classification -- revisit after 20+ full-process runs.
