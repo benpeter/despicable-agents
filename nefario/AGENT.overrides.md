@@ -8,7 +8,7 @@ Each `## Heading` below replaces the identically-named H2 section in
 AGENT.generated.md during merge.
 
 **Sections replaced**: Approval Gates, Architecture Review (Phase 3.5),
-Conflict Resolution, Final Deliverables
+Conflict Resolution, Final Deliverables, Post-Execution Phases (5-8)
 
 ## Approval Gates
 
