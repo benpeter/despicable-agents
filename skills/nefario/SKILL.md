@@ -789,23 +789,43 @@ report is not optional — it is as mandatory as the synthesis phase. Do not
 skip it, do not defer it, do not stop before it is written.
 
 1. Review all deliverables
-2. **Verification summary** — consolidate Phase 5-8 outcomes into a single
+2. **Capture timestamp** — record the current local time as HHMMSS
+   (24-hour, zero-padded). This timestamp is used for both the companion
+   directory name and the report filename. Capture it once; reuse it
+   throughout wrap-up.
+3. **Verification summary** — consolidate Phase 5-8 outcomes into a single
    block for the report and user summary. Format:
    - Default: "Verification: all checks passed."
    - With fixes: "Verification: N code review findings auto-fixed, all tests pass, docs updated (M files)."
    - Skipped: "Verification: skipped (--skip-post)."
-3. Auto-commit remaining changes (silent, informational line only)
-4. **Write execution report** to `docs/history/nefario-reports/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`
-   — capture HHMMSS as the current local time (24-hour, zero-padded) at the
-     moment of writing the report
+4. Auto-commit remaining changes (silent, informational line only)
+5. **Collect working files** — if the scratch directory
+   `nefario/scratch/{slug}/` exists and contains files, copy them to a
+   companion directory alongside the report:
+   - Derive the companion directory name from the report filename:
+     `docs/history/nefario-reports/<YYYY-MM-DD>-<HHMMSS>-<slug>/`
+     (report filename without `.md` extension)
+   - Create the companion directory: `mkdir -p <companion-dir>`
+   - Copy all files: `cp -r nefario/scratch/{slug}/* <companion-dir>/`
+   - Record the list of copied filenames for the report's Working Files section
+   - **Security check before committing**: scan copied files for secrets.
+     Look for: API keys (`sk-`, `key-`), tokens (`token:`, `bearer`),
+     passwords (`password:`, `passwd:`), connection strings (`://`
+     with credentials), private keys (`BEGIN.*PRIVATE KEY`).
+     Remove or redact any matches before proceeding.
+   - If the scratch directory does not exist or is empty, skip this step.
+     The report's Working Files section will say "None".
+6. **Write execution report** to `docs/history/nefario-reports/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`
+   — use the HHMMSS captured in step 2
    — follow the template at `docs/history/nefario-reports/TEMPLATE.md`
    — include a Verification section with Phase 5-8 outcomes
-5. **Regenerate index** by running `docs/history/nefario-reports/build-index.sh`
-6. Commit the report (auto-commit, no prompt needed)
-7. Offer PR creation if on a feature branch
-8. Return to main: `git checkout main && git pull --rebase`
-9. Present report path, PR URL, branch name, and Verification summary to user
-10. Send shutdown_request to teammates
-11. TeamDelete
-12. Report final status to user
+   — include a Working Files section linking to the companion directory
+7. **Regenerate index** by running `docs/history/nefario-reports/build-index.sh`
+8. Commit the report and companion directory together (auto-commit, no prompt needed)
+9. Offer PR creation if on a feature branch
+10. Return to main: `git checkout main && git pull --rebase`
+11. Present report path, PR URL, branch name, and Verification summary to user
+12. Send shutdown_request to teammates
+13. TeamDelete
+14. Report final status to user
 
