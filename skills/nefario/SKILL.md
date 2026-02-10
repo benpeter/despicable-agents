@@ -763,11 +763,14 @@ not part of the default flow.
 
 7. **Review all deliverables** and consolidate verification results.
 
-   Build the **Verification summary** from Phase 5-8 outcomes:
-   - Default (all passed): "Verification: all checks passed."
-   - With auto-fixes: "Verification: 2 code review findings auto-fixed, all tests pass, docs updated (3 files)."
-   - Partial skip: "Verification: code review passed, tests skipped (none found), docs updated (2 files)."
-   Priority: lead with pass/fail, then exceptions, then per-phase detail.
+   Build the **Verification summary** from Phase 5-8 outcomes. List what
+   ran with outcomes; omit phases that didn't run. Format examples:
+   - All ran, all passed: "Verification: all checks passed."
+   - All ran, with fixes: "Verification: 2 code review findings auto-fixed, all tests pass, docs updated (3 files)."
+   - Partial skip: "Verification: code review passed, tests passed. Skipped: docs."
+   - All skipped: "Verification: skipped (--skip-post)."
+   The "Skipped:" suffix tracks user-requested skips only. Phases skipped
+   by existing conditionals (e.g., "no code files") are not listed.
 
 8. **Auto-commit remaining changes** — silently commit any uncommitted files
    from the change ledger before generating the report. Print the informational
