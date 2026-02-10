@@ -508,11 +508,11 @@ modified and what changed.
 **BLOCK** -- Halts execution. The reviewer has identified an issue serious enough
 that proceeding would create significant risk or rework. Resolution process:
 
-1. Block verdict with rationale is sent to nefario
-2. Nefario revises the plan to address the blocking concern
-3. The revised plan is re-submitted to the blocking reviewer only
-4. Cap at 2 total revision rounds
-5. If still blocked after 2 iterations, escalate to user with both positions
+1. All BLOCK verdicts from the current round are collected together
+2. Nefario revises the plan to address all blocking concerns in a single revision
+3. The revised plan is re-submitted to ALL reviewers who participated in the initial review
+4. Cap at 2 total revision rounds (global, not per-reviewer)
+5. If any reviewer still blocks after round 2, escalate to user with all positions
 
 Block format:
 ```
