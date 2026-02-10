@@ -39,6 +39,7 @@ The workflow has nine phases:
 The orchestrator MUST minimize chat output. The user should only see:
 
 **SHOW** (these are the only things printed to chat):
+- Execution plan approval gate (task list, advisories, risks, review summary)
 - Approval gate decision briefs (full structured format)
 - PR creation prompt
 - Final summary (report path, PR URL, branch name)
@@ -60,7 +61,8 @@ The orchestrator MUST minimize chat output. The user should only see:
 **CONDENSE** to a single line:
 - Meta-plan result: "Planning: consulting devx-minion, security-minion, ..."
 - Review verdicts (if no BLOCK): "Review: 4 APPROVE, 0 BLOCK"
-- ADVISE notes: fold silently into relevant task prompts, do not print
+- ADVISE notes: fold into relevant task prompts. Show at execution plan
+  approval gate using advisory delta format. Do not print during mid-execution.
 - Post-execution start: "Verifying: code review, tests, documentation..."
 - Post-execution result: fold into wrap-up ("Verification: all checks passed." or "Verification: code review passed, tests passed. Skipped: docs." or "Verification: skipped (--skip-post).")
 
@@ -388,6 +390,118 @@ Skipping is fine if context is short. Risk: auto-compaction during execution may
 
 Same response handling: if user runs `/compact`, wait for "continue". If
 anything else, print the continuation message and proceed. Do NOT re-prompt.
+
+## Execution Plan Approval Gate
+
+After Phase 3.5 completes, present the execution plan to the user for approval
+using progressive disclosure optimized for anomaly detection. The user knows
+what they asked for; they need to spot surprises and decide whether to proceed.
+
+### Plan Presentation Format
+
+**Instant orientation** (one line + stats):
+```
+EXECUTION PLAN: <1-sentence goal summary>
+Tasks: N | Gates: N | Advisories incorporated: N
+```
+
+**Task list** (compact numbered list, 2-4 lines per task):
+```
+TASKS:
+  1. <Task title>                                    [agent-name, model]
+     Produces: <deliverable summary>
+     Depends on: none
+
+  2. <Task title>                                    [agent-name, model]
+     Produces: <deliverable summary>
+     Depends on: Task 1
+     GATE: Approval required before Tasks 3, 4 proceed
+```
+Format rules:
+- Title on line 1, metadata indented below
+- Agent name and model in brackets (secondary info, right side)
+- Dependencies by task number
+- GATE marker inline with the blocking task
+- One blank line between tasks, no blank lines within a task
+
+**Advisories** (presented as a SEPARATE block after task list):
+
+Advisories are plan changes (delta model), not reviewer opinions. Attribute to
+the DOMAIN (testing, security, usability, etc.), not the agent name.
+
+Format:
+```
+ADVISORIES:
+  [<domain>] Task N: <task title>
+    CHANGE: <one sentence describing the concrete change to the task>
+    WHY: <one sentence explaining the concern that motivated it>
+
+  [<domain>] Task M: <task title>
+    CHANGE: ...
+    WHY: ...
+```
+
+Advisory principles:
+- Two-field format (CHANGE, WHY) makes each advisory self-contained
+- Maximum 3 lines per advisory. If more complex, add:
+  "Details: nefario/scratch/{slug}/phase3.5-{reviewer}.md"
+- Maximum 5 advisories explained individually. Beyond 5, group related advisories
+- Beyond 7, the plan needs rework (too many course corrections)
+- If an advisory did NOT change the task (informational only), say:
+  "[domain]: <note>. No task changes."
+
+**Risks and conflict resolutions** (if any exist):
+```
+RISKS:
+  - <risk description> — Mitigation: <what the plan does about it>
+
+CONFLICTS RESOLVED:
+  - <what was contested>: Resolved in favor of <approach> because <rationale>
+```
+Omit if no conflicts. If no risks, note: "No risks identified by specialists."
+
+**Review summary** (one line):
+```
+REVIEW: N APPROVE, N ADVISE, N BLOCK
+```
+
+**Full plan reference**:
+```
+FULL PLAN: nefario/scratch/{slug}/phase3-synthesis.md
+```
+
+**Line budget guidance**: Target 25-40 lines for the complete gate output
+(orientation + task list + advisories + risks + review summary + plan reference).
+This is soft guidance, not a hard ceiling — clarity wins over brevity.
+
+### What NOT to Show
+
+Do not include at the plan approval gate:
+- Full agent prompts (implementation detail — in the scratch file)
+- Model selection (opus vs sonnet)
+- Mode selection (bypassPermissions, plan, default)
+- File ownership assignments
+- Cross-cutting coverage checklist (internal bookkeeping)
+- Architecture review agent list (the results matter, not who reviewed)
+
+### Decision Options
+
+Present the plan for approval using AskUserQuestion:
+- `header`: "Plan"
+- `question`: "<the orientation line goal summary>"
+- `options` (3, `multiSelect: false`):
+  1. label: "Approve", description: "Accept plan and begin execution." (recommended)
+  2. label: "Request changes", description: "Revise the plan before execution."
+  3. label: "Reject", description: "Abandon this plan entirely."
+
+### Request Changes Workflow
+
+When the user selects "Request changes":
+1. The user provides feedback on what to change
+2. Nefario revises the affected parts of the plan (may re-run synthesis for changed tasks)
+3. The gate is presented again with the updated plan
+
+After "Approve", proceed to Phase 4 execution.
 
 ## Phase 4: Execution
 
