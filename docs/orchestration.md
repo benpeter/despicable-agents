@@ -133,6 +133,8 @@ The main session spawns nefario with `MODE: SYNTHESIS`, passing all specialist c
 
 The synthesis output includes self-contained prompts for each execution agent -- complete with scope, constraints, deliverables, file paths, and explicit "do NOT do" boundaries.
 
+After synthesis, phase outputs are written to scratch files and a compaction checkpoint is presented to the user. See [Context Management](compaction-strategy.md) for the scratch file pattern and compaction protocol.
+
 ### Phase 3.5: Architecture Review
 
 Before execution begins, cross-cutting specialists review the synthesized plan. This phase catches architectural issues that are cheap to fix in a plan and expensive to fix in code.
@@ -163,6 +165,8 @@ Each reviewer returns exactly one of three verdicts:
 - **BLOCK** -- Halts execution. The blocking concern is sent to nefario for plan revision. The blocking reviewer re-reviews the revised plan. If still blocked after 2 iteration rounds, the disagreement escalates to the user with both positions presented.
 
 After all reviews complete and any BLOCK verdicts are resolved, the plan (with advisories attached) is presented to the user for approval.
+
+A second compaction checkpoint follows Phase 3.5, allowing the user to reclaim context space before execution begins.
 
 ### Phase 4: Execution
 
@@ -203,6 +207,8 @@ sequenceDiagram
     Main->>Nef: Task(MODE: SYNTHESIS, all contributions)
     Nef->>Main: Synthesized execution plan
 
+    Note over Main: Scratch files written + compaction checkpoint
+
     Note over Main,Rev: Phase 3.5: Architecture Review
     Main->>Main: Determine reviewers (trigger rules)
     par Parallel Review
@@ -219,6 +225,8 @@ sequenceDiagram
             Main->>User: Escalate disagreement
         end
     end
+
+    Note over Main: Scratch files written + compaction checkpoint
 
     Main->>User: Present plan + advisories + gate map
 

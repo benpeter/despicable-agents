@@ -262,7 +262,23 @@ These decisions were implemented in the nefario v1.4 update.
 
 ---
 
+## Context Management (Decision 21)
+
+### Decision 21: Scratch Files and Compaction Checkpoints for Context Overflow Prevention
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-02-10 |
+| **Choice** | Two-pronged approach: (1) Write full phase outputs to scratch files (`nefario/scratch/{slug}/`) and retain only compact inline summaries (~80-120 tokens each) in session context. (2) Prompt the user to run `/compact` at two phase boundaries (after Phase 3 synthesis, after Phase 3.5 review) with pre-built focus parameters and non-nagging decline behavior. |
+| **Alternatives rejected** | (1) **Programmatic compaction**: Not possible -- Claude Code does not expose compaction as an API to agents or skills. (2) **Reliance on auto-compaction**: Proven unreliable for preserving structured orchestration state (task lists, phase tracking, agent assignments). Auto-compaction optimizes for conversation continuity, not orchestration recovery. (3) **Compaction between Phase 4 execution batches**: Rejected as too disruptive -- mid-execution compaction risks losing agent tracking and task state during the most critical phase. (4) **Full inline outputs with no scratch files**: The previous approach. Rejected because 6 specialists x 500-2000 tokens accumulates 3000-12000 tokens from Phase 2 alone, pushing context limits by Phase 4. |
+| **Rationale** | Context overflow during orchestration causes either truncated agent responses or auto-compaction that loses orchestration state. The scratch file pattern reduces Phase 2 context from ~6000-12000 tokens to ~600 tokens (10x reduction). Phase 3 synthesis and Phase 3.5 reviews read from files (tool calls are invisible to the main session's context window). Compaction checkpoints at information supersession boundaries (where earlier phase data is consumed by the next phase) allow safe context reclamation. The two checkpoints are capped to avoid prompt fatigue. |
+| **Consequences** | Session-specific scratch directories under `nefario/scratch/` (gitignored). Two user-facing compaction prompts per orchestration. SKILL.md grows by ~100 lines (scratch convention, compaction protocol). Phase 3 synthesis agent reads from files instead of receiving inline content. Design rationale: [compaction-strategy.md](compaction-strategy.md). |
+
+---
+
 ## Deferred
 
 - Nefario-gated complexity classification -- revisit after 20+ full-process runs.
 - git-minion specialist agent (Decision 19) -- revisit when concrete demand for branching strategy, PR workflow, or commit hook maintenance emerges.
+- Automatic context usage monitoring -- revisit if Claude Code exposes context metrics to agents.
