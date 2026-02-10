@@ -685,7 +685,7 @@ not part of the default flow.
     temp file to avoid shell expansion issues:
     ```sh
     body_file=$(mktemp)
-    sed '1{/^---$/!q;};1,/^---$/d' "$report_file" > "$body_file"
+    tail -n +2 "$report_file" | sed '1,/^---$/d' > "$body_file"
     gh pr create --title "$pr_title" --body-file "$body_file"
     rm -f "$body_file"
     ```

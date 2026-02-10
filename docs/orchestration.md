@@ -543,7 +543,7 @@ Report generation is enforced by the nefario SKILL.md wrap-up sequence. The wrap
 - Review the conversation for error messages from the Write tool
 
 **Reports generated multiple times:**
-- This indicates the infinite loop protection failed. Check the `stop_hook_active` flag logic in the script.
+- Report generation is governed by the SKILL.md wrap-up sequence, which runs once per orchestration. If duplicates appear, check whether the session was interrupted and restarted mid-wrap-up.
 - File an issue if this occurs consistently.
 
 ---
