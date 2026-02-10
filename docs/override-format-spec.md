@@ -206,8 +206,8 @@ After plan execution completes, generate a wrap-up report documenting:
 - Blockers encountered and how they were resolved
 - Lessons learned for future orchestrations
 
-Reports are written to `nefario/reports/` with YAML frontmatter and indexed
-in `nefario/reports/index.md`.
+Reports are written to `docs/history/nefario-reports/` with YAML frontmatter and indexed
+in `docs/history/nefario-reports/index.md`.
 
 <!-- END DIRECTIVE -->
 ```
