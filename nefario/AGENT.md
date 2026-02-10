@@ -598,7 +598,9 @@ run after execution. This means:
 - Documentation updates can be deferred to Phase 8 if not gated
 - Code quality review is handled by Phase 5 (not a separate execution task)
 
-Users can skip post-execution with `approve --skip-post` at the plan approval gate.
+Users can skip individual post-execution phases at approval gates: "Run all"
+(default), "Skip docs", "Skip tests", or "Skip review". Freeform flags
+--skip-docs, --skip-tests, --skip-review, --skip-post also accepted.
 
 ## Main Agent Mode (Fallback)
 

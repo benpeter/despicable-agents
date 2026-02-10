@@ -64,7 +64,7 @@ The orchestrator MUST minimize chat output. The user should only see:
 - ADVISE notes: fold into relevant task prompts. Show at execution plan
   approval gate using advisory delta format. Do not print during mid-execution.
 - Post-execution start: "Verifying: code review, tests, documentation..."
-- Post-execution result: fold into wrap-up ("Verification: all checks passed" or "Verification: 2 findings auto-fixed, all tests pass, docs updated")
+- Post-execution result: fold into wrap-up ("Verification: all checks passed." or "Verification: code review passed, tests passed. Skipped: docs." or "Verification: skipped (--skip-post).")
 
 Heartbeat: for phases lasting more than 60 seconds with no output, print a
 single status line (e.g., "Waiting for 3 agents...") to confirm progress.
@@ -607,12 +607,24 @@ A batch contains all tasks that can run before the next gate.
    - **"Approve"**: Present a FOLLOW-UP AskUserQuestion for post-execution options:
      - `header`: "Post-exec"
      - `question`: "Post-execution phases for this task?"
-     - `options` (2, `multiSelect: false`):
+     - `options` (4, `multiSelect: false`):
        1. label: "Run all", description: "Code review + tests + docs after execution completes." (recommended)
-       2. label: "Skip post-execution", description: "Skip Phases 5, 6, 8. Commit and continue."
-     Then auto-commit changes (see below) and continue to next batch.
+       2. label: "Skip docs", description: "Skip documentation updates (Phase 8)."
+       3. label: "Skip tests", description: "Skip test execution (Phase 6)."
+       4. label: "Skip review", description: "Skip code review (Phase 5)."
+     Options are ordered by ascending risk (docs = lowest, review = highest).
      If "Run all": run post-execution phases (5-8) after execution completes.
-     If "Skip post-execution": skip Phases 5, 6, 8. Phase 7 is already opt-in.
+     If "Skip docs/tests/review": skip the selected phase, run the rest.
+     Then auto-commit changes (see below) and continue to next batch.
+     The user may also type a freeform response instead of selecting an option,
+     using flags to skip multiple phases (e.g., "--skip-docs --skip-tests",
+     or "--skip-post" to skip all). Interpret natural language skip intent as
+     equivalent to the corresponding flags. Flag reference:
+     - `--skip-docs` = skip Phase 8
+     - `--skip-tests` = skip Phase 6
+     - `--skip-review` = skip Phase 5
+     - `--skip-post` = skip Phases 5, 6, 8 (all post-execution)
+     Flags can be combined: `--skip-docs --skip-tests` skips both.
    - **"Request changes"**: Follow up with a brief conversational message asking
      "What changes are needed?" (keep it minimal). Send feedback to agent.
      Cap at 2 revision rounds.
@@ -665,9 +677,24 @@ These phases follow the **dark kitchen** pattern: they run silently. The
 user sees one CONDENSE line at the start and one consolidated result in
 the wrap-up summary.
 
-Print: `Verifying: code review, tests, documentation...`
+Determine which post-execution phases to run based on the user's follow-up
+response (structured selection or freeform text flags):
+- Phase 5 (Code Review): Skip if user selected "Skip review" or typed
+  --skip-review or --skip-post. Also skip if Phase 4 produced no code
+  files (existing conditional, unchanged).
+- Phase 6 (Test Execution): Skip if user selected "Skip tests" or typed
+  --skip-tests or --skip-post. Also skip if no tests exist (existing
+  conditional, unchanged).
+- Phase 8 (Documentation): Skip if user selected "Skip docs" or typed
+  --skip-docs or --skip-post. Also skip if checklist has no items
+  (existing conditional, unchanged).
 
-If the user said `approve --skip-post`, skip to Wrap-up.
+Print a CONDENSE status line listing only the phases that will actually run:
+- No skips: `Verifying: code review, tests, documentation...`
+- Skip docs: `Verifying: code review, tests...`
+- Skip review + tests: `Verifying: documentation...`
+- All skipped (by user or by existing conditionals): skip the status line
+  entirely and proceed directly to Wrap-up.
 
 **Optional compaction**: If context pressure is high after Phase 4,
 consider a compaction checkpoint here. Not mandatory -- it breaks the
@@ -850,11 +877,14 @@ not part of the default flow.
 
 7. **Review all deliverables** and consolidate verification results.
 
-   Build the **Verification summary** from Phase 5-8 outcomes:
-   - Default (all passed): "Verification: all checks passed."
-   - With auto-fixes: "Verification: 2 code review findings auto-fixed, all tests pass, docs updated (3 files)."
-   - Partial skip: "Verification: code review passed, tests skipped (none found), docs updated (2 files)."
-   Priority: lead with pass/fail, then exceptions, then per-phase detail.
+   Build the **Verification summary** from Phase 5-8 outcomes. List what
+   ran with outcomes; omit phases that didn't run. Format examples:
+   - All ran, all passed: "Verification: all checks passed."
+   - All ran, with fixes: "Verification: 2 code review findings auto-fixed, all tests pass, docs updated (3 files)."
+   - Partial skip: "Verification: code review passed, tests passed. Skipped: docs."
+   - All skipped: "Verification: skipped (--skip-post)."
+   The "Skipped:" suffix tracks user-requested skips only. Phases skipped
+   by existing conditionals (e.g., "no code files") are not listed.
 
 8. **Auto-commit remaining changes** — silently commit any uncommitted files
    from the change ledger before generating the report. Print the informational
@@ -995,10 +1025,14 @@ skip it, do not defer it, do not stop before it is written.
    directory name and the report filename. Capture it once; reuse it
    throughout wrap-up.
 3. **Verification summary** — consolidate Phase 5-8 outcomes into a single
-   block for the report and user summary. Format:
-   - Default: "Verification: all checks passed."
-   - With fixes: "Verification: N code review findings auto-fixed, all tests pass, docs updated (M files)."
-   - Skipped: "Verification: skipped (--skip-post)."
+   block for the report and user summary. List what ran with outcomes;
+   omit phases that didn't run. Format examples:
+   - All ran, all passed: "Verification: all checks passed."
+   - All ran, with fixes: "Verification: N code review findings auto-fixed, all tests pass, docs updated (M files)."
+   - Partial skip: "Verification: code review passed, tests passed. Skipped: docs."
+   - All skipped: "Verification: skipped (--skip-post)."
+   The "Skipped:" suffix tracks user-requested skips only. Phases skipped
+   by existing conditionals (e.g., "no code files") are not listed.
 4. Auto-commit remaining changes (silent, informational line only)
 5. **Collect working files** — if the scratch directory
    `nefario/scratch/{slug}/` exists and contains files, copy them to a

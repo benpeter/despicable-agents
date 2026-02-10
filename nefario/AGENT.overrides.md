@@ -50,7 +50,9 @@ run after execution. This means:
 - Documentation updates can be deferred to Phase 8 if not gated
 - Code quality review is handled by Phase 5 (not a separate execution task)
 
-Users can skip post-execution with `approve --skip-post` at the plan approval gate.
+Users can skip individual post-execution phases at approval gates: "Run all"
+(default), "Skip docs", "Skip tests", or "Skip review". Freeform flags
+--skip-docs, --skip-tests, --skip-review, --skip-post also accepted.
 
 ## Approval Gates
 
@@ -198,14 +200,20 @@ Each reviewer returns exactly one verdict:
 **APPROVE** -- No concerns. The plan adequately addresses this reviewer's domain.
 
 **ADVISE** -- Non-blocking warnings. Advisories are appended to the relevant
-task prompts before execution and presented to the user alongside the plan.
-They do not block execution. Format:
+task prompts before execution and presented to the user at the execution plan
+approval gate. They do not block execution. Format:
 ```
 VERDICT: ADVISE
 WARNINGS:
 - [domain]: <description of concern>
+  TASK: <task number affected, e.g., "Task 3">
+  CHANGE: <what specifically changed in the task prompt or deliverables>
   RECOMMENDATION: <suggested change>
 ```
+
+The TASK and CHANGE fields enable the calling session to populate the execution
+plan approval gate with structured advisory data, showing which tasks were
+modified and what changed.
 
 **BLOCK** -- Halts execution. The reviewer has identified an issue serious enough
 that proceeding would create significant risk or rework. Resolution process:
