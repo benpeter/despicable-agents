@@ -516,7 +516,7 @@ The `docs/history/nefario-reports/` directory is created automatically on first 
 Reports follow an inverted pyramid: most important information first, progressive detail last. A reader can stop at any section and still have a useful understanding of the orchestration outcome.
 
 - **Summary**: 2-3 sentences covering what happened and why it matters. Enough for a PR reviewer to decide whether to read further.
-- **Task**: The verbatim user request (inline blockquote for short prompts, collapsible for long ones). Secrets and credentials are redacted before inclusion.
+- **Original Prompt**: The verbatim user request (inline blockquote for short prompts, collapsible for long ones). Secrets and credentials are redacted before inclusion. Also written as a standalone `prompt.md` file in the report's companion directory for traceability.
 - **Decisions**: Structured entries for each key choice. Non-gate decisions include rationale and rejected alternatives. Gate decision briefs additionally include outcome and confidence fields. Conflict resolutions between specialists are documented here if any occurred.
 - **Agent Contributions**: Collapsible section grouped into Planning (specialist input with adopted recommendations and flagged risks) and Architecture Review (verdicts with proportional detail -- one line for APPROVE, 2-3 lines for ADVISE, 3-4 lines for BLOCK with resolution).
 - **Execution**: Files changed table (path, action, description) and approval gates table (title, agent, confidence, outcome, rounds) with enriched briefs for each gate.

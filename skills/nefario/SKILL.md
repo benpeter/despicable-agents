@@ -137,9 +137,14 @@ alphanumeric and hyphens only). Create the scratch directory:
 
 Capture the verbatim user task description (the text that will be inserted at
 `<insert the user's task description>`) and retain it in session context as
-`original-prompt`. This is the text that appears in the report's Task section.
+`original-prompt`. This is the text that appears in the report's Original Prompt section.
 Before including in the report, sanitize: remove any secrets, tokens, API keys,
 or credentials. Replace with `[REDACTED]`.
+
+Write the **already-sanitized** original prompt to `nefario/scratch/{slug}/prompt.md`
+as plain markdown (no YAML frontmatter). This file flows to the report's companion
+directory via the existing `cp -r` at wrap-up, providing a standalone record of the
+original request.
 
 Spawn nefario as a planning subagent to analyze the task and determine
 which specialists should be consulted for planning.
@@ -720,6 +725,12 @@ not part of the default flow.
     ```sh
     body_file=$(mktemp)
     tail -n +2 "$report_file" | sed '1,/^---$/d' > "$body_file"
+    # Secret scan on PR body
+    if grep -qEi 'sk-|key-|ghp_|github_pat_|AKIA|token:|bearer|password:|passwd:|BEGIN.*PRIVATE KEY' "$body_file"; then
+      echo "WARNING: PR body may contain secrets. Review $body_file before proceeding."
+      rm -f "$body_file"
+      exit 1
+    fi
     gh pr create --title "$pr_title" --body-file "$body_file"
     rm -f "$body_file"
     ```
@@ -845,9 +856,10 @@ skip it, do not defer it, do not stop before it is written.
    - Copy all files: `cp -r nefario/scratch/{slug}/* <companion-dir>/`
    - Record the list of copied filenames for the report's Working Files section
    - **Security check before committing**: scan copied files for secrets.
-     Look for: API keys (`sk-`, `key-`), tokens (`token:`, `bearer`),
-     passwords (`password:`, `passwd:`), connection strings (`://`
-     with credentials), private keys (`BEGIN.*PRIVATE KEY`).
+     Look for: API keys (`sk-`, `key-`, `AKIA`), tokens (`token:`,
+     `bearer`, `ghp_`, `github_pat_`), passwords (`password:`, `passwd:`),
+     connection strings (`://` with credentials), private keys
+     (`BEGIN.*PRIVATE KEY`).
      Remove or redact any matches before proceeding.
    - If the scratch directory does not exist or is empty, skip this step.
      The report's Working Files section will say "None".
