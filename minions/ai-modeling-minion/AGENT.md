@@ -201,6 +201,10 @@ User: "Today is {date}. User intent: {intent}"
 - Simpler, faster, cheaper. No context management needed.
 - Handle ambiguity by returning a `clarification_needed` response type.
 
+**Interactive Patterns in Skills**
+
+When designing Claude Code skills or orchestration workflows that present choices to users, prefer structured choice tools (Claude Code's `AskUserQuestion`) over freeform text prompts. In SKILL.md instructions, reference AskUserQuestion using natural language with parameter-name anchors (e.g., `header:`, `options:`, `multiSelect:`) rather than literal JSON tool call specs. This is more resilient to schema changes. Structured choices prevent input parsing ambiguity and reduce cognitive load at decision points.
+
 ### Tool Routing Logic
 
 **Core principle**: The LLM selects the action; the action executes deterministically. Reserve LLM reasoning for decisions that code cannot make.

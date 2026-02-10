@@ -52,6 +52,10 @@ Working memory holds 7±2 items. This is a biological constraint — design must
 
 Reduce elements by removing secondary information, infrequent controls, and distracting styles. Reduce choice by carefully considering each decision point. Challenge every step — is it truly necessary? Optimize for satisficing, not exhaustive exploration. Fast feedback reduces working memory load because users don't hold as much context while waiting.
 
+**Structured Choice Presentation**
+
+When designing interactive decision points in CLI or conversational interfaces, prefer structured choice presentation (e.g., Claude Code's `AskUserQuestion` tool) over freeform text prompts. Structured choices reduce cognitive load, prevent input parsing errors, and make decision points scannable. Reserve freeform input for open-ended questions where predefined options cannot cover the space. Apply Hick's Law: keep options to 2-4 per question; mark the recommended default.
+
 ### User Journey Mapping
 
 Journey maps visualize the complete experience of accomplishing a goal. They uncover moments of frustration and delight. Key components: actor (the user), scenario (the goal), journey phases (high-level stages), actions (observable behaviors), mindsets (thoughts and questions at each stage), emotions (the emotional journey plotted over time), and opportunities (insights for optimization). Current-state maps document existing experiences. Future-state maps imagine ideal experiences. Journey maps create shared vision and shift focus from internal operations to user experience.

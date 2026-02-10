@@ -405,6 +405,10 @@ Before spawning any execution agents, isolate work on a feature branch.
    e. Create feature branch: `git checkout -b nefario/<slug>` (reuse the slug
       generated in Phase 1).
 
+After branch resolution (whether creating a new branch or using an existing one),
+create the orchestrated-session marker to suppress commit hook noise:
+`touch /tmp/claude-commit-orchestrated-${CLAUDE_SESSION_ID}`
+
 ### Setup
 
 1. **Create a team** using TeamCreate with the team name from the plan.
@@ -451,7 +455,9 @@ A batch contains all tasks that can run before the next gate.
      task status. Trust the task status over idle notifications.
 
 5. **At approval gates**: When a gated task completes, present its
-   deliverable using the structured decision brief:
+   deliverable using the structured decision brief.
+
+   First, print the decision brief as normal conversation output:
 
    ```
    APPROVAL GATE: <Task title>
@@ -467,22 +473,38 @@ A batch contains all tasks that can run before the next gate.
    IMPACT: <what approving/rejecting means for the project>
    DELIVERABLE: <file path(s) to review>
    Confidence: HIGH | MEDIUM | LOW
-   Post-execution: code review + tests + docs (skip with "approve --skip-post")
-
-   Reply: approve / request changes / reject / skip
    ```
 
+   Then present the decision using AskUserQuestion:
+   - `header`: "Gate"
+   - `question`: the DECISION line from the brief
+   - `options` (4, `multiSelect: false`):
+     1. label: "Approve", description: "Accept and continue execution." (recommended)
+     2. label: "Request changes", description: "Send feedback for revision (max 2 rounds)."
+     3. label: "Reject", description: "Drop this task and its dependents from the plan."
+     4. label: "Skip", description: "Defer; re-presented before wrap-up."
+
    Response handling:
-   - **approve**: Auto-commit changes (see below), then continue to next
-     batch. After execution, run post-execution phases (5-8).
-   - **approve --skip-post**: Auto-commit, then skip Phases 5, 6, 8.
-     Phase 7 is already opt-in and unaffected.
-   - **request changes**: Send feedback to the agent for revision.
-     Cap at 2 revision rounds. After 2 rounds, ask the user for more
-     detailed direction.
-   - **reject**: Confirm with the user -- show which dependent tasks will
-     also be dropped. Then remove from plan and continue.
-   - **skip**: Defer the gate. Continue with non-blocked tasks.
+   - **"Approve"**: Present a FOLLOW-UP AskUserQuestion for post-execution options:
+     - `header`: "Post-exec"
+     - `question`: "Post-execution phases for this task?"
+     - `options` (2, `multiSelect: false`):
+       1. label: "Run all", description: "Code review + tests + docs after execution completes." (recommended)
+       2. label: "Skip post-execution", description: "Skip Phases 5, 6, 8. Commit and continue."
+     Then auto-commit changes (see below) and continue to next batch.
+     If "Run all": run post-execution phases (5-8) after execution completes.
+     If "Skip post-execution": skip Phases 5, 6, 8. Phase 7 is already opt-in.
+   - **"Request changes"**: Follow up with a brief conversational message asking
+     "What changes are needed?" (keep it minimal). Send feedback to agent.
+     Cap at 2 revision rounds.
+   - **"Reject"**: Present a SECONDARY AskUserQuestion for confirmation:
+     - `header`: "Confirm"
+     - `question`: "Reject <task>? This will also drop: <list dependents>"
+     - `options` (2, `multiSelect: false`):
+       1. label: "Confirm reject", description: "Remove task and dependents."
+       2. label: "Cancel", description: "Go back to the gate decision."
+     If confirmed, remove from plan and continue. If canceled, return to gate.
+   - **"Skip"**: Defer the gate. Continue with non-blocked tasks.
      Re-present skipped gates before the wrap-up phase.
 
    **Auto-commit after gate approval**: After a gate is approved, silently:
@@ -508,9 +530,12 @@ A batch contains all tasks that can run before the next gate.
      against rubber-stamping.
    - Set confidence based on: number of viable alternatives (more = lower),
      reversibility (harder = lower), downstream dependents (more = lower).
-   - Calibration check: After 5 consecutive approvals without changes, present:
-     "You have approved the last 5 gates without changes. Are the gates
-     well-calibrated, or should future plans gate fewer decisions?"
+   - Calibration check: After 5 consecutive approvals without changes, present using AskUserQuestion:
+     - `header`: "Calibrate"
+     - `question`: "5 consecutive approvals without changes. Gates well-calibrated?"
+     - `options` (2, `multiSelect: false`):
+       1. label: "Gates are fine", description: "Continue with current gating level."
+       2. label: "Fewer gates next time", description: "Note for future plans: consolidate more aggressively."
 
 6. Repeat steps 3-5 for each batch until all tasks are complete.
 
@@ -574,15 +599,22 @@ Task:
   specific findings. Re-review changed files only. Cap at 2 rounds.
 - Security-severity BLOCKs (injection, auth bypass, secret exposure, crypto):
   surface to user before auto-fix (SHOW: max 5-line escalation brief).
-- After 2 rounds unresolved: escalate to user with structured brief:
+- After 2 rounds unresolved: escalate to user. Print the structured brief:
   ```
   VERIFICATION ISSUE: <title>
   Phase: Code Review | Agent: <reviewer>
   Finding: <one-sentence description>
   Producing agent: <who wrote the code> | File: <path>
   Auto-fix attempts: 2 (unsuccessful)
-  Options: fix manually / accept as-is / skip remaining verification
   ```
+
+  Then present the decision using AskUserQuestion:
+  - `header`: "Issue"
+  - `question`: the one-sentence finding description from the brief
+  - `options` (3, `multiSelect: false`):
+    1. label: "Accept as-is", description: "Proceed with current code. Log finding for later." (recommended)
+    2. label: "Fix manually", description: "Pause orchestration. You fix the code, then resume."
+    3. label: "Skip verification", description: "Skip all remaining code review and test checks."
 
 #### Phase 6: Test Execution
 
@@ -674,13 +706,15 @@ not part of the default flow.
    update index, present to user, shutdown teammates, final status).
 
 10. **PR creation** — after the report is committed, if on a feature branch,
-    offer to create a pull request:
+    offer to create a pull request using AskUserQuestion:
 
-    ```
-    Create PR for nefario/<slug>? (Y/n)
-    ```
+    - `header`: "PR"
+    - `question`: "Create PR for nefario/<slug>?"
+    - `options` (2, `multiSelect: false`):
+      1. label: "Create PR", description: "Push branch and open pull request on GitHub." (recommended)
+      2. label: "Skip PR", description: "Keep branch local. Push later."
 
-    If approved: `git push -u origin <branch>` then create the PR.
+    If "Create PR" is selected: `git push -u origin <branch>` then create the PR.
     Use the report body as the PR description. Write the stripped body to a
     temp file to avoid shell expansion issues:
     ```sh
@@ -695,7 +729,9 @@ not part of the default flow.
     See [docs/commit-workflow.md](../docs/commit-workflow.md) for details.
 
 11. **Return to main** — after PR creation (or if declined):
-    `git checkout main && git pull --rebase`. Include branch name in
+    Remove the orchestrated-session marker:
+    `rm -f /tmp/claude-commit-orchestrated-${CLAUDE_SESSION_ID}`
+    Then: `git checkout main && git pull --rebase`. Include branch name in
     final summary.
 
 ### Troubleshooting: Orchestrator Not Progressing

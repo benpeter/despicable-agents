@@ -136,6 +136,12 @@ main() {
         exit 0
     fi
 
+    # --- Orchestrated session? Exit silently ---
+    local orchestrated_marker="/tmp/claude-commit-orchestrated-${session_id}"
+    if [[ -f "$orchestrated_marker" ]]; then
+        exit 0
+    fi
+
     # --- Sensitive patterns file must be readable (fail-closed) ---
     if [[ ! -r "$SENSITIVE_PATTERNS_FILE" ]]; then
         cat >&2 <<'EOF'
