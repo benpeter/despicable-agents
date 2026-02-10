@@ -51,14 +51,28 @@ install_agents() {
   if [[ -f "${SCRIPT_DIR}/gru/AGENT.md" ]]; then
     ln -sf "${SCRIPT_DIR}/gru/AGENT.md" "${AGENTS_DIR}/gru.md"
     print_msg "$COLOR_GREEN" "  ✓ gru.md"
-    ((installed_count++))
+    installed_count=$((installed_count + 1))
   fi
 
   # Install nefario
   if [[ -f "${SCRIPT_DIR}/nefario/AGENT.md" ]]; then
     ln -sf "${SCRIPT_DIR}/nefario/AGENT.md" "${AGENTS_DIR}/nefario.md"
     print_msg "$COLOR_GREEN" "  ✓ nefario.md"
-    ((installed_count++))
+    installed_count=$((installed_count + 1))
+  fi
+
+  # Install lucy
+  if [[ -f "${SCRIPT_DIR}/lucy/AGENT.md" ]]; then
+    ln -sf "${SCRIPT_DIR}/lucy/AGENT.md" "${AGENTS_DIR}/lucy.md"
+    print_msg "$COLOR_GREEN" "  ✓ lucy.md"
+    installed_count=$((installed_count + 1))
+  fi
+
+  # Install margo
+  if [[ -f "${SCRIPT_DIR}/margo/AGENT.md" ]]; then
+    ln -sf "${SCRIPT_DIR}/margo/AGENT.md" "${AGENTS_DIR}/margo.md"
+    print_msg "$COLOR_GREEN" "  ✓ margo.md"
+    installed_count=$((installed_count + 1))
   fi
 
   # Install all minions
@@ -69,7 +83,7 @@ install_agents() {
       minion_name=$(basename "$(dirname "$agent_file")")
       ln -sf "$agent_file" "${AGENTS_DIR}/${minion_name}.md"
       print_msg "$COLOR_GREEN" "  ✓ ${minion_name}.md"
-      ((installed_count++))
+      installed_count=$((installed_count + 1))
     fi
   done
 
@@ -77,7 +91,7 @@ install_agents() {
   if [[ -d "${SCRIPT_DIR}/skills/nefario" ]]; then
     ln -sf "${SCRIPT_DIR}/skills/nefario" "${SKILLS_DIR}/nefario"
     print_msg "$COLOR_GREEN" "  ✓ nefario skill"
-    ((installed_count++))
+    installed_count=$((installed_count + 1))
   fi
 
   print_msg "$COLOR_GREEN" "\nInstalled ${installed_count} agents and skills successfully."
@@ -97,7 +111,7 @@ uninstall_agents() {
     if [[ "$target" == "${SCRIPT_DIR}/gru/AGENT.md" ]]; then
       rm "${AGENTS_DIR}/gru.md"
       print_msg "$COLOR_YELLOW" "  ✗ gru.md"
-      ((removed_count++))
+      removed_count=$((removed_count + 1))
     fi
   fi
 
@@ -108,7 +122,29 @@ uninstall_agents() {
     if [[ "$target" == "${SCRIPT_DIR}/nefario/AGENT.md" ]]; then
       rm "${AGENTS_DIR}/nefario.md"
       print_msg "$COLOR_YELLOW" "  ✗ nefario.md"
-      ((removed_count++))
+      removed_count=$((removed_count + 1))
+    fi
+  fi
+
+  # Remove lucy
+  if [[ -L "${AGENTS_DIR}/lucy.md" ]]; then
+    local target
+    target=$(readlink "${AGENTS_DIR}/lucy.md")
+    if [[ "$target" == "${SCRIPT_DIR}/lucy/AGENT.md" ]]; then
+      rm "${AGENTS_DIR}/lucy.md"
+      print_msg "$COLOR_YELLOW" "  ✗ lucy.md"
+      removed_count=$((removed_count + 1))
+    fi
+  fi
+
+  # Remove margo
+  if [[ -L "${AGENTS_DIR}/margo.md" ]]; then
+    local target
+    target=$(readlink "${AGENTS_DIR}/margo.md")
+    if [[ "$target" == "${SCRIPT_DIR}/margo/AGENT.md" ]]; then
+      rm "${AGENTS_DIR}/margo.md"
+      print_msg "$COLOR_YELLOW" "  ✗ margo.md"
+      removed_count=$((removed_count + 1))
     fi
   fi
 
@@ -126,7 +162,7 @@ uninstall_agents() {
         if [[ "$target" == "$agent_file" ]]; then
           rm "$symlink"
           print_msg "$COLOR_YELLOW" "  ✗ ${minion_name}.md"
-          ((removed_count++))
+          removed_count=$((removed_count + 1))
         fi
       fi
     fi
@@ -139,7 +175,7 @@ uninstall_agents() {
     if [[ "$target" == "${SCRIPT_DIR}/skills/nefario" ]]; then
       rm "${SKILLS_DIR}/nefario"
       print_msg "$COLOR_YELLOW" "  ✗ nefario skill"
-      ((removed_count++))
+      removed_count=$((removed_count + 1))
     fi
   fi
 

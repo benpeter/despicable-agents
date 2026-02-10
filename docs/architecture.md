@@ -1,6 +1,6 @@
 # Architecture Overview
 
-despicable-agents is a specialist agent team for Claude Code: 19 domain-expert agents organized into a three-tier hierarchy. Complex tasks are decomposed and routed to specialists, each with deep expertise in a single domain and strict boundaries that prevent overlap.
+despicable-agents is a specialist agent team for Claude Code: 27 agents organized into a four-tier hierarchy. Complex tasks are decomposed and routed to specialists, each with deep expertise in a single domain and strict boundaries that prevent overlap.
 
 ## Design Philosophy
 
@@ -18,7 +18,7 @@ C4Context
     title System Context - despicable-agents Team
 
     Person(user, "Developer", "Requests tasks via Claude Code")
-    System(agents, "despicable-agents", "19 specialist agents organized hierarchically")
+    System(agents, "despicable-agents", "27 specialist agents organized hierarchically")
 
     System_Ext(claudecode, "Claude Code", "AI coding assistant platform")
     System_Ext(internet, "Internet", "Research sources, documentation, APIs")
@@ -44,11 +44,17 @@ graph TB
         nefario[nefario<br/>Task Orchestrator]
     end
 
+    subgraph Governance["Tier 2b -- Governance"]
+        lucy[lucy<br/>Intent Alignment]
+        margo[margo<br/>Simplicity Enforcement]
+    end
+
     subgraph Minions["Tier 3 -- The Minions (Execution)"]
         subgraph Protocol["Protocol & Integration"]
             mcp[mcp-minion]
             oauth[oauth-minion]
             api[api-design-minion]
+            apispec[api-spec-minion]
         end
         subgraph Infrastructure["Infrastructure & Data"]
             iac[iac-minion]
@@ -63,6 +69,7 @@ graph TB
             test[test-minion]
             debugger[debugger-minion]
             devx[devx-minion]
+            codereview[code-review-minion]
         end
         subgraph Security["Security & Observability"]
             security[security-minion]
@@ -73,11 +80,19 @@ graph TB
             uxdes[ux-design-minion]
             softdocs[software-docs-minion]
             userdocs[user-docs-minion]
+            prodmktg[product-marketing-minion]
+        end
+        subgraph WebQuality["Web Quality"]
+            a11y[accessibility-minion]
+            seo[seo-minion]
+            sitespeed[sitespeed-minion]
         end
     end
 
     gru -.->|Technology decisions| nefario
     nefario -->|Delegates tasks| Minions
+    nefario -.->|Reviews| Governance
+    Governance -.->|Verdicts| nefario
     Minions -.->|Escalates strategic questions| gru
 ```
 
@@ -85,7 +100,9 @@ graph TB
 
 **Tier 2 (Foreman)** -- `nefario` decomposes tasks, routes work via the delegation table, coordinates handoffs, and synthesizes results. Runs a five-phase planning process (meta-plan, specialist consultation, synthesis, architecture review, execution).
 
-**Tier 3 (Minions)** -- 17 specialists grouped by domain. Each has deep expertise encoded in its system prompt, strict "Does NOT do" boundaries, and clear handoff points.
+**Governance** -- `lucy` (intent alignment, repo convention enforcement) and `margo` (simplicity enforcement, YAGNI/KISS guardianship) review every plan during Phase 3.5 Architecture Review. They ensure plans stay aligned with human intent and avoid unnecessary complexity.
+
+**Tier 3 (Minions)** -- 23 specialists grouped by domain. Each has deep expertise encoded in its system prompt, strict "Does NOT do" boundaries, and clear handoff points.
 
 ## Agent Groups
 
@@ -93,12 +110,14 @@ graph TB
 |-------|--------|-------|
 | **Boss** | gru | Strategic technology decisions |
 | **Foreman** | nefario | Multi-agent coordination |
-| **Protocol & Integration** | mcp-minion, oauth-minion, api-design-minion | How systems communicate |
+| **Governance** | lucy, margo | Intent alignment, simplicity enforcement |
+| **Protocol & Integration** | mcp-minion, oauth-minion, api-design-minion, api-spec-minion | How systems communicate |
 | **Infrastructure & Data** | iac-minion, edge-minion, data-minion | Where things run, where data lives |
 | **Intelligence** | ai-modeling-minion | AI/LLM integration |
-| **Development & Quality** | frontend-minion, test-minion, debugger-minion, devx-minion | Building and verifying code |
+| **Development & Quality** | frontend-minion, test-minion, debugger-minion, devx-minion, code-review-minion | Building and verifying code |
 | **Security & Observability** | security-minion, observability-minion | Keeping systems safe and visible |
-| **Design & Documentation** | ux-strategy-minion, ux-design-minion, software-docs-minion, user-docs-minion | How things look and are explained |
+| **Design & Documentation** | ux-strategy-minion, ux-design-minion, software-docs-minion, user-docs-minion, product-marketing-minion | How things look and are explained |
+| **Web Quality** | accessibility-minion, seo-minion, sitespeed-minion | Accessibility, SEO, performance |
 
 ## Cross-Cutting Concerns
 
@@ -107,9 +126,9 @@ Most tasks have secondary dimensions beyond the primary domain. Nefario's planni
 1. **Testing** (test-minion) -- code, config, or infrastructure changes need test strategy
 2. **Security** (security-minion) -- attack surface, auth, user input, secrets, dependencies
 3. **Usability -- Strategy** (ux-strategy-minion) -- journey coherence, cognitive load, simplification
-4. **Usability -- Design** (ux-design-minion) -- accessibility, visual hierarchy, interaction patterns (when UI is involved)
+4. **Usability -- Design** (ux-design-minion, accessibility-minion) -- visual hierarchy, interaction patterns, WCAG compliance (when UI is involved)
 5. **Documentation** (software-docs-minion / user-docs-minion) -- architecture/API changes and user-facing features
-6. **Observability** (observability-minion) -- logging, metrics, tracing for production services
+6. **Observability** (observability-minion, sitespeed-minion) -- logging, metrics, tracing for production services; Core Web Vitals for web components
 
 ## Sub-Documents
 

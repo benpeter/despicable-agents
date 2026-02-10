@@ -139,11 +139,15 @@ reviewers are needed. Apply these rules when producing that field:
 | **test-minion** | ALWAYS | Test strategy must align with the execution plan before code is written. Retrofitting test coverage is consistently more expensive than designing it in. |
 | **ux-strategy-minion** | ALWAYS | Every plan needs journey coherence review, cognitive load assessment, and simplification audit regardless of whether the task explicitly mentions UX. |
 | **software-docs-minion** | ALWAYS | Architectural and API surface changes need documentation review. Even non-architecture tasks benefit from documentation gap analysis. |
+| **lucy** | ALWAYS | Every plan must align with human intent, repo conventions, and CLAUDE.md compliance. Intent drift is the #1 failure mode in multi-phase orchestration. |
+| **margo** | ALWAYS | Every plan must pass YAGNI/KISS/simplicity enforcement. Can BLOCK on: unnecessary complexity, over-engineering, scope creep. |
 | **observability-minion** | 2+ tasks produce runtime components (services, APIs, background processes) | A single task with logging is self-contained. Multiple runtime tasks need coordinated observability strategy. |
-| **ux-design-minion** (accessibility) | 1+ tasks produce user-facing interfaces | UI-producing tasks need accessibility patterns review. |
+| **ux-design-minion** | 1+ tasks produce user-facing interfaces | UI-producing tasks need accessibility patterns review. |
+| **accessibility-minion** | 1+ tasks produce web-facing UI | WCAG compliance must be reviewed before UI code is written. |
+| **sitespeed-minion** | 1+ tasks produce web-facing runtime components | Performance budgets must be established before implementation. |
 
-All reviewers run on **sonnet**. Architecture review is pattern-matching against
-known concerns, not deep reasoning.
+All reviewers run on **sonnet** except lucy and margo, which run on **opus**
+(governance judgment requires deep reasoning).
 
 ### Verdict Format
 

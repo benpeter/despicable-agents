@@ -107,7 +107,7 @@ React Spectrum implements a unique split-component architecture that separates c
 - Example: `useButton`, `useFocusRing`, `useTextField`
 
 **Layer 3: React Spectrum (Design Implementation)**
-- Adobe's Spectrum design language in React components
+- Spectrum design language in React components
 - Composed from React Aria hooks and React Stately state management
 - Visual design, styling, and theme application
 - Example: `<Button>`, `<TextField>`, `<ComboBox>`
@@ -134,10 +134,8 @@ The separation enables teams to:
 All layers provide full TypeScript definitions with precise prop types and state interfaces.
 
 **Sources:**
-- [Introduction to React Spectrum](https://developer.adobe.com/app-builder/docs/guides/app_builder_guides/architecture_overview/introduction-to-react-spectrum)
-- [React Spectrum Architecture](https://react-spectrum.adobe.com/architecture.html)
 - [React Spectrum GitHub](https://github.com/adobe/react-spectrum)
-- [Introducing React Spectrum](https://react-spectrum.adobe.com/blog/introducing-react-spectrum.html)
+- [React Spectrum Architecture](https://github.com/adobe/react-spectrum)
 
 ---
 

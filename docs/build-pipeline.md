@@ -6,7 +6,7 @@ The build pipeline transforms the canonical specification (`the-plan.md`) into d
 
 ## Pipeline Overview
 
-`the-plan.md` is the single source of truth for all 19 agents. It defines each agent's domain, remit, boundaries, model, and research focus areas. No agent file is hand-authored from scratch -- every `AGENT.md` traces back to a spec entry in `the-plan.md` plus domain research.
+`the-plan.md` is the single source of truth for all 27 agents. It defines each agent's domain, remit, boundaries, model, and research focus areas. No agent file is hand-authored from scratch -- every `AGENT.md` traces back to a spec entry in `the-plan.md` plus domain research.
 
 The pipeline has two phases:
 
@@ -16,7 +16,7 @@ flowchart TB
         plan[the-plan.md<br/>Canonical Spec]
     end
 
-    subgraph Phase1["Phase 1: Parallel Research & Build (19 pipelines)"]
+    subgraph Phase1["Phase 1: Parallel Research & Build (27 pipelines)"]
         direction TB
 
         subgraph Pipeline["Per-Agent Pipeline"]
@@ -26,7 +26,8 @@ flowchart TB
 
         p1[Pipeline 1<br/>gru]
         p2[Pipeline 2<br/>nefario]
-        p3[Pipeline 3-19<br/>minions]
+        p3[Pipeline 3-4<br/>lucy, margo]
+        p4[Pipeline 5-27<br/>minions]
     end
 
     subgraph Phase2["Phase 2: Cross-Check (sequential)"]
@@ -49,7 +50,7 @@ flowchart TB
 
 ## Phase 1: Research and Build (Parallel)
 
-All 19 agents are built in parallel. Each agent runs a two-step sequential pipeline.
+All 27 agents are built in parallel. Each agent runs a two-step sequential pipeline.
 
 ### Step 1: Research (model: sonnet)
 
@@ -98,7 +99,7 @@ After the build step produces `AGENT.generated.md`, a merge step produces the de
 
 ## Phase 2: Cross-Check (Sequential)
 
-After all 19 pipelines complete and merge steps finish, the cross-check verifies consistency across the full agent team:
+After all 27 pipelines complete and merge steps finish, the cross-check verifies consistency across the full agent team:
 
 - **Boundary consistency**: Each piece of work has exactly one primary agent.
 - **Handoff clarity**: "Does NOT do" sections create clean delegation points between neighboring agents.
@@ -154,7 +155,7 @@ The `/lab` skill supports three invocation modes:
 |---------|----------|
 | `/lab --check` | Check all agents for version divergence and overlay drift. Reports a table of agent name, current version, spec version, and status. Runs `./validate-overlays.sh --summary` to detect drift. Does not rebuild. |
 | `/lab <agent-name> ...` | Regenerate the named agents, even if already up-to-date. Accepts one or more agent names. For agents with overrides, writes `AGENT.generated.md` and reports "Manual merge required". |
-| `/lab --all` | Force-rebuild all 19 agents regardless of version status. |
+| `/lab --all` | Force-rebuild all 27 agents regardless of version status. |
 
 ### Typical Workflow
 

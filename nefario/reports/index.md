@@ -4,6 +4,7 @@ Reports from nefario orchestration runs, newest first.
 
 | Date | Seq | Task | Outcome | Agents |
 |------|-----|------|---------|--------|
+| 2026-02-10 | 002 | [add-eight-new-agents](2026-02-10-002-add-eight-new-agents.md) | completed | 11 |
 | 2026-02-10 | 001 | [git-workflow-auto-commit](2026-02-10-001-git-workflow-auto-commit.md) | completed | 3 |
 | 2026-02-09 | 005 | [git-workflow-integration](2026-02-09-005-git-workflow-integration.md) | partial | 8 |
 | 2026-02-09 | 004 | [stop-hook-report-automation](2026-02-09-004-stop-hook-report-automation.md) | completed | 7 |

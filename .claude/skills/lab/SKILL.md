@@ -21,12 +21,12 @@ Arguments: `[agent-name ...] | --check | --all`
   rebuild unless asked.
 - **Agent names** (e.g., `mcp-minion security-minion`): Regenerate only the
   named agents, even if they are already up-to-date.
-- **`--all`**: Force-rebuild all 19 agents regardless of version.
+- **`--all`**: Force-rebuild all 27 agents regardless of version.
 
 ## Version Check
 
 ```
-For each agent directory in gru/, nefario/, minions/*/:
+For each agent directory in gru/, nefario/, lucy/, margo/, minions/*/:
   - Read AGENT.md frontmatter -> x-plan-version
   - Read the-plan.md spec -> spec-version (default "1.0" if not yet annotated)
   - If x-plan-version < spec-version or AGENT.md doesn't exist:
@@ -63,6 +63,8 @@ nefario: 10 issues
 |------------|---------------|----------------|
 | gru | the-plan.md -> "The Boss" | `gru/AGENT.md` |
 | nefario | the-plan.md -> "The Foreman" | `nefario/AGENT.md` |
+| lucy | the-plan.md -> "Governance: Lucy" | `lucy/AGENT.md` |
+| margo | the-plan.md -> "Governance: Margo" | `margo/AGENT.md` |
 | *-minion | the-plan.md -> "Minions: *" | `minions/<name>/AGENT.md` |
 
 ## Regeneration Process

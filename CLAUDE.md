@@ -1,7 +1,7 @@
 # despicable-agents
 
-Specialist agent team for Claude Code. 19 agents organized as Gru (boss),
-Nefario (orchestrator), and 17 domain-specialist minions.
+Specialist agent team for Claude Code. 27 agents organized as Gru (boss),
+Nefario (orchestrator), Lucy and Margo (governance), and 23 domain-specialist minions.
 
 ## Structure
 
@@ -11,7 +11,9 @@ Nefario (orchestrator), and 17 domain-specialist minions.
 - `/lab` -- project-local skill to check and rebuild agents (`.claude/skills/lab/`)
 - `gru/` -- AI visionary / technology radar
 - `nefario/` -- task orchestrator (planning only, does not write code)
-- `minions/*/` -- domain specialists (17 agents across 6 groups)
+- `lucy/` -- governance (consistency, intent alignment)
+- `margo/` -- governance (simplicity, YAGNI/KISS)
+- `minions/*/` -- domain specialists (23 agents across 7 groups)
 
 Each agent directory contains:
 - `AGENT.md` -- deployable agent file (YAML frontmatter + system prompt)
