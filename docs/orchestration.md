@@ -196,7 +196,7 @@ At wrap-up, any skipped gates are re-presented. A final report summarizes delive
 
 Phases 5-8 run between execution completion and wrap-up using the **dark kitchen** pattern: they execute silently, writing all findings to scratch files. The user sees a single status line when verification starts and a consolidated summary in the wrap-up report. Only unresolvable BLOCKs (after 2 fix iterations) surface to the user.
 
-At plan approval, the user can opt out of post-execution phases with `approve --skip-post`, which skips Phases 5, 6, and 8 (Phase 7 is already opt-in).
+At each approval gate, after selecting "Approve", a follow-up prompt offers the option to skip post-execution phases (Phases 5, 6, and 8). Phase 7 is already opt-in.
 
 ### Phase 5: Code Review
 
@@ -298,7 +298,7 @@ sequenceDiagram
     Main->>User: Present plan + advisories + gate map
 
     Note over User,Main: Plan Approval Gate
-    User->>Main: Approve / request changes / reject
+    User->>Main: Approve / request changes / reject (structured prompt)
 
     Note over Main,Exec: Phase 4: Execution (batch-gated)
     Main->>Main: Topological sort, identify batches
@@ -310,9 +310,9 @@ sequenceDiagram
         end
 
         alt Batch boundary is an approval gate
-            Main->>User: Decision brief (3-layer)
-            User->>Main: approve / request changes / reject / skip
-            alt request changes
+            Main->>User: Decision brief + structured prompt
+            User->>Main: Approve / Request changes / Reject / Skip
+            alt Request changes
                 Main->>Exec: Revise (max 2 iterations)
                 Exec->>Main: Revised deliverable
             end
@@ -459,15 +459,17 @@ IMPACT: <consequences of approving vs. rejecting>
 DELIVERABLE: <file path>
 Confidence: HIGH | MEDIUM | LOW
 
-Reply: approve / request changes / reject / skip
+Decision points use Claude Code's `AskUserQuestion` tool for structured selection.
 ```
 
 ### Response Handling
 
-- **approve** -- Gate clears. Downstream tasks are unblocked.
-- **request changes** -- The producing agent revises. Capped at 2 revision iterations. If still unsatisfied, the current state is presented with a summary of what was requested, changed, and unresolved. The user then decides to approve as-is, reject, or take over manually.
-- **reject** -- Before executing the rejection, downstream impact is presented: "Rejecting this will also drop Task X, Task Y which depend on it. Confirm?" After confirmation, the rejected task and all dependents are removed from the plan.
-- **skip** -- Gate deferred. Execution continues with non-dependent tasks. Skipped gates are re-presented at wrap-up. If skipped gates still block downstream tasks at wrap-up, those tasks remain incomplete and are flagged in the final report.
+Gates present four options via structured prompt:
+
+- **Approve** -- Gate clears. A follow-up prompt offers "Run all" (post-execution phases) or "Skip post-execution". Downstream tasks are unblocked.
+- **Request changes** -- A follow-up message asks what changes are needed. The producing agent revises. Capped at 2 revision iterations. If still unsatisfied, the current state is presented with a summary of what was requested, changed, and unresolved. The user then decides to approve as-is, reject, or take over manually.
+- **Reject** -- A confirmation prompt shows downstream impact: "Rejecting this will also drop Task X, Task Y which depend on it." After confirmation, the rejected task and all dependents are removed from the plan.
+- **Skip** -- Gate deferred. Execution continues with non-dependent tasks. Skipped gates are re-presented at wrap-up. If skipped gates still block downstream tasks at wrap-up, those tasks remain incomplete and are flagged in the final report.
 
 ### Anti-Fatigue Rules
 
@@ -479,7 +481,7 @@ Approval fatigue is the primary threat to this mechanism. A fatigued user rubber
 
 **Rejected alternatives mandatory.** Every gate's Layer 2 rationale must include at least one rejected alternative. This is the primary anti-rubber-stamping measure: it forces the user to consider whether the chosen approach is genuinely better than the alternatives.
 
-**Calibration check.** After 5 consecutive approvals without any "request changes" or "reject" response, nefario presents a calibration prompt asking whether the gates are well-calibrated or should be reduced. The response is recorded in nefario's memory to tune future plans.
+**Calibration check.** After 5 consecutive approvals without any "request changes" or "reject" response, nefario presents a calibration prompt via structured choice (neither option marked as recommended, forcing a conscious decision). The response is recorded in nefario's memory to tune future plans.
 
 ### Cascading Gates
 
