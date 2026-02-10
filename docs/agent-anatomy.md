@@ -65,7 +65,7 @@ The research backing file contains comprehensive domain research organized by to
 
 ### Problem
 
-The `/lab` build pipeline generates `AGENT.md` from `the-plan.md` + `RESEARCH.md`. This generation is one-directional: any hand-tuned customization in `AGENT.md` is lost on the next rebuild.
+The `/despicable-lab` build pipeline generates `AGENT.md` from `the-plan.md` + `RESEARCH.md`. This generation is one-directional: any hand-tuned customization in `AGENT.md` is lost on the next rebuild.
 
 Without a preservation mechanism, maintainers face a forced choice:
 
@@ -81,14 +81,14 @@ Agents that need customization use three files in their directory:
 
 ```
 nefario/
-  AGENT.generated.md    # output of /lab (never hand-edited)
+  AGENT.generated.md    # output of /despicable-lab (never hand-edited)
   AGENT.overrides.md    # hand-tuned customizations (optional, human-edited)
   AGENT.md              # merged result (deployed, never hand-edited directly)
   RESEARCH.md
 ```
 
-- **AGENT.generated.md** -- Pure output of the `/lab` pipeline. Always regenerated from `the-plan.md` + `RESEARCH.md`. Never hand-edited.
-- **AGENT.overrides.md** -- Optional file containing hand-tuned customizations. Only exists for agents that need fine-tuning. Human-edited, never touched by `/lab`.
+- **AGENT.generated.md** -- Pure output of the `/despicable-lab` pipeline. Always regenerated from `the-plan.md` + `RESEARCH.md`. Never hand-edited.
+- **AGENT.overrides.md** -- Optional file containing hand-tuned customizations. Only exists for agents that need fine-tuning. Human-edited, never touched by `/despicable-lab`.
 - **AGENT.md** -- The merged result of generated + overrides. This is what gets symlinked to `~/.claude/agents/`. Never hand-edited directly.
 
 Most agents (those without customizations) have only `AGENT.generated.md` and `AGENT.md` with identical content. The third file appears only when customization is needed.
@@ -97,7 +97,7 @@ Most agents (those without customizations) have only `AGENT.generated.md` and `A
 
 ```mermaid
 flowchart LR
-    A["the-plan.md"] --> C["/lab"]
+    A["the-plan.md"] --> C["/despicable-lab"]
     B["RESEARCH.md"] --> C
     C --> D["AGENT.generated.md"]
     D --> F["manual merge<br/>(human)"]
@@ -105,7 +105,7 @@ flowchart LR
     F --> G["AGENT.md<br/>(deployed)"]
 ```
 
-When no `AGENT.overrides.md` exists, `/lab` directly writes `AGENT.md` unchanged. When `AGENT.overrides.md` exists, `/lab` writes `AGENT.generated.md` and stops -- the human user must manually merge generated + overrides → deployed following the merge rules below.
+When no `AGENT.overrides.md` exists, `/despicable-lab` directly writes `AGENT.md` unchanged. When `AGENT.overrides.md` exists, `/despicable-lab` writes `AGENT.generated.md` and stops -- the human user must manually merge generated + overrides → deployed following the merge rules below.
 
 ### Merge Rules
 
@@ -160,16 +160,16 @@ Heading matching is exact string comparison. If a heading in the overrides file 
 
 ### Version Tracking
 
-- `x-plan-version` in `AGENT.generated.md` reflects the spec version the generation was based on. This is the version `/lab --check` compares against `spec-version` in `the-plan.md`.
+- `x-plan-version` in `AGENT.generated.md` reflects the spec version the generation was based on. This is the version `/despicable-lab --check` compares against `spec-version` in `the-plan.md`.
 - `AGENT.md` always reflects the latest merge result. Its `x-plan-version` may differ from `AGENT.generated.md` if the overrides file sets it explicitly.
 - `x-fine-tuned: true` appears in `AGENT.md` frontmatter whenever overrides are present. This flag is never set in `AGENT.generated.md` or `AGENT.overrides.md` -- it is injected during merge.
 
 ### Merging Process
 
-**The merge is currently a manual process**. When `/lab` regenerates an agent with overrides:
+**The merge is currently a manual process**. When `/despicable-lab` regenerates an agent with overrides:
 
-1. `/lab` writes `AGENT.generated.md` (never touches `AGENT.overrides.md`)
-2. `/lab` reports: "Manual merge required. See docs/agent-anatomy.md for merge rules."
+1. `/despicable-lab` writes `AGENT.generated.md` (never touches `AGENT.overrides.md`)
+2. `/despicable-lab` reports: "Manual merge required. See docs/agent-anatomy.md for merge rules."
 3. Human user manually merges `AGENT.generated.md` + `AGENT.overrides.md` → `AGENT.md` following the merge rules above
 4. Human user updates `x-fine-tuned: true` in the merged `AGENT.md` frontmatter
 
@@ -193,7 +193,7 @@ Usage:
 # Check one agent
 ./validate-overlays.sh nefario
 
-# Machine-friendly summary (for /lab integration)
+# Machine-friendly summary (for /despicable-lab integration)
 ./validate-overlays.sh --summary
 ```
 
@@ -225,13 +225,13 @@ The script returns:
 - Exit code `1` if drift is detected
 - Exit code `2` on script error
 
-**Integration**: `/lab --check` automatically runs `validate-overlays.sh --summary` and reports drift alongside version mismatches.
+**Integration**: `/despicable-lab --check` automatically runs `validate-overlays.sh --summary` and reports drift alongside version mismatches.
 
 **Requirements**: The script requires bash 4.0+ (macOS ships with bash 3.2). Install via Homebrew: `brew install bash`
 
 ### Real-World Example: Nefario Overrides
 
-The nefario agent is the first agent to use the overlay mechanism. Its `AGENT.overrides.md` documents the following customizations beyond what `/lab` generates from the spec:
+The nefario agent is the first agent to use the overlay mechanism. Its `AGENT.overrides.md` documents the following customizations beyond what `/despicable-lab` generates from the spec:
 
 - **Frontmatter**: Sets `x-plan-version` ahead of the generated value
 - **Approval Gates section**: Adds the full decision brief template, response handling rules (approve/request changes/reject/skip), anti-fatigue mechanisms (gate budget, confidence indicators, calibration checks), cascading gate ordering, and gate-vs-notification distinction
@@ -244,7 +244,7 @@ The nefario agent is the first agent to use the overlay mechanism. Its `AGENT.ov
 
 ```
 Want to change all agents systematically?
-  --> Edit the-plan.md, bump spec-version, rebuild with /lab
+  --> Edit the-plan.md, bump spec-version, rebuild with /despicable-lab
 
 Want to customize one specific agent?
   --> Create or edit AGENT.overrides.md in that agent's directory
@@ -253,5 +253,5 @@ Never edit AGENT.md directly
   --> It is a build artifact, overwritten on every merge
 
 Never edit AGENT.generated.md
-  --> It is a build artifact, overwritten on every /lab run
+  --> It is a build artifact, overwritten on every /despicable-lab run
 ```

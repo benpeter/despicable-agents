@@ -4,6 +4,7 @@ Reports from nefario orchestration runs, newest first.
 
 | Date | Time | Task | Outcome | Agents |
 |------|------|------|---------|--------|
+| 2026-02-10 | 15:09 | [rename-lab-to-despicable-lab](2026-02-10-150945-rename-lab-to-despicable-lab.md) | completed | 9 |
 | 2026-02-10 | 14:33 | [improve-nefario-reporting-visibility](2026-02-10-143322-improve-nefario-reporting-visibility.md) | completed | 10 |
 | 2026-02-10 | 13:54 | [eliminate-report-merge-conflicts](2026-02-10-135438-eliminate-report-merge-conflicts.md) | completed | 10 |
 | 2026-02-10 | 006 | [despicable-prompter-skill](2026-02-10-006-despicable-prompter-skill.md) | completed | 9 |

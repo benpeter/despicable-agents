@@ -86,6 +86,6 @@ Keep fixtures minimal - just enough to trigger the validation scenario. Use synt
 
 ## Integration
 
-This test suite is standalone. Once `validate-overlays.sh` is implemented and passes all tests, it will be integrated into the `/lab` skill for continuous validation.
+This test suite is standalone. Once `validate-overlays.sh` is implemented and passes all tests, it will be integrated into the `/despicable-lab` skill for continuous validation.
 
 See `/Users/ben/github/benpeter/despicable-agents/docs/validate-overlays-spec.md` for full validation specification.

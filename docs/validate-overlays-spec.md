@@ -18,7 +18,7 @@ validate-overlays.sh [<agent-name>] [--summary]
 
 - **No arguments**: Check all agent directories under the project root. Report summary table + detailed issues for all agents with drift.
 - **`<agent-name>`**: Check a single agent directory (e.g., `nefario`, `frontend-minion`). Report detailed issues for that agent only.
-- **`--summary`**: Machine-friendly summary output. Report one line per agent with status and issue count, no detail blocks. Designed for consumption by `/lab --check`.
+- **`--summary`**: Machine-friendly summary output. Report one line per agent with status and issue count, no detail blocks. Designed for consumption by `/despicable-lab --check`.
 
 ### Examples
 
@@ -29,7 +29,7 @@ validate-overlays.sh
 # Check one agent, show details
 validate-overlays.sh nefario
 
-# Check all agents, show summary only (for /lab integration)
+# Check all agents, show summary only (for /despicable-lab integration)
 validate-overlays.sh --summary
 ```
 
@@ -109,7 +109,7 @@ Action: <actionable-next-step>
 
 Every error message MUST include an `Action:` line with concrete next steps. Examples:
 
-- `Action: Run /lab nefario to regenerate AGENT.generated.md and re-merge.`
+- `Action: Run /despicable-lab nefario to regenerate AGENT.generated.md and re-merge.`
 - `Action: Review AGENT.overrides.md and remove or rename the orphaned section claim.`
 - `Action: Remove x-fine-tuned flag from AGENT.md frontmatter or create AGENT.overrides.md.`
 - `Action: Delete AGENT.generated.md or sync AGENT.md to match (copy AGENT.generated.md to AGENT.md).`
@@ -139,7 +139,7 @@ Section: ## Output Standards
 Line: 342
 The section in AGENT.md does not match AGENT.generated.md or AGENT.overrides.md.
 This indicates a manual edit or stale merge.
-Action: Run /lab nefario to regenerate AGENT.generated.md and re-merge. If the section was intentionally hand-edited, move the edit to AGENT.overrides.md.
+Action: Run /despicable-lab nefario to regenerate AGENT.generated.md and re-merge. If the section was intentionally hand-edited, move the edit to AGENT.overrides.md.
 
 ---
 ```
@@ -180,7 +180,7 @@ For each agent directory:
 **Issue Type**: `MERGE_STALENESS` (if overrides exist) or `NON_OVERLAY_MISMATCH` (if no overrides)
 
 **Action**:
-- If overrides exist: `Run /lab <agent-name> to regenerate AGENT.generated.md and re-merge.`
+- If overrides exist: `Run /despicable-lab <agent-name> to regenerate AGENT.generated.md and re-merge.`
 - If no overrides: `Delete AGENT.generated.md or sync AGENT.md to match (copy AGENT.generated.md to AGENT.md).`
 
 ### 2. Orphan Override Check
@@ -235,7 +235,7 @@ For each agent:
 
 **Issue Type**: `INCONSISTENT_FLAG`
 
-**Action**: `Run /lab <agent-name> to regenerate and re-merge (merge process auto-injects x-fine-tuned flag).`
+**Action**: `Run /despicable-lab <agent-name> to regenerate and re-merge (merge process auto-injects x-fine-tuned flag).`
 
 ### 5. Frontmatter Consistency Check
 
@@ -254,7 +254,7 @@ For each agent with `AGENT.overrides.md`:
 
 **Issue Type**: `FRONTMATTER_INCONSISTENCY`
 
-**Action**: `Run /lab <agent-name> to regenerate and re-merge.`
+**Action**: `Run /despicable-lab <agent-name> to regenerate and re-merge.`
 
 ## Merge Algorithm (for validation)
 
@@ -307,7 +307,7 @@ Before comparison, normalize both the computed merge and the actual `AGENT.md`:
 
 ### Language
 
-Bash, for consistency with existing scripts in the repository and `/lab` skill.
+Bash, for consistency with existing scripts in the repository and `/despicable-lab` skill.
 
 ### Dependencies
 
@@ -339,19 +339,19 @@ The script processes up to 19 agent directories. Expected runtime: under 1 secon
 
 8. **Agent directory without AGENT.md**: Skip with a warning (malformed agent directory).
 
-## Integration with /lab
+## Integration with /despicable-lab
 
-The `/lab --check` command calls `validate-overlays.sh --summary` and parses the output to report drift status.
+The `/despicable-lab --check` command calls `validate-overlays.sh --summary` and parses the output to report drift status.
 
 Expected integration:
 
 ```bash
-# In /lab --check logic
+# In /despicable-lab --check logic
 drift_output=$(validate-overlays.sh --summary)
 if [ $? -eq 1 ]; then
   echo "Overlay drift detected:"
   echo "$drift_output" | grep DRIFT
-  echo "Run /lab <agent-name> to regenerate."
+  echo "Run /despicable-lab <agent-name> to regenerate."
 fi
 ```
 
@@ -392,6 +392,6 @@ These are deferred. The current scope is detection-only with human-readable outp
 
 ## Conclusion
 
-This specification defines a clear interface for detecting overlay drift. The script is a focused, read-only validation tool that integrates with the `/lab` build system. It provides actionable error messages, supports both human and machine consumption, and handles the edge cases inherent in the overlay system.
+This specification defines a clear interface for detecting overlay drift. The script is a focused, read-only validation tool that integrates with the `/despicable-lab` build system. It provides actionable error messages, supports both human and machine consumption, and handles the edge cases inherent in the overlay system.
 
 The implementer (Task #2) should follow this specification exactly. The tester (Task #3) should verify all checks and output formats against this document.

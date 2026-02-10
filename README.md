@@ -74,7 +74,7 @@ See [Orchestration](docs/orchestration.md) for the full guide.
 - [Architecture Overview](docs/architecture.md) -- system design, hierarchy, agent groups
 - [Agent Anatomy](docs/agent-anatomy.md) -- file structure, frontmatter, overlay mechanism
 - [Orchestration](docs/orchestration.md) -- nine-phase process, delegation, nefario usage
-- [Build Pipeline](docs/build-pipeline.md) -- building agents, versioning, the `/lab` skill
+- [Build Pipeline](docs/build-pipeline.md) -- building agents, versioning, the `/despicable-lab` skill
 - [Deployment](docs/deployment.md) -- symlink deployment, `install.sh`
 - [Design Decisions](docs/decisions.md) -- architectural tradeoffs and rationale
 

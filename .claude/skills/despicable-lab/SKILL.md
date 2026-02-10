@@ -1,5 +1,5 @@
 ---
-name: lab
+name: despicable-lab
 description: >
   Nefario's Laboratory -- rebuild agents whose specs have changed in
   the-plan.md. Use when you want to regenerate one or more agents, or check
@@ -54,7 +54,7 @@ DRIFT DETECTED: 1 agent
 
 nefario: 10 issues
   - Run ./validate-overlays.sh nefario for details
-  - Run /lab nefario to regenerate and re-merge
+  - Run /despicable-lab nefario to regenerate and re-merge
 ```
 
 ## File Locations
