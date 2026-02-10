@@ -4,6 +4,7 @@ Reports from nefario orchestration runs, newest first.
 
 | Date | Seq | Task | Outcome | Agents |
 |------|-----|------|---------|--------|
+| 2026-02-10 | 006 | [despicable-prompter-skill](2026-02-10-006-despicable-prompter-skill.md) | completed | 9 |
 | 2026-02-10 | 005 | [compaction-resume-ux](2026-02-10-005-compaction-resume-ux.md) | completed | 6 |
 | 2026-02-10 | 004 | [extend-nefario-post-execution-phases](2026-02-10-004-extend-nefario-post-execution-phases.md) | completed | 8 |
 | 2026-02-10 | 003 | [prevent-context-overflow](2026-02-10-003-prevent-context-overflow.md) | completed | 9 |
