@@ -269,7 +269,55 @@ If none: "None"
 
 Important: blank line after `<summary>` and before `</details>` for GitHub rendering.
 
-### 8. Metrics
+### 8. Working Files
+
+Preserved intermediate artifacts from the orchestration run. Inside a
+collapsible `<details>` block.
+
+When a companion directory exists (scratch files were collected at wrap-up):
+
+```markdown
+## Working Files
+
+<details>
+<summary>Working files (N files)</summary>
+
+Companion directory: [<YYYY-MM-DD>-<HHMMSS>-<slug>/](./<YYYY-MM-DD>-<HHMMSS>-<slug>/)
+
+- [Phase 1: Meta-plan](./companion-dir/phase1-metaplan.md)
+- [Phase 2: devx-minion](./companion-dir/phase2-devx-minion.md)
+- [Phase 2: software-docs-minion](./companion-dir/phase2-software-docs-minion.md)
+- [Phase 3: Synthesis](./companion-dir/phase3-synthesis.md)
+- [Phase 3.5: security-minion](./companion-dir/phase3.5-security-minion.md)
+- ...
+
+</details>
+```
+
+When no companion directory exists (no scratch files for this run):
+
+```markdown
+## Working Files
+
+None
+```
+
+Important notes for the template:
+- The companion directory is a sibling directory in the same
+  `docs/history/nefario-reports/` folder, named as the report filename
+  without `.md` (e.g., `2026-02-10-143322-slug/`)
+- Relative links use `./companion-dir/filename.md` format
+- File list is generated from whatever files actually exist in the companion
+  directory -- not a fixed set
+- Label convention: `Phase N: description` where description is derived from
+  filename (phase1-metaplan -> "Meta-plan", phase2-{agent} -> agent name,
+  phase3-synthesis -> "Synthesis", phase3.5-{agent} -> agent name)
+- N in the summary line is the actual file count
+- Blank line after `<summary>` and before `</details>` for GitHub rendering
+- Section is ABSENT for existing/older reports (backward compatibility:
+  absence = no working files)
+
+### 9. Metrics
 
 Reference data table (same fields as v1 Layer 1 header block).
 
@@ -324,6 +372,7 @@ When generating a report:
 9. Write Agent Contributions (collapsible, 2 groups: Planning + Architecture Review)
 10. Write Execution (files + gates)
 11. Write Process Detail (collapsible, includes Verification)
-12. Write Metrics
-13. Regenerate index by running docs/history/nefario-reports/build-index.sh
-14. Present report path to user
+12. Write Working Files section (collapsible, list all files in companion directory with phase labels; or "None" if no companion directory)
+13. Write Metrics
+14. Regenerate index by running docs/history/nefario-reports/build-index.sh
+15. Present report path to user
