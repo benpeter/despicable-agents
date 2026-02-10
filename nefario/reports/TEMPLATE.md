@@ -4,11 +4,11 @@ This template defines the format for execution reports generated after nefario o
 
 ## File Naming Convention
 
-Reports are written to `nefario/reports/<YYYY-MM-DD>-<NNN>-<slug>.md`:
+Reports are written to `nefario/reports/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`:
 
 - `<YYYY-MM-DD>`: date of orchestration
-- `<NNN>`: zero-padded sequence number. Determine by globbing `nefario/reports/<YYYY-MM-DD>-*.md` and counting. First report of the day is 001, second is 002, etc.
-- `<slug>`: kebab-case, lowercase, max 40 chars, derived from task description. Strip articles (a/an/the). Only alphanumeric characters and hyphens. No path separators or special characters.
+- `<HHMMSS>`: local time at report creation, 24-hour format, zero-padded (e.g., `143022` for 2:30:22 PM). Capture this timestamp at wrap-up time when the report is actually written, not at Phase 1.
+- `<slug>`: kebab-case, lowercase, max 40 chars, derived from task description. Strip articles (a/an/the). Only alphanumeric characters and hyphens.
 
 Create `nefario/reports/` directory if it doesn't exist.
 
@@ -21,7 +21,7 @@ Reports use exactly 10 fields in the frontmatter:
 type: nefario-report
 version: 1
 date: "<YYYY-MM-DD>"
-sequence: <N>
+time: "HH:MM:SS"
 task: "<one-line task description>"
 mode: full | plan
 agents-involved: [<list>]
@@ -36,7 +36,7 @@ outcome: completed | partial | aborted
 - **type**: Always `nefario-report`
 - **version**: Template version, currently `1`
 - **date**: Orchestration date in YYYY-MM-DD format
-- **sequence**: Zero-padded sequence number (001, 002, etc.)
+- **time**: Local time of report generation in HH:MM:SS format (24-hour)
 - **task**: One-line description of the orchestration task
 - **mode**: `full` (all phases) or `plan` (planning only, no execution)
 - **agents-involved**: Array of agent names that participated
@@ -185,30 +185,18 @@ Table with approximate phase durations (use `~` prefix):
 
 ## Index File Update
 
-After writing the report, update `nefario/reports/index.md`.
+After writing the report, regenerate the index by running:
 
-If index.md doesn't exist, create it with:
+    nefario/reports/build-index.sh
 
-```markdown
-# Nefario Orchestration Reports
+This script reads YAML frontmatter from all report files and produces
+a complete `nefario/reports/index.md`. It is idempotent -- running it
+multiple times produces the same output. The index is a derived view,
+not primary state.
 
-Reports from nefario orchestration runs.
-
-| Date | Seq | Task | Outcome | Agents |
-|------|-----|------|---------|--------|
-```
-
-Prepend a new row to the table with:
-- Date (YYYY-MM-DD)
-- Sequence (NNN)
-- Task (slug as markdown link to report file: `[slug](YYYY-MM-DD-NNN-slug.md)`)
-- Outcome (completed/partial/aborted)
-- Agent count (total agents involved)
-
-Example row:
-```markdown
-| 2026-02-09 | 001 | [extract-report-template](2026-02-09-001-extract-report-template.md) | completed | 2 |
-```
+If the script is unavailable, the index can be regenerated later by
+any session that runs the script. A stale index is a soft failure --
+all report files remain intact.
 
 ## Incremental Writing
 
@@ -220,10 +208,10 @@ When generating a report:
 
 1. ✅ Collect all accumulated data from phase boundaries
 2. ✅ Generate filename slug (kebab-case, strip articles, max 40 chars)
-3. ✅ Determine sequence number by globbing existing reports for today
+3. ✅ Capture current local time as HHMMSS for filename
 4. ✅ Write YAML frontmatter with all 10 fields
 5. ✅ Write Layer 1 header block table
 6. ✅ Write Layer 2 executive summary and decisions
 7. ✅ Write Layer 3 process detail sections
-8. ✅ Update index.md with new row (prepend, newest first)
+8. ✅ Regenerate index.md by running nefario/reports/build-index.sh
 9. ✅ Present report path to user
