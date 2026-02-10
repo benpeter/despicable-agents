@@ -138,8 +138,8 @@ alphanumeric and hyphens only). Create the scratch directory:
 `mkdir -p nefario/scratch/{slug}/`.
 
 Extract a status summary from the first line of the user's task description.
-Truncate to 51 characters; if truncated, append "..." (so "Nefario: " prefix +
-summary stays within 60 chars). Write the sentinel file:
+Truncate to 48 characters; if truncated, append "..." (so "Nefario: " 9-char
+prefix + 48 + 3 = 60 chars max). Write the sentinel file:
 ```sh
 echo "$summary" > /tmp/nefario-status-${slug}
 chmod 600 /tmp/nefario-status-${slug}   # Status file: read from custom statusline scripts
@@ -596,7 +596,7 @@ A batch contains all tasks that can run before the next gate.
    ```
    Task:
      subagent_type: <agent name>
-     description: <short summary>
+     description: "Nefario: <short task summary>"
      model: <from plan — usually sonnet for execution>
      mode: <from plan>
      team_name: <team name>
