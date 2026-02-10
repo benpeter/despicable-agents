@@ -332,6 +332,21 @@ These decisions were made during the nefario v2.0 update, extending orchestratio
 
 ---
 
+## Toolkit Portability (Decision 26)
+
+### Decision 26: Decouple Toolkit from Self-Referential Path Assumptions
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-02-10 |
+| **Choice** | Remove hardcoded paths that assume the toolkit operates on itself. Scratch files use `mktemp -d` in `$TMPDIR` with secure creation (`chmod 700`) and wrap-up cleanup. Report directory is detected CWD-relative (check `docs/nefario-reports/` then `docs/history/nefario-reports/`, default to creating `docs/history/nefario-reports/`). Git operations include greenfield guards (graceful skip when no git repo). Default branch is detected dynamically, not hardcoded to `main`. |
+| **Alternatives rejected** | (1) **Configuration file** (`.nefario.yml` or similar): rejected as YAGNI -- detection logic handles all known cases without user configuration. (2) **Mode flags** (`--self` vs `--external`): rejected because it leaks implementation detail to the user and creates a maintenance burden. (3) **Fixed paths** (`docs/history/nefario-reports/` always): rejected because it breaks portability for projects that use a different convention. (4) **Environment variable overrides** (`NEFARIO_REPORTS_DIR`): rejected as YAGNI -- no known user needs custom report paths. |
+| **Rationale** | The project assumed it would always operate on itself. As a globally-installed toolkit, it must operate on any project. Hardcoded paths to `nefario/scratch/`, `docs/history/nefario-reports/TEMPLATE.md`, and `main` branch created coupling that broke when invoked from other projects. Supersedes the scratch file portions of Decision 21. |
+| **Consequences** | Scratch files no longer live in the project tree (moved to `$TMPDIR`). `.gitignore` entries for `nefario/scratch/` removed. Report paths are resolved at runtime. Git operations are safe in repositories without a `main` branch or without git at all. `install.sh` now installs 2 skills (nefario + despicable-prompter). |
+
+---
+
 ## Deferred
 
 - Nefario-gated complexity classification -- revisit after 20+ full-process runs.

@@ -34,7 +34,11 @@ git clone https://github.com/benpeter/despicable-agents.git
 cd despicable-agents && ./install.sh
 ```
 
-Symlinks all 27 agents to `~/.claude/agents/` and the `/nefario` skill to `~/.claude/skills/`. Available in every Claude Code session. To remove: `./install.sh uninstall`.
+Installs 27 agents and 2 skills (`/nefario`, `/despicable-prompter`) to `~/.claude/`. Available in every Claude Code session. To remove: `./install.sh uninstall`.
+
+### Using on Other Projects
+
+After install, agents and skills are available in any Claude Code session regardless of working directory. Invoke `@agent-name` or `/nefario` from your project. Reports, branches, and commits target the current project -- no configuration required.
 
 ## Try It
 

@@ -1,6 +1,6 @@
 # Architecture Overview
 
-despicable-agents is a specialist agent team for Claude Code: 27 agents organized into a four-tier hierarchy. Complex tasks are decomposed and routed to specialists, each with deep expertise in a single domain and strict boundaries that prevent overlap.
+despicable-agents is a specialist agent team for Claude Code: 27 agents organized into a four-tier hierarchy. Complex tasks are decomposed and routed to specialists, each with deep expertise in a single domain and strict boundaries that prevent overlap. The team operates on any project via Claude Code -- agents and skills are installed globally and invoked from the target project's working directory.
 
 New to the project? See [Using Nefario](using-nefario.md) for how to use the orchestrator, or [Agent Catalog](agent-catalog.md) for per-agent reference.
 
