@@ -8,7 +8,7 @@ Nefario (orchestrator), Lucy and Margo (governance), and 23 domain-specialist mi
 - `the-plan.md` -- canonical spec for all agents (source of truth, human-edited)
 - `docs/` -- architecture and design documentation (see [docs/architecture.md](docs/architecture.md))
 - `skills/nefario/` -- nefario orchestration skill (symlinked to `~/.claude/skills/nefario`)
-- `/lab` -- project-local skill to check and rebuild agents (`.claude/skills/lab/`)
+- `/despicable-lab` -- project-local skill to check and rebuild agents (`.claude/skills/despicable-lab/`)
 - `/despicable-prompter` -- project-local skill to coach intent-focused `/nefario` briefings (`.claude/skills/despicable-prompter/`)
 - `gru/` -- AI visionary / technology radar
 - `nefario/` -- task orchestrator (planning only, does not write code)
@@ -47,7 +47,7 @@ Key principles that apply to all work here:
 ## Versioning
 
 Each agent spec in `the-plan.md` has a `spec-version`. Each built `AGENT.md`
-has `x-plan-version` in its frontmatter. When they diverge, use `/lab` to regenerate.
+has `x-plan-version` in its frontmatter. When they diverge, use `/despicable-lab` to regenerate.
 
 ## Deployment
 

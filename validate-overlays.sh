@@ -5,7 +5,7 @@
 # Usage:
 #   validate-overlays.sh              # check all agents, show summary + details
 #   validate-overlays.sh <agent-name> # check one agent, show details
-#   validate-overlays.sh --summary    # check all agents, show summary only (for /lab)
+#   validate-overlays.sh --summary    # check all agents, show summary only (for /despicable-lab)
 
 set -euo pipefail
 
@@ -31,7 +31,7 @@ if [[ $# -eq 1 ]]; then
     echo ""
     echo "Options:"
     echo "  <agent-name>  Check a single agent directory"
-    echo "  --summary     Show summary output only (for /lab integration)"
+    echo "  --summary     Show summary output only (for /despicable-lab integration)"
     echo "  -h, --help    Show this help message"
     echo ""
     echo "Exit codes:"
@@ -423,7 +423,7 @@ check_agent() {
   # Check 4: Inconsistent flag (overrides exist but no x-fine-tuned)
   if [[ -f "$overrides" ]] && [[ -s "$overrides" ]]; then
     if ! grep -q "^x-fine-tuned: true" "$agent_md" 2>/dev/null; then
-      record_issue "$agent_name" "INCONSISTENT_FLAG: Agent has AGENT.overrides.md but no x-fine-tuned: true in AGENT.md|File: ${agent_md}|Action: Run /lab ${agent_name} to regenerate and re-merge (merge process auto-injects x-fine-tuned flag)."
+      record_issue "$agent_name" "INCONSISTENT_FLAG: Agent has AGENT.overrides.md but no x-fine-tuned: true in AGENT.md|File: ${agent_md}|Action: Run /despicable-lab ${agent_name} to regenerate and re-merge (merge process auto-injects x-fine-tuned flag)."
       issue_count=$((issue_count + 1))
     fi
   fi
@@ -464,7 +464,7 @@ check_agent() {
       normalize_content "$actual" > "$actual_norm"
 
       if ! diff -q "$computed_norm" "$actual_norm" >/dev/null 2>&1; then
-        record_issue "$agent_name" "MERGE_STALENESS: AGENT.md does not reflect current merge of AGENT.generated.md + AGENT.overrides.md|File: ${agent_md}|The file differs from the expected merge result. This indicates a manual edit or stale merge.|Action: Run /lab ${agent_name} to regenerate AGENT.generated.md and re-merge. If sections were intentionally hand-edited, move the edits to AGENT.overrides.md."
+        record_issue "$agent_name" "MERGE_STALENESS: AGENT.md does not reflect current merge of AGENT.generated.md + AGENT.overrides.md|File: ${agent_md}|The file differs from the expected merge result. This indicates a manual edit or stale merge.|Action: Run /despicable-lab ${agent_name} to regenerate AGENT.generated.md and re-merge. If sections were intentionally hand-edited, move the edits to AGENT.overrides.md."
         issue_count=$((issue_count + 1))
       fi
 
@@ -507,7 +507,7 @@ check_agent() {
     if ! diff -q "$merged_fm" "$actual_fm" >/dev/null 2>&1; then
       local diff_output
       diff_output=$(diff -u "$merged_fm" "$actual_fm" 2>/dev/null | tail -n +4 || echo "(diff failed)")
-      record_issue "$agent_name" "FRONTMATTER_INCONSISTENCY: AGENT.md frontmatter differs from expected merge result|File: ${agent_md}|Diff:|${diff_output}|Action: Run /lab ${agent_name} to regenerate and re-merge."
+      record_issue "$agent_name" "FRONTMATTER_INCONSISTENCY: AGENT.md frontmatter differs from expected merge result|File: ${agent_md}|Diff:|${diff_output}|Action: Run /despicable-lab ${agent_name} to regenerate and re-merge."
       issue_count=$((issue_count + 1))
     fi
 
@@ -604,7 +604,7 @@ main() {
 
   # Output results
   if [[ "$SUMMARY_ONLY" == true ]]; then
-    # Summary-only output (for /lab integration)
+    # Summary-only output (for /despicable-lab integration)
     for agent_name in "${agent_list[@]}"; do
       local status
       local issue_count

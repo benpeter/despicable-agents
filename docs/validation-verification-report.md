@@ -68,7 +68,7 @@ nefario DRIFT 10
 ai-modeling-minion CLEAN 0
 [... all agents ...]
 ```
-✅ PASS - Machine-readable output for /lab integration
+✅ PASS - Machine-readable output for /despicable-lab integration
 
 **All agents (default)**:
 ✅ PASS - Shows summary table + details for agents with drift
@@ -144,7 +144,7 @@ The script successfully identified **real drift** in nefario:
 
 2. **Merge Staleness**: `AGENT.md` does not reflect current merge of generated + overrides
 
-   **Action needed**: Run `/lab nefario` to regenerate and re-merge
+   **Action needed**: Run `/despicable-lab nefario` to regenerate and re-merge
 
 3. **Frontmatter Formatting**: Minor whitespace difference in `x-fine-tuned: true` vs `x-fine-tuned=true`
 
@@ -175,11 +175,11 @@ Add to script help output and deployment documentation.
 
 ### Priority 3: Fix nefario Drift
 
-Run `/lab nefario` to regenerate, then manually review orphaned override sections.
+Run `/despicable-lab nefario` to regenerate, then manually review orphaned override sections.
 
 ## Conclusion
 
 The validation script **works correctly** and successfully detects real drift. The implementation matches the specification. The test infrastructure requires fixes but does not indicate problems with the script itself.
 
-**Ready for**: Integration into `/lab` workflow (Task 5)
+**Ready for**: Integration into `/despicable-lab` workflow (Task 5)
 **Blocked on**: Test fixture redesign (optional - can proceed without automated tests)

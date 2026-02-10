@@ -90,8 +90,8 @@ All 27 agents are built in parallel. Each agent runs a two-step sequential pipel
 
 After the build step produces `AGENT.generated.md`, a merge step produces the deployable `AGENT.md`.
 
-- **Without overrides**: If `AGENT.overrides.md` does not exist, `/lab` writes `AGENT.md` directly from the generated content.
-- **With overrides**: If `AGENT.overrides.md` exists, `/lab` writes `AGENT.generated.md` and **stops**. The human user must manually merge `AGENT.generated.md` + `AGENT.overrides.md` → `AGENT.md` following the merge rules documented in [Agent Anatomy and Overlay System](agent-anatomy.md).
+- **Without overrides**: If `AGENT.overrides.md` does not exist, `/despicable-lab` writes `AGENT.md` directly from the generated content.
+- **With overrides**: If `AGENT.overrides.md` exists, `/despicable-lab` writes `AGENT.generated.md` and **stops**. The human user must manually merge `AGENT.generated.md` + `AGENT.overrides.md` → `AGENT.md` following the merge rules documented in [Agent Anatomy and Overlay System](agent-anatomy.md).
 
 **Why manual?** Automated merging would require LLM-based semantic understanding of override descriptions (see docs/decisions.md Decision 16). Manual merging keeps the process deterministic and preserves human intent.
 
@@ -130,7 +130,7 @@ All agents start at version `1.0`.
 
 ### Divergence Detection
 
-When `x-plan-version` in `AGENT.generated.md` is less than `spec-version` in `the-plan.md`, the agent is outdated and needs regeneration. The `/lab` skill automates this check.
+When `x-plan-version` in `AGENT.generated.md` is less than `spec-version` in `the-plan.md`, the agent is outdated and needs regeneration. The `/despicable-lab` skill automates this check.
 
 For agents with overlay files, the version check reads `x-plan-version` from `AGENT.generated.md` (not `AGENT.md`), since the generated file reflects the true generation state. If `AGENT.generated.md` does not exist (pre-migration agents), the check falls back to reading `AGENT.md`.
 
@@ -140,7 +140,7 @@ flowchart LR
     spec-version"] -->|Spec changes| B["Version bumped"]
     B --> C["Version diverges from
     AGENT.md x-plan-version"]
-    C --> D["/lab skill detects
+    C --> D["/despicable-lab skill detects
     outdated agent"]
     D --> E["Rebuild triggered"]
     E --> F["AGENT.md updated
@@ -149,25 +149,25 @@ flowchart LR
 
 ## Build Triggers
 
-The `/lab` skill supports three invocation modes:
+The `/despicable-lab` skill supports three invocation modes:
 
 | Command | Behavior |
 |---------|----------|
-| `/lab --check` | Check all agents for version divergence and overlay drift. Reports a table of agent name, current version, spec version, and status. Runs `./validate-overlays.sh --summary` to detect drift. Does not rebuild. |
-| `/lab <agent-name> ...` | Regenerate the named agents, even if already up-to-date. Accepts one or more agent names. For agents with overrides, writes `AGENT.generated.md` and reports "Manual merge required". |
-| `/lab --all` | Force-rebuild all 27 agents regardless of version status. |
+| `/despicable-lab --check` | Check all agents for version divergence and overlay drift. Reports a table of agent name, current version, spec version, and status. Runs `./validate-overlays.sh --summary` to detect drift. Does not rebuild. |
+| `/despicable-lab <agent-name> ...` | Regenerate the named agents, even if already up-to-date. Accepts one or more agent names. For agents with overrides, writes `AGENT.generated.md` and reports "Manual merge required". |
+| `/despicable-lab --all` | Force-rebuild all 27 agents regardless of version status. |
 
 ### Typical Workflow
 
 1. Edit `the-plan.md` (update spec content for one or more agents).
 2. Bump `spec-version` (major for remit changes, minor for refinements).
-3. Run `/lab --check` to confirm which agents are outdated.
-4. Run `/lab <agent-name>` to regenerate the outdated agents.
+3. Run `/despicable-lab --check` to confirm which agents are outdated.
+4. Run `/despicable-lab <agent-name>` to regenerate the outdated agents.
 5. Changes are immediately live (agents are deployed via symlinks).
 
-## The /lab Skill
+## The /despicable-lab Skill
 
-The build pipeline is automated by the `/lab` skill, defined in `.claude/skills/lab/SKILL.md`. This is a project-local skill (lives inside the repository, not deployed to `~/.claude/skills/`).
+The build pipeline is automated by the `/despicable-lab` skill, defined in `.claude/skills/despicable-lab/SKILL.md`. This is a project-local skill (lives inside the repository, not deployed to `~/.claude/skills/`).
 
 The skill:
 
@@ -181,7 +181,7 @@ The skill:
 
 ### Constraints
 
-The `/lab` skill enforces several rules:
+The `/despicable-lab` skill enforces several rules:
 
 - It never modifies `the-plan.md` (source of truth, human-edited only).
 - It does not regenerate agents that are already up-to-date unless explicitly asked or `--all` is used.

@@ -3,7 +3,7 @@
 
 # Nefario Overrides
 
-Hand-tuned customizations beyond what `/lab` generates from the-plan.md spec.
+Hand-tuned customizations beyond what `/despicable-lab` generates from the-plan.md spec.
 Each `## Heading` below replaces the identically-named H2 section in
 AGENT.generated.md during merge.
 

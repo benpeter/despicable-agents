@@ -13,7 +13,7 @@
 
 **Capabilities**:
 - Detects 6 types of drift: orphan overrides, merge staleness, frontmatter inconsistency, missing overrides file, inconsistent flag, non-overlay mismatch
-- 3 invocation modes: all agents (default), single agent, summary mode (for `/lab`)
+- 3 invocation modes: all agents (default), single agent, summary mode (for `/despicable-lab`)
 - Actionable error messages with next-step guidance
 - Exit codes: 0 (clean), 1 (drift), 2 (error)
 
@@ -27,7 +27,7 @@ Updated 4 documentation files:
 - Complete specification: interface, validation checks, output format, merge algorithm
 - 398 lines covering all implementation requirements
 
-**`.claude/skills/lab/SKILL.md`**
+**`.claude/skills/despicable-lab/SKILL.md`**
 - Added drift detection to `--check` mode
 - Updated build process to document manual merge for agents with overrides
 - Integration with `validate-overlays.sh --summary`
@@ -41,7 +41,7 @@ Updated 4 documentation files:
 **`docs/build-pipeline.md`**
 - Updated "Merge Step" section to document manual merge workflow
 - Updated "Build Triggers" table (added validation, removed non-existent `--diff`)
-- Updated "/lab Skill" section to mention validation
+- Updated "/despicable-lab Skill" section to mention validation
 
 **`docs/decisions.md`** (Decision 16)
 - Documented validation-only decision
@@ -91,7 +91,7 @@ Validation script detected actual drift in nefario:
 4. **Frontmatter Inconsistency**
    - Formatting difference in `x-fine-tuned` flag (missing space)
 
-**Action**: User should review `nefario/AGENT.overrides.md` and either remove orphaned sections or update them to match new heading names in `AGENT.generated.md`. Then run `/lab nefario` to regenerate and re-merge.
+**Action**: User should review `nefario/AGENT.overrides.md` and either remove orphaned sections or update them to match new heading names in `AGENT.generated.md`. Then run `/despicable-lab nefario` to regenerate and re-merge.
 
 ## Integration Status
 
@@ -100,7 +100,7 @@ Validation script detected actual drift in nefario:
 ✅ **Decision logged**: Decision 16 in docs/decisions.md
 ✅ **Specification complete**: docs/validate-overlays-spec.md
 ⚠️ **Test infrastructure**: Fixtures exist but need redesign
-✅ **`/lab` integration**: SKILL.md updated, validation integrated into `--check` mode
+✅ **`/despicable-lab` integration**: SKILL.md updated, validation integrated into `--check` mode
 
 ## Requirements
 
@@ -121,7 +121,7 @@ brew install bash
 # Check one agent
 ./validate-overlays.sh nefario
 
-# Machine-friendly summary (for /lab)
+# Machine-friendly summary (for /despicable-lab)
 ./validate-overlays.sh --summary
 
 # Help
@@ -137,12 +137,12 @@ brew install bash
 
 **Immediate (for user)**:
 1. Review nefario drift and fix orphaned overrides
-2. Run `/lab nefario` to regenerate
+2. Run `/despicable-lab nefario` to regenerate
 3. Manually re-merge nefario
 
 ## Comparison to Original Request
 
-**Original request (in German)**: Archive old generated, create new generated, check overlay for semantic relevance, re-apply only relevant parts, report discards, human-in-loop for discards, eventually build `/lab` merging.
+**Original request (in German)**: Archive old generated, create new generated, check overlay for semantic relevance, re-apply only relevant parts, report discards, human-in-loop for discards, eventually build `/despicable-lab` merging.
 
 **What was built**: Drift detection script that identifies orphaned sections (semantic irrelevance), reports what needs fixing, requires human review of fixes. Manual merge remains.
 
@@ -151,7 +151,7 @@ brew install bash
 ## Success Criteria
 
 ✅ Detect drift in overlay system (orphans, staleness, inconsistencies)
-✅ Integrate with `/lab --check`
+✅ Integrate with `/despicable-lab --check`
 ✅ Actionable error messages
 ✅ Works on real repo (detected real drift in nefario)
 ✅ Documented and versioned (Decision 16)

@@ -52,7 +52,7 @@ x-build-date: "YYYY-MM-DD"
 ### Versioning
 
 Each agent spec in this file carries a version. When a spec changes, bump its
-version. The `/lab` skill (see `.claude/skills/lab/`) compares `x-plan-version` in each
+version. The `/despicable-lab` skill (see `.claude/skills/despicable-lab/`) compares `x-plan-version` in each
 AGENT.md against the current spec version to determine which agents need
 regeneration.
 
