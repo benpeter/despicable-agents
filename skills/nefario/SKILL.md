@@ -104,14 +104,21 @@ summary in the session context:
 
 ```
 ## Summary: {agent-name}
+Phase: {planning | review}
 Recommendation: {1-2 sentences}
 Tasks: {N} -- {one-line each, semicolons}
 Risks: {critical only, 1-2 bullets}
 Conflicts: {cross-domain conflicts, or "none"}
+Verdict: {APPROVE | ADVISE(details) | BLOCK(details)} (Phase 3.5 reviewers only)
 Full output: nefario/scratch/{slug}/phase2-{agent-name}.md
 ```
 
-Each summary: ~80-120 tokens (versus 500-2000+ for full contributions).
+The `Phase` field groups agents in the report's Agent Contributions section.
+Planning agents (Phase 2) get `Phase: planning`. Architecture reviewers
+(Phase 3.5) get `Phase: review`.
+
+Each summary: ~80-120 tokens (~100-150 for reviewers, verdict field adds ~20 tokens).
+Versus 500-2000+ for full contributions.
 
 ### Lifecycle
 
@@ -127,6 +134,12 @@ Each summary: ~80-120 tokens (versus 500-2000+ for full contributions).
 (same rules as report slug: kebab-case, lowercase, max 40 chars, strip articles,
 alphanumeric and hyphens only). Create the scratch directory:
 `mkdir -p nefario/scratch/{slug}/`.
+
+Capture the verbatim user task description (the text that will be inserted at
+`<insert the user's task description>`) and retain it in session context as
+`original-prompt`. This is the text that appears in the report's Task section.
+Before including in the report, sanitize: remove any secrets, tokens, API keys,
+or credentials. Replace with `[REDACTED]`.
 
 Spawn nefario as a planning subagent to analyze the task and determine
 which specialists should be consulted for planning.
@@ -276,7 +289,7 @@ After writing the synthesis to the scratch file, present a compaction prompt:
 ---
 COMPACT: Phase 3 complete. Specialist details are now in the synthesis.
 
-Run: /compact focus="Preserve: current phase (3.5 review next), synthesized execution plan, task list, approval gates, team name, branch name, scratch directory path. Discard: individual specialist contributions from Phase 2."
+Run: /compact focus="Preserve: current phase (3.5 review next), synthesized execution plan, inline agent summaries, task list, approval gates, team name, branch name, scratch directory path. Discard: individual specialist contributions from Phase 2."
 
 After compaction, type `continue` to resume at Phase 3.5 (Architecture Review).
 
@@ -360,7 +373,7 @@ After processing all review verdicts, present a compaction prompt:
 ---
 COMPACT: Phase 3.5 complete. Review verdicts are folded into the plan.
 
-Run: /compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, task list with dependencies, approval gates, team name, branch name, scratch directory path. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."
+Run: /compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, inline agent summaries, gate decision briefs, task list with dependencies, approval gates, team name, branch name, scratch directory path. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."
 
 After compaction, type `continue` to resume at Phase 4 (Execution).
 
@@ -667,8 +680,17 @@ not part of the default flow.
     Create PR for nefario/<slug>? (Y/n)
     ```
 
-    If approved: `git push -u origin <branch>` then `gh pr create`.
-    Auto-generate the PR body from gate summaries and the execution report.
+    If approved: `git push -u origin <branch>` then create the PR.
+    Use the report body as the PR description. Write the stripped body to a
+    temp file to avoid shell expansion issues:
+    ```sh
+    body_file=$(mktemp)
+    sed '1{/^---$/!q;};1,/^---$/d' "$report_file" > "$body_file"
+    gh pr create --title "$pr_title" --body-file "$body_file"
+    rm -f "$body_file"
+    ```
+    The `--title` comes from the frontmatter `task` field. If the temp file
+    is empty or starts with `---`, warn and fall back to the executive summary only.
     If `gh` is unavailable, print the manual push command instead.
     See [docs/commit-workflow.md](../docs/commit-workflow.md) for details.
 
@@ -729,6 +751,10 @@ Track data at phase boundaries:
 - Per-task outcomes
 - Files created or modified
 - Gate decisions and responses
+- Gate decision briefs: for each gate presented, retain the full decision brief
+  (rationale bullets, rejected alternatives, confidence level, and outcome) in
+  session context. These populate the enriched gate briefs in the report's
+  Decisions and Execution sections.
 
 **After Phase 5-8 (Post-Execution)**:
 - Code review findings count (BLOCK/ADVISE/NIT) and resolution status
@@ -740,9 +766,15 @@ Track data at phase boundaries:
 - Outstanding items
 - Approximate total duration
 
+**Fallback for compacted summaries**: If inline summaries or gate decision
+briefs were lost to compaction, read scratch files from
+`nefario/scratch/{slug}/phase2-*.md` and `nefario/scratch/{slug}/phase3.5-*.md`
+at wrap-up to reconstruct agent contribution summaries and gate briefs for
+the report.
+
 ### Report Template
 
-See `nefario/reports/TEMPLATE.md` for the complete report format, including YAML frontmatter schema, body structure, file naming convention, and index update instructions.
+See `docs/history/nefario-reports/TEMPLATE.md` for the complete report format, including YAML frontmatter schema, body structure, file naming convention, and index update instructions.
 
 ### Incremental Writing
 
@@ -763,12 +795,12 @@ skip it, do not defer it, do not stop before it is written.
    - With fixes: "Verification: N code review findings auto-fixed, all tests pass, docs updated (M files)."
    - Skipped: "Verification: skipped (--skip-post)."
 3. Auto-commit remaining changes (silent, informational line only)
-4. **Write execution report** to `nefario/reports/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`
+4. **Write execution report** to `docs/history/nefario-reports/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`
    — capture HHMMSS as the current local time (24-hour, zero-padded) at the
      moment of writing the report
-   — follow the template at `nefario/reports/TEMPLATE.md`
+   — follow the template at `docs/history/nefario-reports/TEMPLATE.md`
    — include a Verification section with Phase 5-8 outcomes
-5. **Regenerate index** by running `nefario/reports/build-index.sh`
+5. **Regenerate index** by running `docs/history/nefario-reports/build-index.sh`
 6. Commit the report (auto-commit, no prompt needed)
 7. Offer PR creation if on a feature branch
 8. Return to main: `git checkout main && git pull --rebase`

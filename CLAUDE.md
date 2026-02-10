@@ -58,5 +58,5 @@ has `x-plan-version` in its frontmatter. When they diverge, use `/lab` to regene
 ## Orchestration Reports
 
 After completing nefario orchestration (conversations involving META-PLAN or SYNTHESIS phases),
-generate an execution report following the template at `nefario/reports/TEMPLATE.md` and
-regenerate the index by running `nefario/reports/build-index.sh`.
+generate an execution report following the template at `docs/history/nefario-reports/TEMPLATE.md` and
+regenerate the index by running `docs/history/nefario-reports/build-index.sh`.
