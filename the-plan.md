@@ -159,7 +159,7 @@ because its system prompt enforces coordination-only behavior.
 **Invocation model**:
 
 Nefario is invoked via the `/nefario` skill from a normal Claude Code session.
-The skill orchestrates a five-phase planning process:
+The skill orchestrates a nine-phase process:
 
 _Phase 1 -- Meta-plan (MODE: META-PLAN)_: Nefario is spawned as a subagent.
 It analyzes the task, consults the delegation table, and returns a meta-plan --
@@ -187,6 +187,94 @@ Reviewers return APPROVE, ADVISE, or BLOCK verdicts. BLOCK triggers revision loo
 _Phase 4 -- Execution_: After user approval, the calling session executes the
 plan (creates team, spawns teammates, manages approval gates).
 
+_Phase 5 -- Code Review_: Runs after Phase 4 when execution produced or modified
+code files. Skipped if Phase 4 produced only documentation or configuration with
+no code.
+
+Three parallel reviewers:
+- code-review-minion (sonnet): code quality, correctness, bug patterns,
+  cross-agent integration, complexity, DRY, plus security implementation checks
+  (hardcoded secrets, injection vectors, auth/authz flaws, crypto misuse,
+  dependency CVEs).
+- lucy (opus): cross-repo consistency, convention adherence, CLAUDE.md
+  compliance, intent drift.
+- margo (opus): over-engineering, unnecessary abstractions, dependency bloat,
+  YAGNI.
+
+Verdict format reuses APPROVE/ADVISE/BLOCK with per-finding granularity:
+```
+VERDICT: APPROVE | ADVISE | BLOCK
+FINDINGS:
+- [BLOCK|ADVISE|NIT] <file>:<line-range> -- <description>
+  AGENT: <producing-agent>
+  FIX: <specific fix>
+```
+
+BLOCK findings are routed to the original producing agent (not code-review-minion).
+Re-review covers only changed files. Iteration capped at 2 rounds, then escalate
+to user. Security-severity BLOCKs (injection, auth bypass, secret exposure, crypto
+failure) MUST surface to user before auto-fix proceeds. Communication: dark kitchen
+-- runs silently, only unresolvable BLOCKs shown to user.
+
+_Phase 6 -- Test Execution_: Always runs after Phase 5. Even if Phase 5 was
+skipped (no code produced), Phase 6 runs if tests exist in the project.
+
+Test discovery is project-aware (4-step sequence): check package.json / Makefile /
+pyproject.toml scripts, check CI config, scan for test files, check framework
+config. Layered execution: Step 1 lint/type-check, Step 2 unit tests, Step 3
+integration/E2E (skip gracefully if prerequisites unavailable).
+
+Coverage is qualitative and change-relative. No hard percentage threshold. Minimum
+bar: all tests pass, new code has at least one happy-path test, no critical path
+is test-free.
+
+Failure routing: infrastructure issues to test-minion, application logic failures
+to producing agent. Pre-existing failures are non-blocking (delta analysis against
+baseline snapshot captured at Phase 4 start). Heuristic fallback if baseline
+capture is impractical.
+
+Verdict: APPROVE/ADVISE/BLOCK consistent with other phases. Iteration capped at 2
+rounds, then escalate. Communication: dark kitchen.
+
+_Phase 7 -- Deployment (conditional)_: Runs only when user explicitly requests
+deployment at plan approval time. Default: skip. Scope: run existing deployment
+commands (e.g., `./install.sh`), not build-from-scratch pipelines. Agent:
+iac-minion at execution time if deployment is non-trivial. Verdict: pass/fail --
+if deployment command fails, BLOCK and escalate. Communication: dark kitchen.
+Single line on success: "Deployment: complete."
+
+_Phase 8 -- Documentation (conditional)_: Runs when nefario's documentation
+checklist has items. Nefario generates the checklist at the Phase 7->8 boundary
+based on execution outcomes.
+
+Checklist generation rules:
+
+| Execution Outcome | Documentation Action | Owner |
+|---|---|---|
+| New API endpoints created | API reference docs, OpenAPI prose | software-docs-minion |
+| Architecture changed (new services, data stores, integrations) | C4 diagram updates, component docs | software-docs-minion |
+| Significant design decision made (gate approved) | ADR for each gated decision | software-docs-minion |
+| New user-facing feature | Getting-started / how-to guide | user-docs-minion |
+| New CLI command or flag | Usage documentation | user-docs-minion |
+| Bug fix with user-visible impact | Release notes entry | user-docs-minion |
+| README exists and was not updated during execution | README review pass | software-docs-minion + product-marketing-minion |
+| New project created | Full README required | software-docs-minion + product-marketing-minion |
+| Breaking change introduced | Migration guide | user-docs-minion |
+| Configuration changed | Configuration reference update | software-docs-minion |
+
+If no items match, Phase 8 is skipped entirely.
+
+Two sub-steps:
+- 8a (parallel): software-docs-minion (architecture docs, ADRs, API reference,
+  README technical sections) + user-docs-minion (tutorials, guides, release notes,
+  in-app help).
+- 8b (sequential after 8a): product-marketing-minion reviews README and
+  user-facing docs. Conditional -- only when checklist includes README or
+  user-facing documentation.
+
+Non-blocking by default. One exception: new project (git init) requires README
+before PR. Communication: dark kitchen, condensed in wrap-up.
+
 _Alternative (MODE: PLAN)_: For when the user explicitly requests a simplified
 process. Nefario produces an execution plan directly, skipping Phase 2 and 3.5.
 This mode is only used when the user explicitly asks for it -- nefario does not
@@ -201,7 +289,7 @@ strategies, agent team coordination in Claude Code, delegation patterns for
 specialist teams, work breakdown structure methodologies, Claude Code skill
 design for orchestration, architecture review patterns.
 
-**spec-version**: 1.5
+**spec-version**: 2.0
 
 #### Delegation Table
 
@@ -281,7 +369,10 @@ How agents collaborate when working as a team:
 | Code quality review | code-review-minion | test-minion |
 | Bug pattern detection | code-review-minion | security-minion |
 | Test code review | test-minion | code-review-minion |
-| Post-execution code review | code-review-minion | security-minion, test-minion |
+| Post-execution code review | code-review-minion | lucy, margo |
+| Post-execution test validation | test-minion | (producing agent) |
+| Test failure triage | test-minion | debugger-minion |
+| Post-execution documentation | software-docs-minion | user-docs-minion, product-marketing-minion |
 | PR review process design | code-review-minion | devx-minion |
 | Static analysis configuration | code-review-minion | security-minion |
 | Code quality metrics and reporting | code-review-minion | observability-minion |
@@ -387,6 +478,12 @@ capped at 2 rounds.
 - Planning and analysis tasks: Use `opus` for deeper reasoning
 - Execution tasks: Use the minion's default model (usually `sonnet`)
 - Architecture review: Use `sonnet` (pattern-matching, not deep reasoning)
+- Code review (Phase 5): code-review-minion on `sonnet`, lucy on `opus`,
+  margo on `opus`
+- Test execution (Phase 6): test-minion on `sonnet`
+- Deployment (Phase 7): iac-minion on `sonnet` (if needed)
+- Documentation (Phase 8): software-docs-minion on `sonnet`, user-docs-minion
+  on `sonnet`, product-marketing-minion on `sonnet`
 - Override: If the user explicitly requests a specific model, honor that
 
 ---

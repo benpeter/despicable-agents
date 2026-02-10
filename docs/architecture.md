@@ -98,7 +98,7 @@ graph TB
 
 **Tier 1 (Boss)** -- `gru` evaluates technologies (adopt/trial/assess/hold), tracks the AI landscape, and makes strategic recommendations. Does not execute; hands off to nefario or specialists.
 
-**Tier 2 (Foreman)** -- `nefario` decomposes tasks, routes work via the delegation table, coordinates handoffs, and synthesizes results. Runs a five-phase planning process (meta-plan, specialist consultation, synthesis, architecture review, execution).
+**Tier 2 (Foreman)** -- `nefario` decomposes tasks, routes work via the delegation table, coordinates handoffs, and synthesizes results. Runs a nine-phase process (meta-plan, specialist consultation, synthesis, architecture review, execution, code review, test execution, deployment, documentation).
 
 **Governance** -- `lucy` (intent alignment, repo convention enforcement) and `margo` (simplicity enforcement, YAGNI/KISS guardianship) review every plan during Phase 3.5 Architecture Review. They ensure plans stay aligned with human intent and avoid unnecessary complexity.
 
@@ -135,7 +135,7 @@ Most tasks have secondary dimensions beyond the primary domain. Nefario's planni
 | Document | Covers |
 |----------|--------|
 | [Agent Anatomy and Overlay System](agent-anatomy.md) | AGENT.md structure, frontmatter schema, five-section prompt template, RESEARCH.md role, overlay files |
-| [Orchestration and Delegation](orchestration.md) | Five-phase planning process, delegation flow, boundary enforcement, escalation paths, execution reports, automatic report generation, commit points in execution flow |
+| [Orchestration and Delegation](orchestration.md) | Nine-phase process (planning through post-execution), delegation flow, boundary enforcement, escalation paths, execution reports, automatic report generation, commit points in execution flow |
 | [Context Management](compaction-strategy.md) | Scratch file pattern for phase outputs, user-prompted compaction at phase boundaries, context window management during orchestration |
 | [Build Pipeline and Versioning](build-pipeline.md) | Research and build phases, version tracking, `/lab` skill, cross-check verification |
 | [Deployment](deployment.md) | Symlink-based deployment, `install.sh`, hook deployment, development workflow |

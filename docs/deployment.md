@@ -97,4 +97,4 @@ See [commit-workflow.md](commit-workflow.md) Section 7 for hook composition desi
 
 The nefario orchestration skill is deployed separately from agents. It lives at `~/.claude/skills/nefario/` and is not managed by `install.sh`. The skill bridges nefario's planning intelligence to the main Claude Code session's execution capability.
 
-See [Orchestration and Delegation](orchestration.md) for details on the nefario skill's role, deployment, and five-phase planning process.
+See [Orchestration and Delegation](orchestration.md) for details on the nefario skill's role, deployment, and nine-phase orchestration process.

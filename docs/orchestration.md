@@ -2,7 +2,7 @@
 
 # Orchestration and Delegation
 
-This document covers how to use nefario for multi-agent tasks (Section 1), the architecture of the five-phase planning process (Section 2), the delegation model that routes work to specialists (Section 3), and the approval gate mechanism that keeps the user in control of high-impact decisions (Section 4).
+This document covers how to use nefario for multi-agent tasks (Section 1), the architecture of the nine-phase orchestration process (Section 2), the delegation model that routes work to specialists (Section 3), and the approval gate mechanism that keeps the user in control of high-impact decisions (Section 4).
 
 ---
 
@@ -61,9 +61,9 @@ workflows. Include interactive examples and troubleshooting tips.
 /nefario Fix the docs
 ```
 
-### What Happens: The Five Phases
+### What Happens: The Nine Phases
 
-Nefario uses a structured planning process that taps into specialist expertise before execution begins.
+Nefario uses a structured process that taps into specialist expertise before execution, then verifies quality after execution completes.
 
 **Phase 1 -- Meta-Planning.** Nefario reads your codebase and analyzes the task against its delegation table to figure out which specialists should contribute to planning. You see the list of specialists and what each will be asked. No approval needed -- this is informational.
 
@@ -73,7 +73,17 @@ Nefario uses a structured planning process that taps into specialist expertise b
 
 **Phase 3.5 -- Architecture Review.** Cross-cutting reviewers examine the synthesized plan before any code is written. Security and testing reviews are mandatory; others trigger conditionally based on plan scope. Reviewers return APPROVE, ADVISE (non-blocking warnings), or BLOCK (halts execution until resolved). This catches architectural issues that are cheap to fix in a plan and expensive to fix in code.
 
-**Phase 4 -- Execution.** After you approve the plan, the main session creates a team and spawns specialist agents with the prompts from the plan. Independent tasks run in parallel. Tasks with dependencies run in sequence. Approval gates pause execution at high-impact decision points (see Section 4). When all tasks finish, results are synthesized and presented to you.
+**Phase 4 -- Execution.** After you approve the plan, the main session creates a team and spawns specialist agents with the prompts from the plan. Independent tasks run in parallel. Tasks with dependencies run in sequence. Approval gates pause execution at high-impact decision points (see Section 4). When all tasks finish, post-execution verification begins.
+
+**Phase 5 -- Code Review (conditional).** Runs when Phase 4 produced or modified code files. Three parallel reviewers -- code-review-minion, lucy, and margo -- examine the code for quality, convention adherence, and over-engineering. BLOCK findings are routed back to the original producing agent for fix (capped at 2 rounds). Runs silently ("dark kitchen" pattern).
+
+**Phase 6 -- Test Execution (conditional).** Runs when tests exist in the project, even if Phase 5 was skipped. Discovers tests from project configuration, then executes in layers: lint/type-check, unit tests, integration/E2E. Failures are routed to the producing agent. Pre-existing failures are non-blocking. Runs silently.
+
+**Phase 7 -- Deployment (conditional).** Only runs when you explicitly request deployment at plan approval time. Runs existing deployment commands (e.g., `./install.sh`). Runs silently.
+
+**Phase 8 -- Documentation (conditional).** Runs when execution outcomes trigger documentation needs (new APIs, architecture changes, user-facing features). software-docs-minion and user-docs-minion work in parallel, with optional product-marketing-minion review for README and user-facing content. Runs silently.
+
+After all applicable post-execution phases complete, results are consolidated and presented to you in the wrap-up summary.
 
 ### Tips for Success
 
@@ -93,9 +103,9 @@ Custom agents invoked via `claude --agent` do not receive the Task tool from the
 
 ---
 
-## 2. Five-Phase Planning Architecture
+## 2. Nine-Phase Orchestration Architecture
 
-The orchestration system implements a five-phase planning process that separates planning intelligence from execution capability. Nefario provides the planning; the main Claude Code session provides the spawning.
+The orchestration system implements a nine-phase process that separates planning intelligence from execution capability, then verifies quality through automated post-execution phases. Nefario provides the planning; the main Claude Code session provides the spawning.
 
 ### Phase 1: Meta-Plan
 
@@ -182,6 +192,63 @@ After user approval, the main session executes the plan using batch-gated execut
 
 At wrap-up, any skipped gates are re-presented. A final report summarizes deliverables, verification results, known issues, and next steps.
 
+### Post-Execution Phases (5-8)
+
+Phases 5-8 run between execution completion and wrap-up using the **dark kitchen** pattern: they execute silently, writing all findings to scratch files. The user sees a single status line when verification starts and a consolidated summary in the wrap-up report. Only unresolvable BLOCKs (after 2 fix iterations) surface to the user.
+
+At plan approval, the user can opt out of post-execution phases with `approve --skip-post`, which skips Phases 5, 6, and 8 (Phase 7 is already opt-in).
+
+### Phase 5: Code Review
+
+Runs when Phase 4 produced or modified code files. Skipped if Phase 4 produced only documentation or configuration.
+
+Three reviewers run in parallel:
+
+- **code-review-minion** (sonnet): code quality, correctness, bug patterns, cross-agent integration, complexity, DRY, security implementation checks (hardcoded secrets, injection vectors, auth/authz flaws, crypto misuse, dependency CVEs).
+- **lucy** (opus): cross-repo consistency, convention adherence, CLAUDE.md compliance, intent drift.
+- **margo** (opus): over-engineering, unnecessary abstractions, dependency bloat, YAGNI.
+
+Verdict format reuses APPROVE/ADVISE/BLOCK with per-finding granularity:
+
+```
+VERDICT: APPROVE | ADVISE | BLOCK
+FINDINGS:
+- [BLOCK|ADVISE|NIT] <file>:<line-range> -- <description>
+  AGENT: <producing-agent>
+  FIX: <specific fix>
+```
+
+BLOCK findings are routed to the original producing agent for fix. Re-review covers only changed files. Iteration capped at 2 rounds, then escalate to user. Security-severity BLOCKs (injection, auth bypass, secret exposure, crypto failure) always surface to user before auto-fix proceeds.
+
+### Phase 6: Test Execution
+
+Runs after Phase 5. Even if Phase 5 was skipped, Phase 6 runs if tests exist in the project.
+
+Test discovery follows a 4-step project-aware sequence: check package.json / Makefile / pyproject.toml scripts, check CI config, scan for test files, check framework config. Execution is layered: lint/type-check first, then unit tests, then integration/E2E (skipped gracefully if prerequisites unavailable).
+
+Coverage assessment is qualitative and change-relative (no hard percentage threshold). Minimum bar: all tests pass, new code has at least one happy-path test, no critical path is test-free.
+
+Failure routing: infrastructure issues to test-minion, application logic failures to producing agent. Pre-existing failures are non-blocking via delta analysis against a baseline snapshot captured at Phase 4 start.
+
+Verdict: APPROVE/ADVISE/BLOCK, capped at 2 iteration rounds.
+
+### Phase 7: Deployment (Conditional)
+
+Runs only when the user explicitly requests deployment at plan approval time. Default: skip. Scope is limited to running existing deployment commands (e.g., `./install.sh`), not building deployment pipelines from scratch.
+
+Agent: iac-minion if deployment is non-trivial. Verdict: pass/fail -- if the deployment command fails, BLOCK and escalate.
+
+### Phase 8: Documentation (Conditional)
+
+Runs when nefario's documentation checklist has items. The checklist is generated at the Phase 7-to-8 boundary based on execution outcomes (e.g., new API endpoints trigger API reference docs, architecture changes trigger C4 diagram updates, user-facing features trigger how-to guides).
+
+Two sub-steps:
+
+- **8a** (parallel): software-docs-minion (architecture docs, ADRs, API reference, README technical sections) + user-docs-minion (tutorials, guides, release notes, in-app help).
+- **8b** (sequential after 8a): product-marketing-minion reviews README and user-facing docs. Conditional -- only when the checklist includes README or user-facing documentation.
+
+Non-blocking by default. Exception: new project (git init) requires README before PR.
+
 ### Delegation Flow
 
 ```mermaid
@@ -252,9 +319,51 @@ sequenceDiagram
         end
     end
 
+    Note over Main,Exec: Post-Execution (dark kitchen)
+
+    opt Phase 5: Code Review (code files produced)
+        par Parallel Review
+            Main->>Rev: code-review-minion + lucy + margo
+            Rev->>Main: Verdicts + findings
+        end
+        alt Any BLOCK finding
+            Main->>Exec: Route fix to producing agent
+            Exec->>Main: Fix applied
+            Main->>Rev: Re-review changed files
+            Rev->>Main: Verdict
+            alt Still BLOCK after 2 rounds
+                Main->>User: Escalate unresolvable finding
+            end
+        end
+    end
+
+    opt Phase 6: Test Execution (tests exist)
+        Main->>Main: Discover tests, run layered execution
+        alt New test failures
+            Main->>Exec: Route failure to producing agent
+            Exec->>Main: Fix applied
+            Main->>Main: Re-run failed tests
+        end
+    end
+
+    opt Phase 7: Deployment (user-requested)
+        Main->>Main: Run deployment commands
+    end
+
+    opt Phase 8: Documentation (checklist has items)
+        par 8a: Parallel Documentation
+            Main->>Exec: software-docs-minion + user-docs-minion
+            Exec->>Main: Documentation deliverables
+        end
+        opt 8b: README or user-facing docs produced
+            Main->>Exec: product-marketing-minion review
+            Exec->>Main: Review feedback
+        end
+    end
+
     Note over Main,User: Wrap-up
     Main->>Main: Re-present skipped gates
-    Main->>User: Final report + open items
+    Main->>User: Final report + verification summary + open items
 ```
 
 ---
