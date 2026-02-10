@@ -94,6 +94,13 @@ install_agents() {
     installed_count=$((installed_count + 1))
   fi
 
+  # Install despicable-prompter skill
+  if [[ -d "${SCRIPT_DIR}/skills/despicable-prompter" ]]; then
+    ln -sf "${SCRIPT_DIR}/skills/despicable-prompter" "${SKILLS_DIR}/despicable-prompter"
+    print_msg "$COLOR_GREEN" "  ✓ despicable-prompter skill"
+    installed_count=$((installed_count + 1))
+  fi
+
   print_msg "$COLOR_GREEN" "\nInstalled ${installed_count} agents and skills successfully."
 }
 
@@ -179,6 +186,17 @@ uninstall_agents() {
     fi
   fi
 
+  # Remove despicable-prompter skill
+  if [[ -L "${SKILLS_DIR}/despicable-prompter" ]]; then
+    local target
+    target=$(readlink "${SKILLS_DIR}/despicable-prompter")
+    if [[ "$target" == "${SCRIPT_DIR}/skills/despicable-prompter" ]]; then
+      rm "${SKILLS_DIR}/despicable-prompter"
+      print_msg "$COLOR_YELLOW" "  ✗ despicable-prompter skill"
+      removed_count=$((removed_count + 1))
+    fi
+  fi
+
   if [[ $removed_count -eq 0 ]]; then
     print_msg "$COLOR_YELLOW" "\nNo agents or skills were installed (nothing to remove)."
   else
@@ -201,8 +219,8 @@ main() {
       print_msg "$COLOR_RED" "Unknown command: $action"
       echo ""
       echo "Usage:"
-      echo "  $0 install   — create symlinks to ~/.claude/agents/ (default)"
-      echo "  $0 uninstall — remove symlinks from ~/.claude/agents/"
+      echo "  $0 install   — create symlinks to ~/.claude/agents/ and ~/.claude/skills/ (default)"
+      echo "  $0 uninstall — remove symlinks from ~/.claude/agents/ and ~/.claude/skills/"
       exit 1
       ;;
   esac
