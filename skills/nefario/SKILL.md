@@ -137,7 +137,7 @@ alphanumeric and hyphens only). Create the scratch directory:
 
 Capture the verbatim user task description (the text that will be inserted at
 `<insert the user's task description>`) and retain it in session context as
-`original-prompt`. This is the text that appears in the report's Task section.
+`original-prompt`. This is the text that appears in the report's Original Prompt section.
 Before including in the report, sanitize: remove any secrets, tokens, API keys,
 or credentials. Replace with `[REDACTED]`.
 

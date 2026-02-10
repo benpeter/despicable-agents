@@ -365,6 +365,7 @@ When generating a report:
 2. Generate filename slug (kebab-case, strip articles, max 40 chars)
 3. Capture current local time as HHMMSS for filename
 4. Sanitize verbatim prompt (redact secrets/tokens/keys)
+4a. Write sanitized prompt to scratch directory as prompt.md
 5. Write YAML frontmatter with all 10 fields (version: 2)
 6. Write Summary
 7. Write Original Prompt (verbatim prompt, inline if <20 lines, collapsible if >=20 lines)
