@@ -33,6 +33,7 @@ The orchestrator MUST minimize chat output. The user should only see:
 - PR creation prompt
 - Final summary (report path, PR URL, branch name)
 - Warnings and errors
+- Compaction checkpoints (at phase boundaries)
 
 **NEVER SHOW** (suppress entirely):
 - Phase transition announcements ("Starting Phase 2...")
@@ -50,7 +51,57 @@ The orchestrator MUST minimize chat output. The user should only see:
 Heartbeat: for phases lasting more than 60 seconds with no output, print a
 single status line (e.g., "Waiting for 3 agents...") to confirm progress.
 
+## Scratch File Convention
+
+Phase outputs are written to scratch files to prevent context accumulation.
+The main session retains compact summaries; full outputs live on disk.
+
+### Directory Structure
+
+Each orchestration session uses a subdirectory under `nefario/scratch/`:
+
+```
+nefario/scratch/{slug}/
+  phase1-metaplan.md
+  phase2-{agent-name}.md        # one per specialist
+  phase3-synthesis.md
+  phase3.5-{reviewer-name}.md   # one per reviewer (BLOCK/ADVISE only)
+```
+
+The `{slug}` reuses the report slug generated in Phase 1 (kebab-case, lowercase,
+max 40 chars, strip articles, alphanumeric and hyphens only). Create the directory
+with `mkdir -p` at the start of Phase 1.
+
+### Inline Summary Template
+
+After writing a specialist's full output to a scratch file, record a compact
+summary in the session context:
+
+```
+## Summary: {agent-name}
+Recommendation: {1-2 sentences}
+Tasks: {N} -- {one-line each, semicolons}
+Risks: {critical only, 1-2 bullets}
+Conflicts: {cross-domain conflicts, or "none"}
+Full output: nefario/scratch/{slug}/phase2-{agent-name}.md
+```
+
+Each summary: ~80-120 tokens (versus 500-2000+ for full contributions).
+
+### Lifecycle
+
+- **Creation**: `mkdir -p nefario/scratch/{slug}/` at Phase 1 start.
+- **Overwrites**: If the same slug directory exists, overwrite silently (retry).
+- **Cleanup**: Never auto-delete. Scratch files persist for debugging.
+  Manual cleanup: `rm -rf nefario/scratch/*/`
+- **Git**: `nefario/scratch/` is gitignored (except `.gitkeep`).
+
 ## Phase 1: Meta-Plan
+
+**Before spawning nefario**: Generate the session slug from the task description
+(same rules as report slug: kebab-case, lowercase, max 40 chars, strip articles,
+alphanumeric and hyphens only). Create the scratch directory:
+`mkdir -p nefario/scratch/{slug}/`.
 
 Spawn nefario as a planning subagent to analyze the task and determine
 which specialists should be consulted for planning.
@@ -80,6 +131,7 @@ Task:
     4. For each specialist, write a specific planning question that
        draws on their unique expertise.
     5. Return the meta-plan in the structured format.
+    6. Write your complete meta-plan to `nefario/scratch/{slug}/phase1-metaplan.md`
 ```
 
 Nefario will return a meta-plan listing which specialists to consult
@@ -137,7 +189,13 @@ Task:
     ### Additional Agents Needed
     <any specialists not yet involved who should be, and why>
     (or "None" if the current team is sufficient)
+    6. Write your complete contribution to `nefario/scratch/{slug}/phase2-{your-name}.md`
 ```
+
+**After each specialist returns**: Write their full output to the scratch file
+(if the specialist did not already do so). Record an inline summary using the
+template from the Scratch File Convention section. Pass only the summary and
+file path forward -- do not paste the full contribution into later prompts.
 
 **Important**: If any specialist recommends additional agents, spawn those
 agents for planning too (a second round of Phase 2 consultations), then
@@ -163,7 +221,12 @@ Task:
     <insert the user's task>
 
     ## Specialist Contributions
-    <paste ALL specialist plan contributions from Phase 2>
+
+    Read the following scratch files for full specialist contributions:
+    <list each file path: nefario/scratch/{slug}/phase2-{agent}.md>
+
+    ## Key consensus across specialists:
+    <paste the inline summaries collected during Phase 2>
 
     ## Instructions
     1. Review all specialist contributions
@@ -171,10 +234,33 @@ Task:
     3. Incorporate risks and concerns into the plan
     4. Create the final execution plan in structured format
     5. Ensure every task has a complete, self-contained prompt
+    6. Write your complete delegation plan to `nefario/scratch/{slug}/phase3-synthesis.md`
 ```
 
-Nefario will return a structured delegation plan. **Proceed to Phase 3.5
+Nefario will return a structured delegation plan. **After synthesis returns**:
+Write the full execution plan to `nefario/scratch/{slug}/phase3-synthesis.md`
+(if nefario did not already do so). Record a compact summary (task count, gate
+count, execution order) in session context. **Proceed to Phase 3.5
 (Architecture Review)** before presenting the plan to the user.
+
+### Compaction Checkpoint
+
+After writing the synthesis to the scratch file, present a compaction prompt:
+
+```
+---
+COMPACT: Phase 3 complete. Specialist details are now in the synthesis.
+
+Run: /compact focus="Preserve: current phase (3.5 review next), synthesized execution plan, task list, approval gates, team name, branch name, scratch directory path. Discard: individual specialist contributions from Phase 2."
+
+Skipping is fine if context is short. Risk: auto-compaction in later phases may lose orchestration state.
+---
+```
+
+If the user runs `/compact`, wait for them to say "continue" then proceed.
+If the user types anything else (or says "skip"/"continue"), print:
+`Continuing without compaction. Auto-compaction may interrupt later phases.`
+Then proceed to Phase 3.5. Do NOT re-prompt at subsequent boundaries.
 
 ## Phase 3.5: Architecture Review
 
@@ -207,7 +293,7 @@ Task:
     Your role: identify gaps, risks, or concerns from your domain.
 
     ## Delegation Plan
-    <paste the full plan from Phase 3>
+    Read the full plan from: nefario/scratch/{slug}/phase3-synthesis.md
 
     ## Your Review Focus
     <domain-specific: security gaps / test coverage / observability gaps / etc.>
@@ -229,6 +315,27 @@ Task:
   to revise the plan. Then re-submit the revised plan to the blocking
   reviewer only. Cap at 2 revision rounds. If still blocked after 2 rounds,
   present the impasse to the user for decision.
+
+**After all reviews complete**: Write any BLOCK or ADVISE verdicts to
+`nefario/scratch/{slug}/phase3.5-{reviewer}.md`. APPROVE verdicts do not
+need scratch files.
+
+### Compaction Checkpoint
+
+After processing all review verdicts, present a compaction prompt:
+
+```
+---
+COMPACT: Phase 3.5 complete. Review verdicts are folded into the plan.
+
+Run: /compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, task list with dependencies, approval gates, team name, branch name, scratch directory path. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."
+
+Skipping is fine if context is short. Risk: auto-compaction during execution may lose task/agent tracking.
+---
+```
+
+Same response handling: if user runs `/compact`, wait for "continue". If
+anything else, print the continuation message and proceed. Do NOT re-prompt.
 
 ## Phase 4: Execution
 
@@ -401,6 +508,12 @@ the process, decisions, and outcomes. The calling session (main Claude Code
 session executing this skill) generates the report, not nefario as a subagent.
 
 ### Data Accumulation
+
+Phase data is tracked in two places:
+- **Scratch files** (on disk): Full phase outputs for reference and recovery.
+  See Scratch File Convention above.
+- **Session context** (in memory): Compact summaries for report generation.
+  The items below describe what to retain in session context at each boundary.
 
 Track data at phase boundaries:
 
