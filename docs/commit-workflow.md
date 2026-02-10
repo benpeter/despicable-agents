@@ -2,7 +2,7 @@
 
 # Commit Workflow and Branching Strategy
 
-This document defines the commit interaction protocol for Claude Code sessions: how work is isolated on feature branches, when commit checkpoints are presented, and how they integrate with existing orchestration flows. The design applies to both single-agent sessions and nefario-orchestrated multi-agent sessions.
+This document defines the commit protocol for Claude Code sessions: how work is isolated on feature branches, when auto-commits happen, and how they integrate with existing orchestration flows. The design applies to both single-agent sessions and nefario-orchestrated multi-agent sessions.
 
 ---
 
@@ -10,7 +10,13 @@ This document defines the commit interaction protocol for Claude Code sessions: 
 
 ### Branch Creation
 
-At the start of a session that will modify files, create a feature branch from the current HEAD. Branch creation is the first mutating action -- it happens before any file edits.
+At the start of a session that will modify files, create a feature branch from `main`. Branch creation is the first mutating action -- it happens before any file edits.
+
+**Pre-flight checks (before branch creation):**
+
+1. Verify the working tree is clean (`git status --porcelain`). If dirty: warn and stop (fail-closed). The user must stash or commit changes manually.
+2. Pull latest main: `git pull --rebase`. If the pull fails: warn and stop.
+3. Create the feature branch from the now-up-to-date main.
 
 **Branch naming conventions:**
 
@@ -24,12 +30,11 @@ The slug is derived from the task description: lowercase, kebab-case, max 40 cha
 **Branch creation rules:**
 
 1. If already on a non-main branch (e.g., the user manually created a branch), use it. Do not create a nested branch.
-2. If on `main` or `master`, create the feature branch from HEAD.
-3. If the working tree has uncommitted changes when the session starts, warn the user before branching: `"Working tree has uncommitted changes. Create branch anyway? (Y/n)"`
+2. If on `main` or `master`, run pre-flight checks and create the feature branch.
 
 ### PR Creation at Wrap-Up
 
-At session wrap-up (after the final commit checkpoint), offer to create a pull request:
+At session wrap-up (after the final auto-commit), offer to create a pull request:
 
 ```
 PR: "Build MCP server with OAuth" (Y/n)
@@ -42,6 +47,11 @@ If the user approves:
 3. The PR body is auto-generated from gate summaries (orchestrated) or the agent's completion summary (single-agent).
 4. Display the PR URL.
 
+After PR creation (or if declined):
+
+1. Return to main: `git checkout main && git pull --rebase`.
+2. Include the branch name in the final summary so the user can return to it if needed.
+
 **Graceful degradation:** If `gh` CLI is not available or not authenticated, skip PR creation and print: `"gh CLI not available. Push your branch and create a PR manually: git push -u origin <branch-name>"`
 
 ### Branching Sequence (Orchestrated Session)
@@ -53,8 +63,10 @@ sequenceDiagram
     participant Git
 
     Note over Main: Session Start
-    Main->>Git: git branch --show-current
-    Git-->>Main: "main"
+    Main->>Git: git status --porcelain
+    Git-->>Main: (clean)
+    Main->>Git: git pull --rebase
+    Git-->>Main: Already up to date
     Main->>Git: git checkout -b nefario/<slug>
     Git-->>Main: Branch created
 
@@ -64,15 +76,15 @@ sequenceDiagram
     loop For each approval gate
         Main->>User: Gate decision brief
         User-->>Main: approve
-        Main->>User: Commit checkpoint
-        User-->>Main: Y
+        Note over Main: Auto-commit (silent)
         Main->>Git: git add <files> && git commit
+        Main-->>User: Committed N files: path1, path2, ...
     end
 
     Note over Main: Wrap-Up
-    Main->>User: Final commit checkpoint (remaining changes)
-    User-->>Main: Y
+    Note over Main: Auto-commit remaining changes (silent)
     Main->>Git: git add <files> && git commit
+    Main-->>User: Committed N files: path1, path2, ...
 
     Main->>User: PR: "<title>" (Y/n)
     User-->>Main: Y
@@ -80,35 +92,33 @@ sequenceDiagram
     Main->>Git: gh pr create
     Git-->>Main: PR URL
     Main->>User: PR created: <URL>
+    Main->>Git: git checkout main && git pull --rebase
 ```
 
 ---
 
-## 2. Commit Checkpoint Format
+## 2. Auto-Commit Behavior
 
-Commit checkpoints are compact, single-interaction prompts. They present changed files and a conventional commit message, defaulting to "yes."
+After each gate approval and at wrap-up, changes are committed automatically without user interaction.
 
-### Format
+### Flow
+
+1. Read the change ledger (see Section 6) for files modified since the last commit.
+2. Filter entries against the sensitive file patterns (see Section 8).
+3. Stage and commit silently using a conventional commit message with a Co-Authored-By trailer.
+4. Print one informational line: `Committed N files: path1, path2, ...`
+5. If no changes since the last commit: skip silently.
+6. If the commit fails: print a warning and continue execution.
+
+### Informational Output
+
+After each auto-commit, a single line is printed to keep the user informed without requiring interaction:
 
 ```
-Commit: "feat(oauth): add device flow token exchange"
-
-  - src/auth/device-flow.ts
-  - src/auth/token-store.ts
-  - tests/auth/device-flow.test.ts
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-(Y/n)
+Committed 3 files: src/auth/device-flow.ts, src/auth/token-store.ts, tests/auth/device-flow.test.ts
 ```
 
-### Rules
-
-- **File list**: Show up to 10 changed files as a bullet list. If more than 10, show the first 9 and `+ N more`.
-- **Commit message**: Follows the project's conventional commit format (see Section 5).
-- **Co-Authored-By trailer**: Always included in the proposed message. Uses `Claude <noreply@anthropic.com>`.
-- **Default-yes**: Pressing Enter (empty response) is treated as "Y."
-- **Rejection**: If the user says "n", changes remain staged but uncommitted. The user can amend, rewrite the message, or commit manually later.
-- **No interactive editing**: The checkpoint does not open an editor. If the user wants to edit the message, they reject and commit manually.
+If more than 10 files, show the first 9 and `+ N more`.
 
 ---
 
@@ -130,83 +140,23 @@ A Stop hook detects uncommitted changes when the agent finishes and presents a c
 
 ### Orchestrated Sessions
 
-Commit checkpoints are co-located with approval gates. They appear immediately after gate approval, so the user commits the work that was just approved.
+Auto-commits are co-located with gate approvals. They happen silently after each gate is approved and once more at wrap-up.
 
 **Flow:**
 
 1. Approval gate is presented and approved by the user.
-2. Immediately after approval, present a commit checkpoint for the files changed since the last commit.
-3. One additional commit checkpoint at wrap-up for any remaining uncommitted work.
-4. PR creation offered at wrap-up (after the final commit).
+2. Auto-commit happens silently (informational line only).
+3. One auto-commit at wrap-up for remaining changes.
+4. PR creation offered at wrap-up.
+5. Return to main after PR creation (or decline).
 
-**Why co-locate with gates?** Gates are already interaction boundaries where the user pauses to review. Adding a commit prompt at this point is a natural extension rather than a separate interruption. The user is already in "review and decide" mode.
+Auto-commits are co-located with gate approvals because each gate represents a semantic unit of reviewed work.
 
 ---
 
 ## 4. Anti-Fatigue Rules
 
-Commit prompts must not create approval fatigue. The following rules limit prompt frequency and provide escape hatches.
-
-### Commit Budget
-
-```
-commit_budget = gate_budget + 1
-```
-
-For orchestrated sessions, the gate budget is 3-5 per plan (from Decision 11). The commit budget is therefore 4-6: one per gate plus one at wrap-up. This prevents commit prompts from exceeding the established interaction budget.
-
-For single-agent sessions, the commit budget is 1 (the wrap-up commit). Mid-session commits are not prompted.
-
-### The `defer-all` Escape Hatch
-
-At any commit checkpoint, the user can respond `defer-all` instead of "Y" or "n":
-
-```
-Commit: "feat(oauth): add device flow token exchange"
-
-  - src/auth/device-flow.ts
-  - src/auth/token-store.ts
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-(Y/n) defer-all
-```
-
-**Effect:** All subsequent commit prompts are suppressed until wrap-up. At wrap-up, all deferred changes are presented as a single batch commit:
-
-```
-Commit (deferred batch): "feat: build MCP server with OAuth support"
-
-  - src/auth/device-flow.ts
-  - src/auth/token-store.ts
-  - src/mcp/server.ts
-  - src/mcp/tools/github.ts
-  - tests/auth/device-flow.test.ts
-  - tests/mcp/server.test.ts
-  + 3 more
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-(Y/n)
-```
-
-The deferred batch uses a higher-level commit message summarizing the overall work rather than individual gate-level messages.
-
-### Auto-Defer for Trivial Changes
-
-If all of the following are true, the commit checkpoint is auto-deferred (not presented):
-
-- Only `.md` files were changed.
-- Total diff is fewer than 5 lines.
-
-Auto-deferred changes are included in the wrap-up batch. This prevents commit prompts for minor documentation fixes during an orchestration.
-
-### Deferred Recovery
-
-At wrap-up, deferred commits (from `defer-all` or auto-defer) are consolidated:
-
-1. All deferred files are collected from the change ledger.
-2. A single batch commit message is proposed.
-3. The user approves or rejects the batch.
-4. If rejected, changes remain uncommitted on the feature branch.
+Auto-commits require no user interaction, so anti-fatigue measures for commit prompts are not needed. Approval gate anti-fatigue rules (budget, calibration) are documented in the orchestration skill (SKILL.md).
 
 ---
 
@@ -254,7 +204,7 @@ The scope in orchestrated sessions is derived from the agent or domain that prod
 
 ## 6. File Change Tracking
 
-A session-scoped change ledger tracks which files were modified during the session. The commit checkpoint reads this ledger to determine what to stage.
+A session-scoped change ledger tracks which files were modified during the session. The auto-commit reads this ledger to determine what to stage.
 
 ### Ledger Interface
 
@@ -271,7 +221,7 @@ The ledger is a plain text file, one absolute file path per line. Located at a s
 | Session start | Delete any existing ledger file for this session. Create empty. |
 | PostToolUse (Write) | Append the written file path to the ledger. |
 | PostToolUse (Edit) | Append the edited file path to the ledger. |
-| Commit checkpoint | Read the ledger. Deduplicate paths. Stage only ledger entries that have actual `git diff` changes. |
+| Auto-commit | Read the ledger. Deduplicate paths. Stage only ledger entries that have actual `git diff` changes. |
 | After commit | Remove committed paths from the ledger (or clear if all were committed). |
 | Session end | Delete the ledger file. |
 
@@ -299,13 +249,13 @@ exit 0
 
 ### Why a Ledger Instead of `git status`?
 
-`git status` shows all uncommitted changes, including those from before the session or from manual edits. The ledger tracks only changes made by this Claude session, preventing the commit checkpoint from proposing to commit unrelated work.
+`git status` shows all uncommitted changes, including those from before the session or from manual edits. The ledger tracks only changes made by this Claude session, preventing the auto-commit from proposing to commit unrelated work.
 
 ---
 
 ## 7. Hook Composition
 
-The commit workflow uses a Stop hook for commit checkpoints. Report generation is handled by the SKILL.md wrap-up instructions, not by a hook.
+The commit workflow uses a Stop hook for single-agent commit checkpoints. In orchestrated sessions, auto-commits are driven by SKILL.md instructions rather than hooks. Report generation is handled by the SKILL.md wrap-up instructions, not by a hook.
 
 ### Execution Order
 
@@ -413,10 +363,10 @@ Sensitive file checking is fail-closed: if the pattern file cannot be read, refu
 3. Filter ledger against sensitive patterns
 4. Verify remaining files have actual git diff changes
 5. Stage filtered files
-6. Present commit checkpoint
+6. Present commit checkpoint (single-agent) or auto-commit (orchestrated)
 ```
 
-If any check fails, the commit checkpoint is skipped with a clear warning explaining why.
+If any check fails, the commit is skipped with a clear warning explaining why.
 
 ---
 
@@ -424,11 +374,11 @@ If any check fails, the commit checkpoint is skipped with a clear warning explai
 
 ### No Changes Made
 
-If the session produces no file changes (e.g., research-only or read-only session), the ledger is empty and no commit checkpoint is presented.
+If the session produces no file changes (e.g., research-only or read-only session), the ledger is empty and no commit is made.
 
 ### All Changes Are Sensitive
 
-If every file in the ledger matches a sensitive pattern, no commit checkpoint is presented. The user is warned that all changes were sensitive and must be committed manually.
+If every file in the ledger matches a sensitive pattern, no commit is made. The user is warned that all changes were sensitive and must be committed manually.
 
 ### Branch Already Exists
 
@@ -444,7 +394,11 @@ If the repository is in detached HEAD state, warn the user and skip branch creat
 
 ### Conflict with Manual Commits
 
-If the user manually runs `git commit` during the session, the ledger may contain paths that are already committed. The commit checkpoint handles this by cross-referencing against `git diff` -- paths with no diff are silently excluded.
+If the user manually runs `git commit` during the session, the ledger may contain paths that are already committed. The auto-commit handles this by cross-referencing against `git diff` -- paths with no diff are silently excluded.
+
+### Dirty Working Tree at Session Start
+
+If the working tree has uncommitted changes when the orchestrator tries to pull and create a branch, the session warns and stops (fail-closed). The user must stash or commit changes manually.
 
 ---
 
@@ -453,9 +407,10 @@ If the user manually runs `git commit` during the session, the ledger may contai
 | Concern | Single-Agent | Orchestrated |
 |---------|-------------|--------------|
 | **Branch creation** | `agent/<name>/<slug>` at session start | `nefario/<slug>` at session start |
-| **Commit triggers** | Stop hook (1 checkpoint) | Co-located with gates + wrap-up |
-| **Commit budget** | 1 | gate_budget + 1 (typically 4-6) |
-| **Anti-fatigue** | N/A (single checkpoint) | defer-all, auto-defer for trivial |
+| **Commit triggers** | Stop hook (1 checkpoint) | Auto-commit after gate approval + wrap-up |
+| **Commit interaction** | Interactive (Y/n) | None (auto-commit, informational line only) |
+| **Anti-fatigue** | N/A (single checkpoint) | N/A (no interactive commit prompts) |
 | **PR creation** | Offered at wrap-up | Offered at wrap-up |
+| **Return to main** | After PR (or decline) | After PR (or decline) |
 | **File tracking** | PostToolUse ledger | PostToolUse ledger |
 | **Safety rails** | Sensitive patterns, branch protection | Sensitive patterns, branch protection |
