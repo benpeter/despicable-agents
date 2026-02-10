@@ -89,6 +89,8 @@ Run: /compact focus="Preserve: current phase, synthesized execution plan,
 task list, approval gates, team name, branch name, scratch directory path.
 Discard: individual specialist contributions from Phase 2."
 
+After compaction, type `continue` to resume at Phase 3.5 (Architecture Review).
+
 Skipping is fine if context is short. Risk: auto-compaction in later
 phases may lose orchestration state.
 ---
@@ -96,6 +98,7 @@ phases may lose orchestration state.
 
 Design rationale for the format:
 - **Pre-built command**: Copy-paste execution, zero cognitive effort.
+- **Resume instruction**: After the `/compact` command, a single line tells the user what to type (`continue`) and names the destination phase for post-compaction orientation.
 - **"Skipping is fine" framing**: User is in control; this is a suggestion, not a demand.
 - **Consequence stated**: The risk of skipping (uncontrolled auto-compaction later) is named once.
 
