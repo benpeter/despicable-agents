@@ -101,7 +101,11 @@ At wrap-up, any skipped gates are re-presented. A final report summarizes delive
 
 Phases 5-8 run between execution completion and wrap-up using the **dark kitchen** pattern: they execute silently, writing all findings to scratch files. The user sees a single status line when verification starts and a consolidated summary in the wrap-up report. Only unresolvable BLOCKs (after 2 fix iterations) surface to the user.
 
-At each approval gate, after selecting "Approve", a follow-up prompt offers the option to skip post-execution phases (Phases 5, 6, and 8). Phase 7 is already opt-in.
+At each approval gate, after selecting "Approve", a follow-up prompt offers
+granular control: "Run all" (default), "Skip docs" (Phase 8), "Skip tests"
+(Phase 6), or "Skip review" (Phase 5). Freeform flags (--skip-docs,
+--skip-tests, --skip-review, --skip-post) can skip multiple phases at once.
+Phase 7 (deployment) is opt-in.
 
 ### Phase 5: Code Review
 
@@ -371,7 +375,9 @@ Decision points use Claude Code's `AskUserQuestion` tool for structured selectio
 
 Gates present four options via structured prompt:
 
-- **Approve** -- Gate clears. A follow-up prompt offers "Run all" (post-execution phases) or "Skip post-execution". Downstream tasks are unblocked.
+- **Approve** -- Gate clears. A follow-up prompt offers "Run all" (default),
+  "Skip docs", "Skip tests", or "Skip review". Freeform flags for multi-skip.
+  Downstream tasks are unblocked.
 - **Request changes** -- A follow-up message asks what changes are needed. The producing agent revises. Capped at 2 revision iterations. If still unsatisfied, the current state is presented with a summary of what was requested, changed, and unresolved. The user then decides to approve as-is, reject, or take over manually.
 - **Reject** -- A confirmation prompt shows downstream impact: "Rejecting this will also drop Task X, Task Y which depend on it." After confirmation, the rejected task and all dependents are removed from the plan.
 - **Skip** -- Gate deferred. Execution continues with non-dependent tasks. Skipped gates are re-presented at wrap-up. If skipped gates still block downstream tasks at wrap-up, those tasks remain incomplete and are flagged in the final report.
