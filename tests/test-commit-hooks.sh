@@ -80,6 +80,7 @@ teardown() {
     rm -f "/tmp/claude-change-ledger-${SESSION_ID}.txt"
     rm -f "/tmp/claude-commit-defer-${SESSION_ID}.txt"
     rm -f "/tmp/claude-commit-declined-${SESSION_ID}"
+    rm -f "/tmp/claude-commit-orchestrated-${SESSION_ID}"
 }
 
 # --- JSON helpers ---
@@ -300,6 +301,33 @@ test_commit_defer_all_suppresses() {
 
     # Create defer marker
     echo "deferred" > "/tmp/claude-commit-defer-${SESSION_ID}.txt"
+
+    local input
+    input=$(commit_input)
+    local exit_code=0
+    echo "$input" | bash -c "cd '$TEMP_DIR/repo' && exec '$COMMIT_HOOK'" >/dev/null 2>&1 || exit_code=$?
+
+    if [[ $exit_code -eq 0 ]]; then
+        pass "$test_name"
+    else
+        fail "$test_name" "Expected exit 0, got $exit_code"
+    fi
+}
+
+test_commit_orchestrated_marker_suppresses() {
+    local test_name="Commit: orchestrated-session marker suppresses prompt (exit 0)"
+
+    # Create uncommitted changes
+    echo "content" > "$TEMP_DIR/repo/orchestrated.js"
+    git -C "$TEMP_DIR/repo" add orchestrated.js
+    git -C "$TEMP_DIR/repo" commit -m "add orchestrated" >/dev/null 2>&1
+    echo "modified" > "$TEMP_DIR/repo/orchestrated.js"
+
+    # Populate ledger
+    echo "$TEMP_DIR/repo/orchestrated.js" > "$(ledger_path)"
+
+    # Create orchestrated marker
+    touch "/tmp/claude-commit-orchestrated-${SESSION_ID}"
 
     local input
     input=$(commit_input)
@@ -592,6 +620,7 @@ main() {
     setup; test_commit_no_uncommitted_changes; teardown
     setup; test_commit_uncommitted_changes_block; teardown
     setup; test_commit_defer_all_suppresses; teardown
+    setup; test_commit_orchestrated_marker_suppresses; teardown
     setup; test_commit_auto_defer_trivial_md; teardown
     setup; test_commit_auto_defer_not_for_non_md; teardown
     setup; test_commit_branch_safety_main; teardown
