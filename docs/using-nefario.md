@@ -117,7 +117,7 @@ Nefario follows a structured process: plan with specialists, review the plan, ex
 
 **Phase 8 -- Documentation (conditional).** Runs when execution outcomes trigger documentation needs (new APIs, architecture changes, user-facing features). Technical and user-facing documentation are updated in parallel. You do not see this unless a problem surfaces.
 
-After all applicable phases complete, you receive a wrap-up summary with the results.
+After all applicable phases complete, you receive a wrap-up summary with the results. Git commit output is suppressed via `--quiet` flags -- only errors appear inline.
 
 ## Working Directory
 
@@ -149,7 +149,7 @@ Add the following to `~/.claude/settings.json`. If you already have a `statusLin
 {
   "statusLine": {
     "type": "command",
-    "command": "input=$(cat); dir=$(echo \"$input\" | jq -r '.workspace.current_dir // \"?\"'); model=$(echo \"$input\" | jq -r '.model.display_name // \"?\"'); used=$(echo \"$input\" | jq -r '.context_window.used_percentage // \"\"'); result=\"$dir | $model\"; if [ -n \"$used\" ]; then result=\"$result | Context: $(printf '%.1f' \"$used\")% used\"; fi; f=\"/tmp/nefario-status-${CLAUDE_SESSION_ID}\"; [ -f \"$f\" ] && ns=$(cat \"$f\" 2>/dev/null) && [ -n \"$ns\" ] && result=\"$result | $ns\"; echo \"$result\""
+    "command": "input=$(cat); dir=$(echo \"$input\" | jq -r '.workspace.current_dir // \"?\"'); model=$(echo \"$input\" | jq -r '.model.display_name // \"?\"'); used=$(echo \"$input\" | jq -r '.context_window.used_percentage // \"\"'); sid=$(echo \"$input\" | jq -r '.session_id // \"\"'); [ -n \"$sid\" ] && echo \"$sid\" > /tmp/claude-session-id; result=\"$dir | $model\"; if [ -n \"$used\" ]; then result=\"$result | Context: $(printf '%.0f' \"$used\")%\"; fi; f=\"/tmp/nefario-status-$sid\"; [ -n \"$sid\" ] && [ -f \"$f\" ] && ns=$(cat \"$f\" 2>/dev/null) && [ -n \"$ns\" ] && result=\"$result | $ns\"; echo \"$result\""
   }
 }
 ```
@@ -160,13 +160,13 @@ Restart Claude Code or start a new conversation to activate.
 
 When nefario is orchestrating, the status bar appends the task summary after the standard info:
 
-`~/my-project | Claude Opus 4 | Context: 12.3% used | Build MCP server with OAuth...`
+`~/my-project | Claude Opus 4 | Context: 12% | Build MCP server with OAuth...`
 
 When nefario is not running, the status bar shows just the directory, model, and context usage.
 
 ### How It Works
 
-When nefario starts orchestrating, it writes a one-line task summary to a temporary file (`/tmp/nefario-status-<session-id>`). The status line command checks for this file and appends its contents. When orchestration finishes, nefario removes the file. If you run multiple Claude Code windows simultaneously, each shows its own nefario task independently -- no conflicts.
+The status line command extracts `session_id` from the JSON that Claude Code pipes to it, and writes it to `/tmp/claude-session-id` so the nefario skill can discover it. When nefario starts orchestrating, it reads the session ID from that file and writes a one-line task summary to `/tmp/nefario-status-<session-id>`. The status line command checks for this file and appends its contents. When orchestration finishes, nefario removes the file.
 
 ---
 

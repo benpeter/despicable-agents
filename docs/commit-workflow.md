@@ -106,7 +106,7 @@ After each gate approval and at wrap-up, changes are committed automatically wit
 
 1. Read the change ledger (see Section 6) for files modified since the last commit.
 2. Filter entries against the sensitive file patterns (see Section 8).
-3. Stage and commit silently using a conventional commit message with a Co-Authored-By trailer.
+3. Stage and commit silently (`git commit --quiet`) using a conventional commit message with a Co-Authored-By trailer. The `--quiet` flag suppresses verbose output while preserving error output. Git push and pull also use `--quiet`.
 4. Print one informational line: `Committed N files: path1, path2, ...`
 5. If no changes since the last commit: skip silently.
 6. If the commit fails: print a warning and continue execution.
@@ -257,7 +257,7 @@ exit 0
 
 ## 7. Hook Composition
 
-The commit workflow uses a Stop hook for single-agent commit checkpoints. In orchestrated sessions, auto-commits are driven by SKILL.md instructions rather than hooks. Report generation is handled by the SKILL.md wrap-up instructions, not by a hook.
+The commit workflow uses a Stop hook for single-agent commit checkpoints. In orchestrated sessions, auto-commits are driven by SKILL.md instructions rather than hooks. SKILL.md instructions specify `--quiet` flags on `git commit`, `git push`, and `git pull` to suppress verbose output during orchestration. Report generation is handled by the SKILL.md wrap-up instructions, not by a hook.
 
 During nefario-orchestrated sessions, the Stop hook is suppressed via a session-scoped marker file (`/tmp/claude-commit-orchestrated-<session-id>`). The marker is created at the start of Phase 4 (execution) and removed at wrap-up. When the marker exists, the hook exits 0 immediately, producing no output. This prevents the hook's commit checkpoint from conflicting with the SKILL.md-driven auto-commit flow.
 

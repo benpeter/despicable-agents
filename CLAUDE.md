@@ -44,6 +44,24 @@ Key principles that apply to all work here:
   Don't default to React, Vue, Tailwind CSS, jQuery, etc. just because they're popular.
   Always ask: "What does this dependency give me that I can't do simply without it?"
 
+### Session Output Discipline
+
+During nefario-orchestrated sessions, minimize tool output noise:
+
+- **Git commands**: Use `--quiet` on `commit`, `push`, and `pull`. Do not use `--no-verify`.
+- **Bash commands** producing expected verbose output: When the output is not
+  needed for decision-making, pipe through `| tail -2` on success (use
+  `set -o pipefail` to preserve exit codes). Show last 10 lines on error
+  for debugging context.
+- **Read tool**: Use `offset` and `limit` parameters to read only what is needed.
+  Do not read entire large files when a section suffices.
+- **Write/Edit tools**: Output is already concise. No additional truncation needed.
+
+These conventions apply only during orchestrated sessions (invoked via `/nefario`).
+Single-agent sessions and subagents are not affected.
+See `skills/nefario/SKILL.md` Communication Protocol for the full orchestration
+output specification.
+
 ## Versioning
 
 Each agent spec in `the-plan.md` has a `spec-version`. Each built `AGENT.md`
