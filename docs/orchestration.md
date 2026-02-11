@@ -513,7 +513,7 @@ If already on a non-main branch (user-created), the existing branch is used. If 
 
 ### Commit Checkpoints and Approval Gates
 
-In orchestrated sessions, commit checkpoints are co-located with approval gates. After the user approves a gate, a commit checkpoint immediately follows, proposing to commit the files changed since the last commit. This reuses the existing "review and decide" pause rather than creating a separate interaction.
+In orchestrated sessions, commit checkpoints are co-located with approval gates. After the user approves a gate, a commit checkpoint immediately follows, proposing to commit the files changed since the last commit. Auto-commits use `git commit --quiet` to keep the approval gate flow clean; only errors surface inline. This reuses the existing "review and decide" pause rather than creating a separate interaction.
 
 ```
 [Gate approved] --> [Commit checkpoint] --> [Next batch executes]

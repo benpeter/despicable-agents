@@ -117,7 +117,7 @@ Nefario follows a structured process: plan with specialists, review the plan, ex
 
 **Phase 8 -- Documentation (conditional).** Runs when execution outcomes trigger documentation needs (new APIs, architecture changes, user-facing features). Technical and user-facing documentation are updated in parallel. You do not see this unless a problem surfaces.
 
-After all applicable phases complete, you receive a wrap-up summary with the results.
+After all applicable phases complete, you receive a wrap-up summary with the results. Git commit output is suppressed via `--quiet` flags -- only errors appear inline.
 
 ## Working Directory
 
@@ -166,7 +166,7 @@ When nefario is not running, the status bar shows just the directory, model, and
 
 ### How It Works
 
-When nefario starts orchestrating, it writes a one-line task summary to a temporary file (`/tmp/nefario-status-<session-id>`). The status line command checks for this file and appends its contents. When orchestration finishes, nefario removes the file. If you run multiple Claude Code windows simultaneously, each shows its own nefario task independently -- no conflicts.
+The status line command extracts `session_id` from the JSON that Claude Code pipes to it, and writes it to `/tmp/claude-session-id` so the nefario skill can discover it. When nefario starts orchestrating, it reads the session ID from that file and writes a one-line task summary to `/tmp/nefario-status-<session-id>`. The status line command checks for this file and appends its contents. When orchestration finishes, nefario removes the file.
 
 ---
 

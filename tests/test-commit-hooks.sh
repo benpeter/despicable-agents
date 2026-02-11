@@ -590,6 +590,130 @@ test_integration_full_flow_with_defer() {
     fi
 }
 
+# --- Noise Reduction Tests ---
+
+test_quiet_commit_suppresses_output() {
+    local test_name="Noise: git commit --quiet suppresses output on success"
+
+    # Create and stage a file change
+    echo "hello" > "$TEMP_DIR/repo/greet.js"
+    git -C "$TEMP_DIR/repo" add greet.js
+
+    local exit_code=0
+    local stdout
+    stdout=$(git -C "$TEMP_DIR/repo" commit --quiet -m "add greet" 2>/dev/null) || exit_code=$?
+
+    if [[ $exit_code -ne 0 ]]; then
+        fail "$test_name" "Expected exit 0, got $exit_code"
+        return
+    fi
+
+    if [[ -n "$stdout" ]]; then
+        fail "$test_name" "Expected empty stdout, got: $stdout"
+        return
+    fi
+
+    # Verify the commit actually exists
+    local log_line
+    log_line=$(git -C "$TEMP_DIR/repo" log --oneline -1)
+    if echo "$log_line" | grep -q "add greet"; then
+        pass "$test_name"
+    else
+        fail "$test_name" "Commit not found in git log"
+    fi
+}
+
+test_quiet_commit_shows_hook_errors() {
+    local test_name="Noise: git commit --quiet still shows hook errors on failure"
+
+    # Create and stage a file change
+    echo "data" > "$TEMP_DIR/repo/data.js"
+    git -C "$TEMP_DIR/repo" add data.js
+
+    # Install a pre-commit hook that fails with an error message
+    mkdir -p "$TEMP_DIR/repo/.git/hooks"
+    cat > "$TEMP_DIR/repo/.git/hooks/pre-commit" <<'HOOK'
+#!/usr/bin/env bash
+echo "HOOK_ERROR: pre-commit check failed" >&2
+exit 1
+HOOK
+    chmod +x "$TEMP_DIR/repo/.git/hooks/pre-commit"
+
+    local exit_code=0
+    local stderr
+    stderr=$(git -C "$TEMP_DIR/repo" commit --quiet -m "should fail" 2>&1 >/dev/null) || exit_code=$?
+
+    if [[ $exit_code -eq 0 ]]; then
+        fail "$test_name" "Expected non-zero exit, got 0"
+        return
+    fi
+
+    if echo "$stderr" | grep -q "HOOK_ERROR"; then
+        pass "$test_name"
+    else
+        fail "$test_name" "stderr missing hook error message, got: $stderr"
+    fi
+}
+
+test_quiet_commit_shows_native_errors() {
+    local test_name="Noise: git commit --quiet shows errors for no staged changes"
+
+    # Do NOT stage anything -- commit should fail
+    local exit_code=0
+    local output
+    output=$(git -C "$TEMP_DIR/repo" commit --quiet -m "empty" 2>&1) || exit_code=$?
+
+    if [[ $exit_code -eq 0 ]]; then
+        fail "$test_name" "Expected non-zero exit, got 0"
+        return
+    fi
+
+    if echo "$output" | grep -qi "nothing to commit\|no changes added\|nothing added"; then
+        pass "$test_name"
+    else
+        fail "$test_name" "Output missing git error message, got: $output"
+    fi
+}
+
+test_quiet_push_suppresses_output() {
+    local test_name="Noise: git push --quiet suppresses output on success"
+
+    # Create a bare remote repo
+    git init --bare "$TEMP_DIR/remote.git" >/dev/null 2>&1
+
+    # Add the bare repo as a remote and push initial branch
+    git -C "$TEMP_DIR/repo" remote add origin "$TEMP_DIR/remote.git"
+    git -C "$TEMP_DIR/repo" push --quiet -u origin main >/dev/null 2>&1
+
+    # Create a new commit to push
+    echo "feature" > "$TEMP_DIR/repo/feature.js"
+    git -C "$TEMP_DIR/repo" add feature.js
+    git -C "$TEMP_DIR/repo" commit --quiet -m "add feature" >/dev/null 2>&1
+
+    local exit_code=0
+    local stdout
+    stdout=$(git -C "$TEMP_DIR/repo" push --quiet 2>/dev/null) || exit_code=$?
+
+    if [[ $exit_code -ne 0 ]]; then
+        fail "$test_name" "Expected exit 0, got $exit_code"
+        return
+    fi
+
+    if [[ -n "$stdout" ]]; then
+        fail "$test_name" "Expected empty stdout, got: $stdout"
+        return
+    fi
+
+    # Verify the commit arrived at the remote
+    local remote_log
+    remote_log=$(git -C "$TEMP_DIR/remote.git" log --oneline -1)
+    if echo "$remote_log" | grep -q "add feature"; then
+        pass "$test_name"
+    else
+        fail "$test_name" "Push did not reach remote"
+    fi
+}
+
 # --- Main ---
 
 main() {
@@ -633,6 +757,14 @@ main() {
 
     setup; test_integration_full_flow; teardown
     setup; test_integration_full_flow_with_defer; teardown
+
+    echo ""
+    echo -e "${YELLOW}--- Noise Reduction Tests ---${NC}\n"
+
+    setup; test_quiet_commit_suppresses_output; teardown
+    setup; test_quiet_commit_shows_hook_errors; teardown
+    setup; test_quiet_commit_shows_native_errors; teardown
+    setup; test_quiet_push_suppresses_output; teardown
 
     # Report results
     echo ""

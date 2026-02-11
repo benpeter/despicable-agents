@@ -148,6 +148,7 @@ The orchestrator MUST minimize chat output. The user should only see:
 - Review verdicts (unless BLOCK)
 - Post-execution phase transitions ("Starting code review...", "Running tests...")
 - Post-execution reviewer spawning and auto-fix iterations
+- Verbose git command output (use `--quiet` flags on commit/push/pull)
 
 **CONDENSE** to a single line:
 - Meta-plan result: "Planning: consulting devx-minion, security-minion, ... | Scratch: <actual resolved path>"
@@ -282,8 +283,9 @@ Extract a status summary from the first line of the user's task description.
 Truncate to 48 characters; if truncated, append "..." (so "Nefario: " 9-char
 prefix + 48 + 3 = 60 chars max). Write the sentinel file:
 ```sh
-echo "$summary" > /tmp/nefario-status-${CLAUDE_SESSION_ID}
-chmod 600 /tmp/nefario-status-${CLAUDE_SESSION_ID}   # Status file: read from custom statusline scripts
+SID=$(cat /tmp/claude-session-id 2>/dev/null)
+echo "$summary" > /tmp/nefario-status-$SID
+chmod 600 /tmp/nefario-status-$SID   # Status file: read from custom statusline scripts
 ```
 Use this summary text in Task `description` fields and TaskCreate `activeForm`
 fields throughout the orchestration (see per-phase instructions below).
@@ -716,14 +718,14 @@ automatic branching and commits." Proceed directly to Setup.
    a. Check working tree: `git status --porcelain`
    b. If dirty, warn: "Working tree has uncommitted changes. Stash or commit
       before proceeding." and STOP.
-   c. Pull latest: `git pull --rebase`
+   c. Pull latest: `git pull --quiet --rebase`
    d. If pull fails, warn and STOP.
    e. Create feature branch: `git checkout -b nefario/<slug>` (reuse the slug
       generated in Phase 1).
 
 After branch resolution (whether creating a new branch or using an existing one),
 create the orchestrated-session marker to suppress commit hook noise:
-`touch /tmp/claude-commit-orchestrated-${CLAUDE_SESSION_ID}`
+`SID=$(cat /tmp/claude-session-id 2>/dev/null); touch /tmp/claude-commit-orchestrated-$SID`
 
 ### Setup
 
@@ -842,7 +844,7 @@ A batch contains all tasks that can run before the next gate.
    1. Identify files changed since the last commit (use the change ledger).
    2. Filter against sensitive patterns (existing safety rails apply).
    3. If no changes or all changes are sensitive, skip silently.
-   4. Stage and commit with conventional commit message:
+   4. Stage and commit (`git commit --quiet`) with conventional commit message:
       `<type>(<scope>): <summary>` with
       `Co-Authored-By: Claude <noreply@anthropic.com>`
    5. Print ONE informational line:
@@ -1084,9 +1086,10 @@ not part of the default flow.
    The "Skipped:" suffix tracks user-requested skips only. Phases skipped
    by existing conditionals (e.g., "no code files") are not listed.
 
-8. **Auto-commit remaining changes** — if in a git repo, silently commit any
-   uncommitted files from the change ledger before generating the report. Print
-   the informational commit line (`Committed N files: ...`). Skip if no git repo.
+8. **Auto-commit remaining changes** — if in a git repo, silently commit
+   (`git commit --quiet`) any uncommitted files from the change ledger before
+   generating the report. Print the informational commit line
+   (`Committed N files: ...`). Skip if no git repo.
 
 9. **Verify and report** — follow the wrap-up sequence documented in the
    "Report Generation" section below (review deliverables, write report,
@@ -1101,7 +1104,7 @@ not part of the default flow.
       1. label: "Create PR", description: "Push branch and open pull request on GitHub." (recommended)
       2. label: "Skip PR", description: "Keep branch local. Push later."
 
-    If "Create PR" is selected: `git push -u origin <branch>` then create the PR.
+    If "Create PR" is selected: `git push --quiet -u origin <branch>` then create the PR.
     Use the report body as the PR description. Write the stripped body to a
     temp file to avoid shell expansion issues:
     ```sh
@@ -1126,11 +1129,11 @@ not part of the default flow.
 11. **Return to default branch** — after PR creation (or if declined),
     if in a git repo:
     Remove the orchestrated-session marker and status sentinel:
-    `rm -f /tmp/claude-commit-orchestrated-${CLAUDE_SESSION_ID}`
-    `rm -f /tmp/nefario-status-${CLAUDE_SESSION_ID}`
+    `SID=$(cat /tmp/claude-session-id 2>/dev/null); rm -f /tmp/claude-commit-orchestrated-$SID`
+    `rm -f /tmp/nefario-status-$SID`
     Detect default branch:
     `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'`
-    (fall back to `main`). Then: `git checkout <default-branch> && git pull --rebase`.
+    (fall back to `main`). Then: `git checkout --quiet <default-branch> && git pull --quiet --rebase`.
     Include branch name in final summary.
     If not in a git repo, skip this step.
 
@@ -1274,7 +1277,7 @@ skip it, do not defer it, do not stop before it is written.
 8. Offer PR creation if on a feature branch (skip if no git repo)
 9. Return to default branch (if git repo): detect with
    `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'`
-   (fall back to `main`), then `git checkout <default-branch> && git pull --rebase`
+   (fall back to `main`), then `git checkout --quiet <default-branch> && git pull --quiet --rebase`
 10. Present report path, PR URL, branch name, and Verification summary to user
 11. Send shutdown_request to teammates
 12. TeamDelete
