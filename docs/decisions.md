@@ -275,6 +275,7 @@ These decisions were implemented in the nefario v1.4 update.
 | **Alternatives rejected** | (1) **Programmatic compaction**: Not possible -- Claude Code does not expose compaction as an API to agents or skills. (2) **Reliance on auto-compaction**: Proven unreliable for preserving structured orchestration state (task lists, phase tracking, agent assignments). Auto-compaction optimizes for conversation continuity, not orchestration recovery. (3) **Compaction between Phase 4 execution batches**: Rejected as too disruptive -- mid-execution compaction risks losing agent tracking and task state during the most critical phase. (4) **Full inline outputs with no scratch files**: The previous approach. Rejected because 6 specialists x 500-2000 tokens accumulates 3000-12000 tokens from Phase 2 alone, pushing context limits by Phase 4. |
 | **Rationale** | Context overflow during orchestration causes either truncated agent responses or auto-compaction that loses orchestration state. The scratch file pattern reduces Phase 2 context from ~6000-12000 tokens to ~600 tokens (10x reduction). Phase 3 synthesis and Phase 3.5 reviews read from files (tool calls are invisible to the main session's context window). Compaction checkpoints at information supersession boundaries (where earlier phase data is consumed by the next phase) allow safe context reclamation. The two checkpoints are capped to avoid prompt fatigue. |
 | **Consequences** | Session-specific scratch directories under `nefario/scratch/` (gitignored). Two user-facing compaction prompts per orchestration. SKILL.md grows by ~100 lines (scratch convention, compaction protocol). Phase 3 synthesis agent reads from files instead of receiving inline content. Design rationale: [compaction-strategy.md](compaction-strategy.md). |
+| **Note** | Scratch file path convention (`nefario/scratch/`) superseded by Decision 26 (2026-02-10). Compaction checkpoint design remains current. |
 
 ---
 
@@ -329,6 +330,21 @@ These decisions were made during the nefario v2.0 update, extending orchestratio
 | **Alternatives rejected** | (1) **Keep sequence numbers with locking**: rejected because POSIX shell lacks reliable file locking, and the glob-count-increment pattern has a TOCTOU race when multiple sessions run in parallel. (2) **UUID-based filenames**: rejected because UUIDs are not human-readable and do not sort chronologically. (3) **Migrate existing files to new format**: rejected because original creation timestamps are unavailable; fabricating them is worse than handling dual formats in the script. |
 | **Rationale** | Parallel nefario sessions (e.g., during team work or concurrent branches) can produce reports simultaneously. The old sequence-number scheme required reading existing files to determine the next number (TOCTOU race) and the index file was mutated in place (merge conflict on concurrent writes). Timestamps are globally unique without coordination. A generated index eliminates the mutable shared state entirely. |
 | **Consequences** | Report filenames use timestamps instead of sequence numbers. The `build-index.sh` script must handle both legacy (sequence) and new (time) frontmatter formats. Legacy files (11 existing reports) retain their original names and frontmatter. Decision 14's naming convention description is superseded by this decision. |
+
+---
+
+## Toolkit Portability (Decision 26)
+
+### Decision 26: Decouple Toolkit from Self-Referential Path Assumptions
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-02-10 |
+| **Choice** | Remove hardcoded paths that assume the toolkit operates on itself. Scratch files use `mktemp -d` in `$TMPDIR` with secure creation (`chmod 700`) and wrap-up cleanup. Report directory is detected CWD-relative (check `docs/nefario-reports/` then `docs/history/nefario-reports/`, default to creating `docs/history/nefario-reports/`). Git operations include greenfield guards (graceful skip when no git repo). Default branch is detected dynamically, not hardcoded to `main`. |
+| **Alternatives rejected** | (1) **Configuration file** (`.nefario.yml` or similar): rejected as YAGNI -- detection logic handles all known cases without user configuration. (2) **Mode flags** (`--self` vs `--external`): rejected because it leaks implementation detail to the user and creates a maintenance burden. (3) **Fixed paths** (`docs/history/nefario-reports/` always): rejected because it breaks portability for projects that use a different convention. (4) **Environment variable overrides** (`NEFARIO_REPORTS_DIR`): rejected as YAGNI -- no known user needs custom report paths. |
+| **Rationale** | The project assumed it would always operate on itself. As a globally-installed toolkit, it must operate on any project. Hardcoded paths to `nefario/scratch/`, `docs/history/nefario-reports/TEMPLATE.md`, and `main` branch created coupling that broke when invoked from other projects. Supersedes the scratch file portions of Decision 21. |
+| **Consequences** | Scratch files no longer live in the project tree (moved to `$TMPDIR`). `.gitignore` entries for `nefario/scratch/` removed. Report paths are resolved at runtime. Git operations are safe in repositories without a `main` branch or without git at all. `install.sh` now installs 2 skills (nefario + despicable-prompter). |
 
 ---
 
