@@ -4,6 +4,16 @@
 
 Agents are deployed to Claude Code via symlinks from the repository to `~/.claude/agents/`. Edits to agent files in the repository are immediately live -- no reinstall, restart, or copy step required.
 
+## Using the Toolkit
+
+`./install.sh` installs 27 agents to `~/.claude/agents/` and 2 skills (`/nefario`, `/despicable-prompter`) to `~/.claude/skills/`. After install, agents and skills are available in any Claude Code session.
+
+Hooks (`.claude/hooks/`) are project-local and are **not** installed globally. They apply only when Claude Code runs inside the despicable-agents repository. To use hooks in another project, copy the hook scripts and `.claude/settings.json` manually.
+
+## Development Workflow
+
+The following sections describe the development setup for contributors to despicable-agents itself.
+
 ## Symlink Deployment Model
 
 ```mermaid
@@ -93,8 +103,8 @@ Report generation is enforced by the nefario SKILL.md wrap-up instructions, not 
 
 See [commit-workflow.md](commit-workflow.md) Section 7 for hook composition design and [commit-workflow-security.md](commit-workflow-security.md) for security properties of hook scripts.
 
-## The Nefario Skill
+## Skills
 
-The nefario orchestration skill is deployed separately from agents. It lives at `~/.claude/skills/nefario/` and is not managed by `install.sh`. The skill bridges nefario's planning intelligence to the main Claude Code session's execution capability.
+The nefario orchestration skill and despicable-prompter briefing skill are deployed alongside agents by `install.sh`. They live at `~/.claude/skills/nefario/` and `~/.claude/skills/despicable-prompter/` respectively.
 
-See [Orchestration and Delegation](orchestration.md) for details on the nefario skill's role, deployment, and nine-phase orchestration process.
+See [Orchestration and Delegation](orchestration.md) for details on the nefario skill's role and nine-phase orchestration process.

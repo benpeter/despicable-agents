@@ -450,15 +450,14 @@ Every `/nefario` orchestration produces a decision log documenting the agents in
 
 ### Report Location and Naming
 
-Reports are written to `docs/history/nefario-reports/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`:
+Reports are written to `<report-dir>/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`:
 
+- `<report-dir>`: Detected relative to the project root. The skill checks `docs/nefario-reports/` first, then `docs/history/nefario-reports/`, and creates `docs/history/nefario-reports/` as the default if neither exists.
 - `<YYYY-MM-DD>`: Orchestration date
 - `<HHMMSS>`: Local time at report creation, 24-hour format, zero-padded (e.g., `143022` for 2:30:22 PM)
 - `<slug>`: Kebab-case task summary derived from the task description (max 40 characters)
 
 Example: `docs/history/nefario-reports/2026-02-09-143022-build-mcp-server-with-oauth.md`
-
-The `docs/history/nefario-reports/` directory is created automatically on first use.
 
 ### Report Structure
 
@@ -472,11 +471,11 @@ Reports follow an inverted pyramid: most important information first, progressiv
 - **Process Detail**: Collapsible section containing phases executed (with agents per phase), verification results, timing breakdown, and outstanding items checklist.
 - **Metrics**: Reference data table with key numbers (date, duration, outcome, agent counts, gates, files changed, outstanding items).
 
-The full template is maintained at `docs/history/nefario-reports/TEMPLATE.md`. Do not reproduce it here.
+The operational report format is defined in `skills/nefario/SKILL.md`. A human-readable format reference is maintained at `docs/history/nefario-reports/TEMPLATE.md`.
 
 ### Index
 
-All reports are cataloged in `docs/history/nefario-reports/index.md`, a table listing date, time, task summary (as a link to the report), outcome, and agent count. The index is a derived view, regenerated automatically by CI (GitHub Actions) on push to main. The build script (`docs/history/nefario-reports/build-index.sh`) can also be run locally to preview the index. It provides a chronological view of all orchestration runs for cross-run analysis.
+All reports are cataloged in an `index.md` inside the report directory. The index is a derived view, regenerated automatically by CI (GitHub Actions) on push to main. The build script (`build-index.sh`, co-located with the reports) can also be run locally to preview the index. CI/index generation is project-specific -- projects adopting the toolkit configure their own CI pipeline.
 
 ### When Reports Are Generated
 
@@ -490,7 +489,7 @@ Report generation is enforced by the nefario SKILL.md wrap-up sequence. The wrap
 
 **Report not generated:**
 - Verify the nefario skill is loaded (invoked via `/nefario`)
-- Check that `docs/history/nefario-reports/` directory exists and is writable
+- Check that the project's report directory exists and is writable
 - Review the conversation for error messages from the Write tool
 
 **Reports generated multiple times:**
@@ -510,7 +509,7 @@ At the start of any session that will modify files, a feature branch is created 
 - **Orchestrated sessions**: `nefario/<slug>` (e.g., `nefario/build-mcp-server-with-oauth`)
 - **Single-agent sessions**: `agent/<agent-name>/<slug>` (e.g., `agent/frontend-minion/fix-header-layout`)
 
-If already on a non-main branch (user-created), the existing branch is used. If the working tree has uncommitted changes, the user is warned before branching.
+If already on a non-main branch (user-created), the existing branch is used. If the working tree has uncommitted changes, the user is warned before branching. In greenfield projects without a git repository, branching is skipped gracefully -- the skill does not run `git init` on the user's behalf.
 
 ### Commit Checkpoints and Approval Gates
 

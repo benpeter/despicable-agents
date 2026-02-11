@@ -8,8 +8,8 @@ Nefario (orchestrator), Lucy and Margo (governance), and 23 domain-specialist mi
 - `the-plan.md` -- canonical spec for all agents (source of truth, human-edited)
 - `docs/` -- architecture and design documentation (see [docs/architecture.md](docs/architecture.md))
 - `skills/nefario/` -- nefario orchestration skill (symlinked to `~/.claude/skills/nefario`)
+- `skills/despicable-prompter/` -- briefing coach skill (symlinked to `~/.claude/skills/despicable-prompter`)
 - `/despicable-lab` -- project-local skill to check and rebuild agents (`.claude/skills/despicable-lab/`)
-- `/despicable-prompter` -- project-local skill to coach intent-focused `/nefario` briefings (`.claude/skills/despicable-prompter/`)
 - `gru/` -- AI visionary / technology radar
 - `nefario/` -- task orchestrator (planning only, does not write code)
 - `lucy/` -- governance (consistency, intent alignment)
@@ -52,11 +52,11 @@ has `x-plan-version` in its frontmatter. When they diverge, use `/despicable-lab
 ## Deployment
 
 ```bash
-./install.sh  # Symlinks all agents to ~/.claude/agents/ and /nefario skill to ~/.claude/skills/
+./install.sh  # Symlinks 27 agents and 2 skills (/nefario, /despicable-prompter) to ~/.claude/
 ```
 
 ## Orchestration Reports
 
 After completing nefario orchestration (conversations involving META-PLAN or SYNTHESIS phases),
-generate an execution report following the template at `docs/history/nefario-reports/TEMPLATE.md`.
+generate an execution report following the format defined in the nefario skill (`skills/nefario/SKILL.md`).
 The report index is regenerated automatically by CI on push to main.

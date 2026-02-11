@@ -79,6 +79,10 @@ Nefario follows a structured process: plan with specialists, review the plan, ex
 
 After all applicable phases complete, you receive a wrap-up summary with the results.
 
+## Working Directory
+
+Nefario operates on whichever project your Claude Code session is in. Reports, feature branches, and commits all target the current working directory's project. No configuration is needed -- invoke `/nefario` from any project after installing the toolkit.
+
 ## Tips for Success
 
 **Be specific in your task description.** Include context about target users, required features, and constraints. "Build an MCP server with auth" is vague. "Build an MCP server for GitHub integration with OAuth device flow, targeting developers using Claude Code" gives nefario and the specialists clear direction.

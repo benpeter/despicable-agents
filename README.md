@@ -4,6 +4,8 @@
 
 A team of domain specialists, an orchestrator that coordinates them, and a governance layer that reviews every plan before execution -- for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
+This project explores [Agent Teams](https://code.claude.com/docs/en/agent-teams), a research preview feature [released on February 5, 2026](https://www.anthropic.com/news/claude-opus-4-6), that enables multiple Claude Code sessions to coordinate autonomously on complex tasks.
+
 ## Examples
 
 Single-domain work goes to the specialist. Multi-domain work goes to `/nefario`.
@@ -34,7 +36,11 @@ git clone https://github.com/benpeter/despicable-agents.git
 cd despicable-agents && ./install.sh
 ```
 
-Symlinks all 27 agents to `~/.claude/agents/` and the `/nefario` skill to `~/.claude/skills/`. Available in every Claude Code session. To remove: `./install.sh uninstall`.
+Installs 27 agents and 2 skills (`/nefario`, `/despicable-prompter`) to `~/.claude/`. Available in every Claude Code session. To remove: `./install.sh uninstall`.
+
+### Using on Other Projects
+
+After install, agents and skills are available in any Claude Code session regardless of working directory. Invoke `@agent-name` or `/nefario` from your project. Reports, branches, and commits target the current project -- no configuration required.
 
 ## Try It
 
@@ -117,8 +123,8 @@ See [Agent Catalog](docs/agent-catalog.md) for per-agent details.
 
 - **Claude Code dependency.** Agents are AGENT.md files consumed by Claude Code's agent loading. They are not standalone tools.
 - **No subagent nesting.** Claude Code does not allow subagents to spawn other subagents. Only the main session dispatches to agents.
-- **Context window pressure.** Complex orchestrations with many specialists can approach context limits. The project uses scratch files and compaction checkpoints, but very large plans may require manual intervention.
-- **97% vibe-coded.** The research is real and the architecture is deliberate, but the system prompt prose was generated with AI assistance and refined, not hand-written from scratch.
+- **Context window pressure.** Complex orchestrations with many specialists can approach context limits. The project uses temporary scratch files and compaction checkpoints to manage context, but very large plans may require manual intervention.
+- **97% vibe-coded.** The research is real and the architecture is deliberate, but the system prompt prose was generated with AI assistance and refined iteratively.
 
 ## Contributing
 
