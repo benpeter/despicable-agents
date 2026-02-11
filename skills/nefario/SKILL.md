@@ -1297,6 +1297,8 @@ Track data at phase boundaries:
 - Timestamp
 - Task description (one-line summary)
 - Specialists identified
+- External skills discovered (count, names, classifications, recommendations).
+  If none, note "No external skills detected."
 - Generate filename slug: kebab-case, lowercase, max 40 chars from task
   description. Strip articles (a/an/the). Only alphanumeric and hyphens.
   No path separators or special characters.
@@ -1400,6 +1402,8 @@ skip it, do not defer it, do not stop before it is written.
 6. **Write execution report** to `<REPORT_DIR>/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`
    — use the HHMMSS captured in step 2
    — follow the report format defined in this skill (see Data Accumulation above)
+   — include an External Skills section if any were discovered (name, classification,
+     recommendation, and which execution tasks used them). Omit if none discovered.
    — include a Verification section with Phase 5-8 outcomes
    — include a Working Files section linking to the companion directory
 7. Commit the report and companion directory together (auto-commit, no prompt needed; skip if no git repo)
