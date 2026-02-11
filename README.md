@@ -1,6 +1,6 @@
 # Despicable Agents
 
-[![97% Vibe_Coded](https://img.shields.io/badge/97%25-Vibe_Coded-ff69b4?style=for-the-badge&logo=claude&logoColor=white)](https://github.com/trieloff/vibe-coded-badge-action)
+[![98% Vibe_Coded](https://img.shields.io/badge/98%25-Vibe_Coded-ff69b4?style=for-the-badge&logo=claude&logoColor=white)](https://github.com/trieloff/vibe-coded-badge-action)
 
 A team of domain specialists, an orchestrator that coordinates them, and a governance layer that reviews every plan before execution -- for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
