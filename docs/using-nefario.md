@@ -55,6 +55,8 @@ workflows. Include interactive examples and troubleshooting tips.
 /nefario Fix the docs
 ```
 
+If you have a rough idea but aren't sure how to structure it, run `/despicable-prompter` first — it transforms vague descriptions into structured `/nefario` briefings with clear outcomes, success criteria, and scope.
+
 ## What Happens: The Nine Phases
 
 Nefario follows a structured process: plan with specialists, review the plan, execute, then verify the results. Here is what you experience at each phase.
