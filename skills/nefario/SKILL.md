@@ -191,8 +191,8 @@ Extract a status summary from the first line of the user's task description.
 Truncate to 48 characters; if truncated, append "..." (so "Nefario: " 9-char
 prefix + 48 + 3 = 60 chars max). Write the sentinel file:
 ```sh
-echo "$summary" > /tmp/nefario-status-${slug}
-chmod 600 /tmp/nefario-status-${slug}   # Status file: read from custom statusline scripts
+echo "$summary" > /tmp/nefario-status-${CLAUDE_SESSION_ID}
+chmod 600 /tmp/nefario-status-${CLAUDE_SESSION_ID}   # Status file: read from custom statusline scripts
 ```
 Use this summary text in Task `description` fields and TaskCreate `activeForm`
 fields throughout the orchestration (see per-phase instructions below).
@@ -1033,7 +1033,7 @@ not part of the default flow.
     if in a git repo:
     Remove the orchestrated-session marker and status sentinel:
     `rm -f /tmp/claude-commit-orchestrated-${CLAUDE_SESSION_ID}`
-    `rm -f /tmp/nefario-status-${slug}`
+    `rm -f /tmp/nefario-status-${CLAUDE_SESSION_ID}`
     Detect default branch:
     `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'`
     (fall back to `main`). Then: `git checkout <default-branch> && git pull --rebase`.
