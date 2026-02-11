@@ -27,6 +27,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/history/nefario-reports/index.md
+          git add -f docs/history/nefario-reports/index.md
           git diff --cached --quiet || git commit -m "docs: regenerate nefario report index [skip ci]"
           git push

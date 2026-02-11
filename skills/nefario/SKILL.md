@@ -413,14 +413,53 @@ Task:
 
 - **All APPROVE or ADVISE**: Append any ADVISE notes to the relevant task
   prompts. Present the plan to the user for approval. Proceed to Phase 4.
-- **Any BLOCK**: Send the BLOCK feedback back to nefario (MODE: SYNTHESIS)
-  to revise the plan. Then re-submit the revised plan to the blocking
-  reviewer only. Cap at 2 revision rounds. If still blocked after 2 rounds,
-  present the impasse to the user for decision.
+- **Any BLOCK**: Enter the revision loop below.
 
-**After all reviews complete**: Write any BLOCK or ADVISE verdicts to
-`$SCRATCH_DIR/{slug}/phase3.5-{reviewer}.md`. APPROVE verdicts do not
-need scratch files.
+#### Revision Loop (BLOCK path)
+
+Follow these steps exactly. **Global cap: 2 revision rounds total.**
+
+1. **Collect feedback from the current round.** Gather:
+   - All BLOCK verdicts (reviewer name, ISSUE, RISK, SUGGESTION).
+   - All ADVISE verdicts as secondary, non-blocking context.
+
+2. **Write scratch files.** For each reviewer that returned BLOCK or ADVISE,
+   write their verdict to `$SCRATCH_DIR/{slug}/phase3.5-{reviewer}.md`.
+   On re-review rounds, overwrite the same file (the final verdict is what
+   matters; git preserves history if needed). APPROVE verdicts do not need
+   scratch files.
+
+3. **Revise the plan.** Send a single revision request to nefario
+   (MODE: SYNTHESIS). The prompt must include:
+   - Every BLOCK verdict from this round (reviewer name, ISSUE, RISK,
+     SUGGESTION).
+   - Every ADVISE verdict as secondary context.
+   - Instruction: "Address ALL listed BLOCKs in the revised plan."
+   - Warning: "The revised plan will be re-reviewed by ALL reviewers,
+     not just the blockers."
+   - Instruction: "Overwrite `$SCRATCH_DIR/{slug}/phase3-synthesis.md`
+     with the revised plan."
+
+4. **Re-review the revised plan.** Spawn ALL reviewers who participated in
+   the initial Phase 3.5 review (not just the blockers). Use the same
+   reviewer spawning logic as the initial round. Each re-review prompt must
+   tell the reviewer:
+   - This is a re-review of a revised plan (revision round N of 2).
+   - What changed and why (from nefario's revision output).
+   - Which BLOCK verdicts triggered the revision.
+   - The reviewer's own previous verdict.
+   - They may raise NEW concerns introduced by the revision.
+   - They should not re-raise concerns the revision adequately addressed.
+
+5. **Evaluate re-review verdicts.**
+   - All APPROVE or ADVISE: Done. Write any ADVISE scratch files per step 2.
+     Append ADVISE notes to task prompts. Present the plan to the user for
+     approval. Proceed to Phase 4.
+   - Any BLOCK and revision rounds remaining (< 2 used): Return to step 1
+     for the next revision round.
+   - Any BLOCK and revision rounds exhausted (2 used): Present the impasse
+     to the user with all reviewer positions and let the user decide how
+     to proceed.
 
 ### Compaction Checkpoint
 

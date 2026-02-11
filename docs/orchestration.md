@@ -77,7 +77,7 @@ Each reviewer returns exactly one of three verdicts:
 
 - **APPROVE** -- No concerns. The plan adequately addresses this reviewer's domain.
 - **ADVISE** -- Non-blocking warnings. Advisories are appended to relevant task prompts and presented to the user alongside the plan. They do not block execution.
-- **BLOCK** -- Halts execution. The blocking concern is sent to nefario for plan revision. The blocking reviewer re-reviews the revised plan. If still blocked after 2 iteration rounds, the disagreement escalates to the user with both positions presented.
+- **BLOCK** -- Halts execution. All BLOCK verdicts from the round are collected and sent to nefario together; nefario revises the plan in a single pass addressing all blocking concerns. The revised plan is re-submitted to all reviewers who participated in the review (not just the blockers). If still blocked after 2 global iteration rounds, the disagreement escalates to the user with all positions presented.
 
 After all reviews complete and any BLOCK verdicts are resolved, the plan (with advisories attached) is presented to the user for approval.
 
@@ -192,13 +192,18 @@ sequenceDiagram
         Rev->>Main: Verdict (APPROVE / ADVISE / BLOCK)
     end
 
-    alt Any BLOCK verdict
-        Main->>Nef: Task(revise plan, blocking feedback)
-        Nef->>Main: Revised plan
-        Main->>Rev: Task(re-review)
-        Rev->>Main: Verdict
-        alt Still BLOCK after 2 iterations
-            Main->>User: Escalate disagreement
+    loop BLOCK resolution (max 2 rounds)
+        alt Any BLOCK verdict
+            Main->>Main: Collect all BLOCK verdicts from round
+            Main->>Nef: Task(revise plan, all blocking feedback)
+            Nef->>Main: Revised plan
+            par All Reviewers Re-review
+                Main->>Rev: Task(re-review revised plan)
+                Rev->>Main: Verdict (APPROVE / ADVISE / BLOCK)
+            end
+            alt Still BLOCK after round 2
+                Main->>User: Escalate disagreement (all positions)
+            end
         end
     end
 
