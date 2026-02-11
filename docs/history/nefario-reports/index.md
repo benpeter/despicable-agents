@@ -4,7 +4,9 @@ Reports from nefario orchestration runs, newest first.
 
 | Date | Time | Task | Outcome | Agents |
 |------|------|------|---------|--------|
+| 2026-02-11 | 09:34 | [reconcile-pr21-with-pr20-changes](2026-02-11-093423-reconcile-pr21-with-pr20-changes.md) | completed | 8 |
 | 2026-02-11 | ? | [audit-docs-consistency-path-decoupling](2026-02-11-083024-audit-docs-consistency-path-decoupling.md) | completed | 0 |
+| 2026-02-10 | 21:59 | [status-line-task-summary-nefario](2026-02-10-215954-status-line-task-summary-nefario.md) | completed | 9 |
 | 2026-02-10 | 20:50 | [decouple-self-referential-assumptions](2026-02-10-205010-decouple-self-referential-assumptions.md) | completed | 8 |
 | 2026-02-10 | 17:18 | [replace-skip-post-granular-flags](2026-02-10-171844-replace-skip-post-granular-flags.md) | completed | 9 |
 | 2026-02-10 | 17:06 | [improve-exec-plan-approval-gate](2026-02-10-170603-improve-exec-plan-approval-gate.md) | completed | 7 |
