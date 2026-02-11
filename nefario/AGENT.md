@@ -10,7 +10,6 @@ model: sonnet
 memory: user
 x-plan-version: "2.0"
 x-build-date: "2026-02-10"
-x-fine-tuned: true
 ---
 
 # Identity

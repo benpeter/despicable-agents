@@ -1,5 +1,0 @@
-exit_code: 1
-patterns:
-  - "DRIFT"
-  - "ORPHAN_OVERRIDE"
-  - "Nonexistent Section"

@@ -133,7 +133,7 @@ Most tasks have secondary dimensions beyond the primary domain. Nefario's planni
 | Document | Covers |
 |----------|--------|
 | [Orchestration and Delegation](orchestration.md) | Nine-phase architecture, delegation flow, boundary enforcement, escalation paths, approval gates, execution reports, commit points |
-| [Agent Anatomy and Overlay System](agent-anatomy.md) | AGENT.md structure, frontmatter schema, five-section prompt template, RESEARCH.md role, overlay files |
+| [Agent Anatomy](agent-anatomy.md) | AGENT.md structure, frontmatter schema, five-section prompt template, RESEARCH.md role |
 | [Context Management](compaction-strategy.md) | Scratch file pattern for phase outputs, user-prompted compaction at phase boundaries, context window management during orchestration |
 | [Build Pipeline and Versioning](build-pipeline.md) | Research and build phases, version tracking, `/despicable-lab` skill, cross-check verification |
 | [Deployment](deployment.md) | Symlink-based deployment, `install.sh`, hook deployment, development workflow |

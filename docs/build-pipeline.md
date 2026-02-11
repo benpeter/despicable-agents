@@ -77,29 +77,18 @@ All 27 agents are built in parallel. Each agent runs a two-step sequential pipel
 1. Read `the-plan.md` for the agent's frontmatter pattern and system prompt structure.
 2. Read the completed `RESEARCH.md`.
 3. Distill `RESEARCH.md` into a dense, actionable system prompt following the five-section structure (Identity, Core Knowledge, Working Patterns, Output Standards, Boundaries).
-4. Write `AGENT.generated.md` with frontmatter values:
+4. Write `AGENT.md` with frontmatter values:
    - `model`: from the agent's Model field in the spec
    - `x-plan-version`: current `spec-version` from `the-plan.md`
    - `x-build-date`: today's date
 
-**Output**: `<agent-dir>/AGENT.generated.md`
+**Output**: `<agent-dir>/AGENT.md`
 
 **Model choice**: Per agent spec. Opus for strategic/reasoning-intensive agents (gru, debugger, ai-modeling, security). Sonnet for execution-focused specialists. Build quality directly impacts agent effectiveness, so strategic agents warrant the higher-capability model.
 
-## Merge Step
-
-After the build step produces `AGENT.generated.md`, a merge step produces the deployable `AGENT.md`.
-
-- **Without overrides**: If `AGENT.overrides.md` does not exist, `/despicable-lab` writes `AGENT.md` directly from the generated content.
-- **With overrides**: If `AGENT.overrides.md` exists, `/despicable-lab` writes `AGENT.generated.md` and **stops**. The human user must manually merge `AGENT.generated.md` + `AGENT.overrides.md` → `AGENT.md` following the merge rules documented in [Agent Anatomy and Overlay System](agent-anatomy.md).
-
-**Why manual?** Automated merging would require LLM-based semantic understanding of override descriptions (see docs/decisions.md Decision 16). Manual merging keeps the process deterministic and preserves human intent.
-
-**Drift detection**: Run `./validate-overlays.sh` to check if merged agents have drifted from their expected merge state (orphaned overrides, stale merges, frontmatter inconsistencies).
-
 ## Phase 2: Cross-Check (Sequential)
 
-After all 27 pipelines complete and merge steps finish, the cross-check verifies consistency across the full agent team:
+After all 27 pipelines complete, the cross-check verifies consistency across the full agent team:
 
 - **Boundary consistency**: Each piece of work has exactly one primary agent.
 - **Handoff clarity**: "Does NOT do" sections create clean delegation points between neighboring agents.
@@ -130,9 +119,7 @@ All agents start at version `1.0`.
 
 ### Divergence Detection
 
-When `x-plan-version` in `AGENT.generated.md` is less than `spec-version` in `the-plan.md`, the agent is outdated and needs regeneration. The `/despicable-lab` skill automates this check.
-
-For agents with overlay files, the version check reads `x-plan-version` from `AGENT.generated.md` (not `AGENT.md`), since the generated file reflects the true generation state. If `AGENT.generated.md` does not exist (pre-migration agents), the check falls back to reading `AGENT.md`.
+When `x-plan-version` in `AGENT.md` is less than `spec-version` in `the-plan.md`, the agent is outdated and needs regeneration. The `/despicable-lab` skill automates this check.
 
 ```mermaid
 flowchart LR
@@ -153,8 +140,8 @@ The `/despicable-lab` skill supports three invocation modes:
 
 | Command | Behavior |
 |---------|----------|
-| `/despicable-lab --check` | Check all agents for version divergence and overlay drift. Reports a table of agent name, current version, spec version, and status. Runs `./validate-overlays.sh --summary` to detect drift. Does not rebuild. |
-| `/despicable-lab <agent-name> ...` | Regenerate the named agents, even if already up-to-date. Accepts one or more agent names. For agents with overrides, writes `AGENT.generated.md` and reports "Manual merge required". |
+| `/despicable-lab --check` | Check all agents for version divergence. Reports a table of agent name, current version, spec version, and status. Does not rebuild. |
+| `/despicable-lab <agent-name> ...` | Regenerate the named agents, even if already up-to-date. Accepts one or more agent names. |
 | `/despicable-lab --all` | Force-rebuild all 27 agents regardless of version status. |
 
 ### Typical Workflow
@@ -173,11 +160,12 @@ The skill:
 
 - Parses arguments to determine which agents to rebuild.
 - Checks versions by comparing `x-plan-version` against `spec-version` for each agent.
-- Runs `./validate-overlays.sh --summary` during `--check` mode to detect overlay drift.
 - Executes the two-step research-and-build pipeline per agent, running pipelines in parallel when multiple agents need rebuilding.
-- For agents without overrides, writes `AGENT.md` directly. For agents with overrides, writes `AGENT.generated.md` and reports "Manual merge required".
+- Writes `AGENT.md` for each rebuilt agent.
 - Runs cross-check verification after all builds complete.
 - Reports results with a version status table and summary of changes.
+
+**Exception**: nefario is hand-maintained and excluded from the build pipeline. Its `AGENT.md` is edited directly. See Decision 27 in Design Decisions.
 
 ### Constraints
 
