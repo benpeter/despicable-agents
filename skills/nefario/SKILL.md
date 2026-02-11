@@ -560,9 +560,31 @@ Follow these steps exactly. **Global cap: 2 revision rounds total.**
      approval. Proceed to Phase 4.
    - Any BLOCK and revision rounds remaining (< 2 used): Return to step 1
      for the next revision round.
-   - Any BLOCK and revision rounds exhausted (2 used): Present the impasse
-     to the user with all reviewer positions and let the user decide how
-     to proceed.
+   - Any BLOCK and revision rounds exhausted (2 used): Print the structured brief:
+     ```
+     PLAN IMPASSE: <one-sentence description of the disagreement>
+     Revision rounds: 2 of 2 exhausted
+
+     POSITIONS:
+       [<reviewer-1>] BLOCK: <one-sentence position>
+         Concern: <what they believe will go wrong>
+       [<reviewer-2>] BLOCK: <one-sentence position>
+         Concern: <what they believe will go wrong>
+       [other reviewers]: <summary of APPROVE/ADVISE verdicts>
+
+     CONFLICT ANALYSIS: <nefario's synthesis of why positions are incompatible>
+
+     Full context: $SCRATCH_DIR/{slug}/phase3.5-{reviewer}.md
+     ```
+
+     Then present using AskUserQuestion:
+     - `header`: "Impasse"
+     - `question`: the one-sentence disagreement description
+     - `options` (4, `multiSelect: false`):
+       1. label: "Override blockers", description: "Accept the plan despite unresolved concerns."
+       2. label: "Provide direction", description: "Give your own guidance to resolve the conflict."
+       3. label: "Restart planning", description: "Re-run synthesis with additional constraints."
+       4. label: "Abandon", description: "Cancel this orchestration."
 
 ### Compaction Checkpoint
 
@@ -594,7 +616,9 @@ what they asked for; they need to spot surprises and decide whether to proceed.
 **Instant orientation** (one line + stats):
 ```
 EXECUTION PLAN: <1-sentence goal summary>
+REQUEST: "<truncated original prompt, max 80 chars>..."
 Tasks: N | Gates: N | Advisories incorporated: N
+Working dir: $SCRATCH_DIR/{slug}/
 ```
 
 **Task list** (compact numbered list, 2-4 lines per task):
@@ -659,7 +683,7 @@ REVIEW: N APPROVE, N ADVISE, N BLOCK
 
 **Full plan reference**:
 ```
-FULL PLAN: $SCRATCH_DIR/{slug}/phase3-synthesis.md
+FULL PLAN: $SCRATCH_DIR/{slug}/phase3-synthesis.md (task prompts, agent assignments, dependencies)
 ```
 
 **Line budget guidance**: Target 25-40 lines for the complete gate output
@@ -757,8 +781,10 @@ A batch contains all tasks that can run before the next gate.
    this instruction at the end:
 
    > When you finish your task, mark it completed with TaskUpdate and
-   > send a message to the team lead summarizing what you produced and
-   > where the deliverables are. Include file paths.
+   > send a message to the team lead with:
+   > - File paths with change scope and line counts (e.g., "src/auth.ts (new OAuth flow, +142 lines)")
+   > - 1-2 sentence summary of what was produced
+   > This information populates the gate's DELIVERABLE section.
 
 4. **Actively monitor completion.** After spawning agents, DO NOT just
    wait passively. You are the orchestrator — you must drive progress:
@@ -786,15 +812,25 @@ A batch contains all tasks that can run before the next gate.
 
    DECISION: <one-sentence summary of the deliverable/decision>
 
+   DELIVERABLE:
+     <file path 1> (<change scope>, +N/-M lines)
+     <file path 2> (<change scope>, +N/-M lines)
+     Summary: <1-2 sentences describing what was produced>
+
    RATIONALE:
    - <key point 1>
    - <key point 2>
-   - <rejected alternative and why>
+   - Rejected: <alternative and why>
 
    IMPACT: <what approving/rejecting means for the project>
-   DELIVERABLE: <file path(s) to review>
    Confidence: HIGH | MEDIUM | LOW
    ```
+
+   Maximum 5 files listed in DELIVERABLE; if more, show top 4 + "and N more files".
+   If a gate depends on a prior approved gate, the DECISION line must restate the
+   dependency: "Builds on <prior decision description> approved in Task N."
+
+   Target 12-18 lines for mid-execution gates (soft ceiling; clarity wins over brevity).
 
    Then present the decision using AskUserQuestion:
    - `header`: "Gate"
@@ -832,7 +868,16 @@ A batch contains all tasks that can run before the next gate.
      Cap at 2 revision rounds.
    - **"Reject"**: Present a SECONDARY AskUserQuestion for confirmation:
      - `header`: "Confirm"
-     - `question`: "Reject <task>? This will also drop: <list dependents>"
+     - `question`: formatted as:
+       ```
+       Reject <task title>?
+
+       Dependent tasks that will also be dropped:
+         Task N: <title> -- <1-sentence deliverable description>
+         Task M: <title> -- <1-sentence deliverable description>
+
+       Alternative: Select "Cancel" then choose "Request changes" for a less drastic revision.
+       ```
      - `options` (2, `multiSelect: false`):
        1. label: "Confirm reject", description: "Remove task and dependents."
        2. label: "Cancel", description: "Go back to the gate decision."
@@ -944,15 +989,43 @@ Task:
 - Any BLOCK: group findings by producing agent. Spawn fix tasks with the
   specific findings. Re-review changed files only. Cap at 2 rounds.
 - Security-severity BLOCKs (injection, auth bypass, secret exposure, crypto):
-  surface to user before auto-fix (SHOW: max 5-line escalation brief).
+  surface to user before auto-fix. Print the structured brief:
+  ```
+  SECURITY FINDING: <title>
+  Severity: CRITICAL | HIGH | MEDIUM | File: <path>:<line-range>
+  Finding: <one-sentence description>
+  Proposed fix: <one-sentence description of what auto-fix will do>
+  Risk if unfixed: <one-sentence consequence>
+  ```
+
+  Then present using AskUserQuestion:
+  - `header`: "Security"
+  - `question`: the one-sentence finding description
+  - `options` (4, `multiSelect: false`):
+    1. label: "Proceed with auto-fix", description: "Apply the proposed fix automatically." (recommended)
+    2. label: "Review first", description: "Show the affected code before deciding."
+    3. label: "Fix manually", description: "Pause orchestration. You fix the code, then resume."
+    4. label: "Accept risk", description: "Proceed without fixing. Document as known risk."
 - After 2 rounds unresolved: escalate to user. Print the structured brief:
   ```
   VERIFICATION ISSUE: <title>
-  Phase: Code Review | Agent: <reviewer>
+  Phase: Code Review | Agent: <reviewer> | Severity: HIGH | MEDIUM | LOW
   Finding: <one-sentence description>
-  Producing agent: <who wrote the code> | File: <path>
-  Auto-fix attempts: 2 (unsuccessful)
+  Producing agent: <who wrote the code> | File: <path>:<line-range>
+
+  CODE CONTEXT (max 5 lines):
+    <relevant code lines with the issue>
+
+  FIX HISTORY:
+    Round 1: <what was attempted, why it didn't resolve>
+    Round 2: <what was attempted, why it didn't resolve>
+
+  Risk if accepted: <one-sentence consequence>
   ```
+
+  Before including code in an escalation brief, scan for credential patterns
+  (sk-, AKIA, ghp_, token:, password:, BEGIN.*PRIVATE KEY). If matched, replace
+  snippet with: "Code omitted (potential secret). Review: <path>:<lines>"
 
   Then present the decision using AskUserQuestion:
   - `header`: "Issue"
@@ -960,7 +1033,7 @@ Task:
   - `options` (3, `multiSelect: false`):
     1. label: "Accept as-is", description: "Proceed with current code. Log finding for later." (recommended)
     2. label: "Fix manually", description: "Pause orchestration. You fix the code, then resume."
-    3. label: "Skip verification", description: "Skip all remaining code review and test checks."
+    3. label: "Skip remaining checks", description: "Skip all remaining code review and test phases."
 
 #### Phase 6: Test Execution
 
@@ -1096,7 +1169,25 @@ not part of the default flow.
    present to user, shutdown teammates, final status).
 
 10. **PR creation** — after the report is committed, if in a git repo and on
-    a feature branch, offer to create a pull request using AskUserQuestion:
+    a feature branch, offer to create a pull request.
+
+    Before presenting the PR gate, run `git diff --stat origin/<default-branch>...HEAD`
+    and `git rev-list --count origin/<default-branch>..HEAD` to populate commit count,
+    file count, and line deltas. Print the change summary:
+
+    ```
+    PR: Create PR for nefario/<slug>?
+    Branch: nefario/<slug>
+    Commits: N | Files changed: N | Lines: +N/-M
+      <file path 1> (+N/-M)
+      <file path 2> (+N/-M)
+      ... (max 5 files, then "and N more")
+    ```
+
+    If verification had accepted-as-is findings, append:
+    "Note: N verification findings accepted as-is (see report)."
+
+    Then present using AskUserQuestion:
 
     - `header`: "PR"
     - `question`: "Create PR for nefario/<slug>?"
