@@ -106,7 +106,7 @@ These decisions were made during the initial system design and are implemented a
 
 | Field | Value |
 |-------|-------|
-| **Status** | Partially implemented |
+| **Status** | Superseded by Decision 27 |
 | **Date** | 2026-02-09 |
 | **Choice** | Introduce a three-file overlay pattern: AGENT.generated.md (pure /despicable-lab output, never hand-edited) + AGENT.overrides.md (optional hand-tuned customizations) merged into AGENT.md (deployed artifact). Merge rules: YAML frontmatter shallow-merges (overrides win), Markdown body replaces entire H2 sections by heading match. `x-fine-tuned: true` injected automatically when overrides exist. |
 | **Alternatives rejected** | (1) **Marker-based partial generation** (`<!-- CUSTOM:START/END -->` markers in AGENT.md, /despicable-lab preserves content between them): rejected because fragile HTML comments are easy to accidentally delete, mixes generated and hand-edited content in one file, and requires the generator to parse its own output. (2) **Hooks/customizations directory** (patch files and post-processing scripts per agent): rejected as over-engineered for 19 agents where most have zero customizations; patch files are brittle across regeneration as context lines shift. (3) **Template + data separation** (split into markdown template + YAML data file, render together): rejected because prose-heavy prompts are painful as YAML multiline strings, and the problem is merge preservation, not templating. |
@@ -198,7 +198,7 @@ These decisions were implemented in the nefario v1.4 update.
 
 | Field | Value |
 |-------|-------|
-| **Status** | Implemented |
+| **Status** | Superseded by Decision 27 |
 | **Date** | 2026-02-09 |
 | **Choice** | Implement drift detection with `validate-overlays.sh` that identifies orphaned overrides, merge staleness, and frontmatter inconsistencies. Manual merge remains the workflow. No automated merge, no LLM-based semantic analysis. |
 | **Alternatives rejected** | (1) **LLM-based automated merge**: Parse `AGENT.overrides.md` as natural language instructions, use LLM to apply them to `AGENT.generated.md`. Rejected due to non-determinism (different LLM runs produce different outputs), prompt injection risk (overrides file content is executed as instructions), and opacity (hard to predict/review what merge will produce). (2) **Validation + automated merge**: Add `--fix` mode to auto-merge after detecting drift. Rejected because it couples detection (low-risk, read-only) with modification (high-risk, alters deployed agents). (3) **Description + content hybrid format**: Overlay file contains both descriptions AND literal replacement content. Rejected as "way over the top" complexity for current needs. |
@@ -345,6 +345,22 @@ These decisions were made during the nefario v2.0 update, extending orchestratio
 | **Alternatives rejected** | (1) **Configuration file** (`.nefario.yml` or similar): rejected as YAGNI -- detection logic handles all known cases without user configuration. (2) **Mode flags** (`--self` vs `--external`): rejected because it leaks implementation detail to the user and creates a maintenance burden. (3) **Fixed paths** (`docs/history/nefario-reports/` always): rejected because it breaks portability for projects that use a different convention. (4) **Environment variable overrides** (`NEFARIO_REPORTS_DIR`): rejected as YAGNI -- no known user needs custom report paths. |
 | **Rationale** | The project assumed it would always operate on itself. As a globally-installed toolkit, it must operate on any project. Hardcoded paths to `nefario/scratch/`, `docs/history/nefario-reports/TEMPLATE.md`, and `main` branch created coupling that broke when invoked from other projects. Supersedes the scratch file portions of Decision 21. |
 | **Consequences** | Scratch files no longer live in the project tree (moved to `$TMPDIR`). `.gitignore` entries for `nefario/scratch/` removed. Report paths are resolved at runtime. Git operations are safe in repositories without a `main` branch or without git at all. `install.sh` now installs 2 skills (nefario + despicable-prompter). |
+
+---
+
+## Overlay Removal (Decision 27)
+
+### Decision 27: Remove Overlay Mechanism, Hand-Maintain Nefario
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-02-11 |
+| **Supersedes** | Decision 9 (Overlay Files), Decision 16 (Validation-Only Drift Detection) |
+| **Choice** | Remove the overlay mechanism entirely. Mark nefario as hand-maintained (`/despicable-lab` skips nefario during rebuilds). Delete all overlay artifacts: `validate-overlays.sh` (659 lines), `AGENT.generated.md`, `AGENT.overrides.md`, `override-format-spec.md` (660 lines), `validate-overlays-spec.md` (400 lines), `tests/` directory (harness + 10 fixtures), overlay documentation sections. Apply the "one-agent rule": do not build infrastructure for a pattern until 2+ agents exhibit the need. |
+| **Alternatives rejected** | (1) **Retain overlays** (status quo): ~2,900 lines of infrastructure serving exactly one agent violates YAGNI, KISS, and Lean-and-Mean from the Helix Manifesto. Contributors must learn a complex three-file system used by 1 of 27 agents. (2) **Bake nefario customizations into the-plan.md** (Option A from issue #32): Rejected to preserve spec/prompt separation -- nefario's spec section would grow from ~150 to 400-460 lines, mixing high-level specification with prompt-level engineering detail. (3) **Retain but simplify overlay system** (Option C from issue #32): Still introduces build infrastructure for a single-agent need, violating the one-agent rule. |
+| **Rationale** | The overlay mechanism was built for nefario alone. No other agent developed a need for it. Per Helix Manifesto ("Lean and Mean", "YAGNI"), infrastructure should not exist for hypothetical future needs. nefario/AGENT.md is already the fully merged result of generated + overrides -- no content is lost by removing the intermediate files. The "one-agent rule" provides a clear re-introduction trigger: when a second agent needs customization preservation, revisit the mechanism. Until then, nefario is hand-maintained. |
+| **Consequences** | **Gained**: Simpler build pipeline (no merge step, no drift detection). ~2,900 lines removed. Reduced contributor learning curve. No bash 4.0+ dependency for drift detection. **Lost**: nefario spec drift goes undetected by tooling (manual vigilance required). Spec changes in the-plan.md must be manually propagated to nefario/AGENT.md. `/despicable-lab` has a special case (skip nefario). Constraints previously encoded in `AGENT.overrides.md` (Decision 15) are now maintained directly in `nefario/AGENT.md`. |
 
 ---
 

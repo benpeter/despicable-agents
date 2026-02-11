@@ -41,8 +41,6 @@ model: opus  # or sonnet -- see individual agent specs
 memory: user
 # x-plan-version tracks the spec version from the-plan.md
 # x-build-date tracks when AGENT.md was last generated
-# x-fine-tuned (optional) indicates AGENT.md has hand-tuned overrides beyond
-# the generated baseline. Present when overlay files exist.
 # When x-plan-version < current spec version, the agent needs regeneration
 x-plan-version: "1.0"
 x-build-date: "YYYY-MM-DD"

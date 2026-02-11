@@ -40,7 +40,7 @@ flowchart LR
 
 Each `AGENT.md` in the repository is symlinked to `~/.claude/agents/<name>.md`. Claude Code discovers agents by scanning that directory, so symlinking is sufficient for deployment.
 
-Only `AGENT.md` files are deployed. `RESEARCH.md`, `AGENT.generated.md`, and `AGENT.overrides.md` remain in the repository as build artifacts and source material -- they are not visible to Claude Code.
+Only `AGENT.md` files are deployed. `RESEARCH.md` remains in the repository as source material -- it is not visible to Claude Code.
 
 ## install.sh
 
