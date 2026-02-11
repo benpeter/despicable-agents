@@ -135,6 +135,39 @@ Nefario operates on whichever project your Claude Code session is in. Reports, f
 
 **Use MODE: PLAN for simpler multi-agent tasks.** The skill supports a simplified mode that skips specialist consultation and has nefario plan directly. This works well when you know which 2-3 agents you need and the handoffs are straightforward.
 
+## Status Line
+
+You can add a live status line to Claude Code that shows the current nefario task while orchestration is running.
+
+### Setup
+
+Requires `jq` (`brew install jq` on macOS if not already installed).
+
+Add the following to `~/.claude/settings.json`. If you already have a `statusLine` entry, merge the nefario-specific part (the `f="/tmp/nefario-status-..."` line) into your existing command.
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "input=$(cat); dir=$(echo \"$input\" | jq -r '.workspace.current_dir // \"?\"'); model=$(echo \"$input\" | jq -r '.model.display_name // \"?\"'); used=$(echo \"$input\" | jq -r '.context_window.used_percentage // \"\"'); result=\"$dir | $model\"; if [ -n \"$used\" ]; then result=\"$result | Context: $(printf '%.1f' \"$used\")% used\"; fi; f=\"/tmp/nefario-status-${CLAUDE_SESSION_ID}\"; [ -f \"$f\" ] && ns=$(cat \"$f\" 2>/dev/null) && [ -n \"$ns\" ] && result=\"$result | $ns\"; echo \"$result\""
+  }
+}
+```
+
+Restart Claude Code or start a new conversation to activate.
+
+### What It Shows
+
+When nefario is orchestrating, the status bar appends the task summary after the standard info:
+
+`~/my-project | Claude Opus 4 | Context: 12.3% used | Build MCP server with OAuth...`
+
+When nefario is not running, the status bar shows just the directory, model, and context usage.
+
+### How It Works
+
+When nefario starts orchestrating, it writes a one-line task summary to a temporary file (`/tmp/nefario-status-<session-id>`). The status line command checks for this file and appends its contents. When orchestration finishes, nefario removes the file. If you run multiple Claude Code windows simultaneously, each shows its own nefario task independently -- no conflicts.
+
 ---
 
 For the technical architecture behind the orchestration process, see [Orchestration Architecture](orchestration.md).
