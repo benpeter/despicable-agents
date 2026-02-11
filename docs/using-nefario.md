@@ -135,6 +135,34 @@ Nefario operates on whichever project your Claude Code session is in. Reports, f
 
 **Use MODE: PLAN for simpler multi-agent tasks.** The skill supports a simplified mode that skips specialist consultation and has nefario plan directly. This works well when you know which 2-3 agents you need and the handoffs are straightforward.
 
+## Working with Project Skills
+
+If your project ships Claude Code skills (in `.claude/skills/` or `.skills/`), nefario discovers and incorporates them automatically during planning. No configuration is needed -- skills with a `name` and `description` in their SKILL.md frontmatter are detected in Phase 1 and woven into the execution plan alongside built-in specialists.
+
+For example, if you have CDD skills installed and run `/nefario 'build a new block'`, nefario includes the CDD skill in the plan without any extra setup.
+
+### How Skills Appear in the Plan
+
+External skills are marked `(project skill)` in the execution plan so you can distinguish them from built-in specialists. Orchestration skills -- those with their own multi-phase workflow -- appear as a single task with a `Phases:` line rather than being decomposed into sub-tasks. Leaf skills appear in the `Available Skills` section of relevant task prompts.
+
+### Overriding Skill Selection
+
+If nefario picks the wrong handler for a task, correct it at the plan approval gate. Use the "Request changes" flow and specify which skill or agent should handle it:
+
+```
+Use the CDD skill for block building instead of frontend-minion.
+```
+
+Nefario regenerates the affected plan section with your override applied.
+
+### Troubleshooting
+
+**Skill not detected?** Verify the skill directory exists under `.claude/skills/` or `.skills/` and that its SKILL.md has `name` and `description` fields in the YAML frontmatter. Skills missing either field are silently skipped.
+
+**Wrong skill selected?** Override at the plan approval gate as described above.
+
+For the full discovery mechanism, precedence rules, and skill maintainer guidance, see [External Skill Integration](external-skills.md).
+
 ## Status Line
 
 You can add a live status line to Claude Code that shows the current nefario task while orchestration is running.
