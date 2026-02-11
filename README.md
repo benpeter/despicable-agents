@@ -4,6 +4,8 @@
 
 A team of domain specialists, an orchestrator that coordinates them, and a governance layer that reviews every plan before execution -- for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
+This project explores [Agent Teams](https://code.claude.com/docs/en/agent-teams), a research preview feature [released on February 5, 2026](https://www.anthropic.com/news/claude-opus-4-6), that enables multiple Claude Code sessions to coordinate autonomously on complex tasks.
+
 ## Examples
 
 Single-domain work goes to the specialist. Multi-domain work goes to `/nefario`.
