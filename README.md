@@ -121,7 +121,7 @@ See [Agent Catalog](docs/agent-catalog.md) for per-agent details.
 
 - **Claude Code dependency.** Agents are AGENT.md files consumed by Claude Code's agent loading. They are not standalone tools.
 - **No subagent nesting.** Claude Code does not allow subagents to spawn other subagents. Only the main session dispatches to agents.
-- **Context window pressure.** Complex orchestrations with many specialists can approach context limits. The project uses scratch files (preserved as companion directories in PRs) and compaction checkpoints, but very large plans may require manual intervention.
+- **Context window pressure.** Complex orchestrations with many specialists can approach context limits. The project uses temporary scratch files and compaction checkpoints to manage context, but very large plans may require manual intervention.
 - **97% vibe-coded.** The research is real and the architecture is deliberate, but the system prompt prose was generated with AI assistance and refined iteratively.
 
 ## Contributing

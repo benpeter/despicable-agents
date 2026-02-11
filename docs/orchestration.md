@@ -471,7 +471,7 @@ Reports follow an inverted pyramid: most important information first, progressiv
 - **Process Detail**: Collapsible section containing phases executed (with agents per phase), verification results, timing breakdown, and outstanding items checklist.
 - **Metrics**: Reference data table with key numbers (date, duration, outcome, agent counts, gates, files changed, outstanding items).
 
-The full template is maintained at `docs/history/nefario-reports/TEMPLATE.md`. Do not reproduce it here.
+The operational report format is defined in `skills/nefario/SKILL.md`. A human-readable format reference is maintained at `docs/history/nefario-reports/TEMPLATE.md`.
 
 ### Index
 

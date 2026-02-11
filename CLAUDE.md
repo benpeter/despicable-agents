@@ -58,5 +58,5 @@ has `x-plan-version` in its frontmatter. When they diverge, use `/despicable-lab
 ## Orchestration Reports
 
 After completing nefario orchestration (conversations involving META-PLAN or SYNTHESIS phases),
-generate an execution report following the template at `docs/history/nefario-reports/TEMPLATE.md`.
+generate an execution report following the format defined in the nefario skill (`skills/nefario/SKILL.md`).
 The report index is regenerated automatically by CI on push to main.
