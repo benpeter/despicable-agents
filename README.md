@@ -6,6 +6,8 @@ A team of domain specialists, an orchestrator that coordinates them, and a gover
 
 This project explores [Agent Teams](https://code.claude.com/docs/en/agent-teams), a research preview feature [released on February 5, 2026](https://www.anthropic.com/news/claude-opus-4-6), that enables multiple Claude Code sessions to coordinate autonomously on complex tasks.
 
+[Web Resource Ledger](https://github.com/benpeter/web-resource-ledger) is an illustration of a full project evolving using this framework.
+
 ## Examples
 
 Single-domain work goes to the specialist. Multi-domain work goes to `/nefario`.
