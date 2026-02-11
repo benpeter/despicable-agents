@@ -23,6 +23,7 @@ Each agent directory contains:
 ## Key Rules
 
 - **Do NOT modify `the-plan.md`** unless you are the human owner or the human owner approves you making changes
+- **Never delete remote branches** -- do not delete branches on origin, not even after merging PRs
 - All artifacts in **English**
 - **No PII**, no proprietary data -- agents must remain publishable (Apache 2.0)
 - Agent boundaries are strict: check "Does NOT do" sections for handoff points
