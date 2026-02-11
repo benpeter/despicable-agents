@@ -47,10 +47,7 @@ If the user approves:
 3. The PR body is auto-generated from gate summaries (orchestrated) or the agent's completion summary (single-agent).
 4. Display the PR URL.
 
-After PR creation (or if declined):
-
-1. Return to main: `git checkout main && git pull --rebase`.
-2. Include the branch name in the final summary so the user can return to it if needed.
+After PR creation (or if declined), the session stays on the feature branch. The final summary includes the current branch name and a command to return to the default branch when ready: `git checkout <default-branch> && git pull --rebase`.
 
 **Graceful degradation:** If `gh` CLI is not available or not authenticated, skip PR creation and print: `"gh CLI not available. Push your branch and create a PR manually: git push -u origin <branch-name>"`
 
@@ -93,7 +90,7 @@ sequenceDiagram
     Main->>Git: gh pr create
     Git-->>Main: PR URL
     Main->>User: PR created: <URL>
-    Main->>Git: git checkout main && git pull --rebase
+    Note over Main: Stays on nefario/<slug> branch
 ```
 
 ---
@@ -150,7 +147,7 @@ Auto-commits are co-located with gate approvals. They happen silently after each
 3. Post-execution phases (5-8) may produce additional changes (code review fixes, documentation).
 4. One auto-commit at wrap-up for remaining changes.
 5. PR creation offered at wrap-up.
-6. Return to main after PR creation (or decline).
+6. Stay on feature branch after PR creation (or decline). Final summary includes escape hatch to return to default branch.
 
 Auto-commits are co-located with gate approvals because each gate represents a semantic unit of reviewed work.
 
@@ -415,6 +412,6 @@ If the working tree has uncommitted changes when the orchestrator tries to pull 
 | **Commit interaction** | Interactive (Y/n) | None (auto-commit, informational line only) |
 | **Anti-fatigue** | N/A (single checkpoint) | N/A (no interactive commit prompts) |
 | **PR creation** | Offered at wrap-up | Offered at wrap-up |
-| **Return to main** | After PR (or decline) | After PR (or decline) |
+| **Post-PR branch** | Stays on feature branch | Stays on feature branch |
 | **File tracking** | PostToolUse ledger | PostToolUse ledger |
 | **Safety rails** | Sensitive patterns, branch protection | Sensitive patterns, branch protection |

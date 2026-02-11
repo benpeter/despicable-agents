@@ -1217,15 +1217,15 @@ not part of the default flow.
     is empty or starts with `---`, warn and fall back to the executive summary only.
     If `gh` is unavailable, print the manual push command instead.
 
-11. **Return to default branch** — after PR creation (or if declined),
+11. **Clean up session markers** — after PR creation (or if declined),
     if in a git repo:
     Remove the orchestrated-session marker and status sentinel:
     `SID=$(cat /tmp/claude-session-id 2>/dev/null); rm -f /tmp/claude-commit-orchestrated-$SID`
     `rm -f /tmp/nefario-status-$SID`
-    Detect default branch:
-    `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'`
-    (fall back to `main`). Then: `git checkout --quiet <default-branch> && git pull --quiet --rebase`.
-    Include branch name in final summary.
+    The session stays on the feature branch.
+    Include current branch name in final summary and a hint to return to
+    the default branch when ready:
+    `git checkout <default-branch> && git pull --rebase`.
     If not in a git repo, skip this step.
 
 ### Troubleshooting: Orchestrator Not Progressing
@@ -1366,10 +1366,8 @@ skip it, do not defer it, do not stop before it is written.
    — include a Working Files section linking to the companion directory
 7. Commit the report and companion directory together (auto-commit, no prompt needed; skip if no git repo)
 8. Offer PR creation if on a feature branch (skip if no git repo)
-9. Return to default branch (if git repo): detect with
-   `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'`
-   (fall back to `main`), then `git checkout --quiet <default-branch> && git pull --quiet --rebase`
-10. Present report path, PR URL, branch name, and Verification summary to user
+9. Stay on the feature branch (no checkout).
+10. Present report path, PR URL, current branch name, hint to return to default branch (`git checkout <default-branch> && git pull --rebase`), and Verification summary to user
 11. Send shutdown_request to teammates
 12. TeamDelete
 13. Report final status to user
