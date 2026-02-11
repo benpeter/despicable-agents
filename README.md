@@ -44,6 +44,8 @@ Installs 27 agents and 2 skills (`/nefario`, `/despicable-prompter`) to `~/.clau
 
 After install, agents and skills are available in any Claude Code session regardless of working directory. Invoke `@agent-name` or `/nefario` from your project. Reports, branches, and commits target the current project -- no configuration required.
 
+Nefario automatically discovers and delegates to project-local skills (`.skills/`, `.claude/skills/`). See [External Skill Integration](docs/external-skills.md) for details.
+
 ## Try It
 
 Agents are invoked with `@name`. The `/nefario` skill coordinates multiple agents for complex tasks.

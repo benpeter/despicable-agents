@@ -10,7 +10,7 @@ Four principles shape every agent:
 
 - **Generic specialists** -- Deep domain expertise without ties to any specific project. Project context belongs in the target project's `CLAUDE.md`, not in agents.
 - **Publishable** -- All agents ship under Apache 2.0. No PII, no proprietary data.
-- **Composable** -- Clear boundaries and a deterministic delegation table allow agents to be combined into teams for any project.
+- **Composable** -- Clear boundaries and a deterministic delegation table allow agents to be combined into teams for any project. External skills (project-local or user-installed) are discovered and delegated to at planning time without coupling.
 - **Persistent learners** -- Each agent uses `memory: user` to accumulate knowledge across sessions.
 
 ## System Context
@@ -140,3 +140,4 @@ Most tasks have secondary dimensions beyond the primary domain. Nefario's planni
 | [Design Decisions](decisions.md) | Architectural tradeoffs: hierarchy vs. flat, strict boundaries, two-file agents, model selection, memory scope, versioning strategy, reporting automation, git workflow integration |
 | [Commit Workflow](commit-workflow.md) | Branching strategy, commit checkpoint format, trigger points, anti-fatigue rules, file change tracking, hook composition, safety rails |
 | [Commit Workflow Security](commit-workflow-security.md) | Input validation, safe filename parsing, commit message safety, git command safety for hooks, fail-closed behavior |
+| [External Skill Integration](external-skills.md) | Discovery, precedence, deferral mechanism for project-local skills |

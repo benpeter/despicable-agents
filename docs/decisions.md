@@ -364,6 +364,21 @@ These decisions were made during the nefario v2.0 update, extending orchestratio
 
 ---
 
+## External Skill Integration (Decision 28)
+
+### Decision 28: Prompt-Level External Skill Discovery and Deferral
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-02-11 |
+| **Choice** | Prompt-level external skill discovery using filesystem scanning and content-signal classification. Three-tier precedence (CLAUDE.md > project-local > specificity). Deferred macro-tasks for orchestration skills. |
+| **Alternatives rejected** | (1) **Skill registry/manifest**: rejected because filesystem IS the registry (YAGNI). (2) **Mandatory metadata fields on external skills**: rejected because it couples external skills to despicable-agents. (3) **Configurable precedence system**: rejected because one simple heuristic + user override at approval gate is sufficient. |
+| **Rationale** | External skills already exist in known directories with SKILL.md frontmatter. Nefario can read and reason about them at planning time without any new infrastructure. Loose coupling preserves both ecosystems' independence. |
+| **Consequences** | Nefario's meta-plan phase gains a discovery step. Execution plans can include DEFERRED tasks. Routing accuracy depends on SKILL.md description quality (mitigated by approval gate override). |
+
+---
+
 ## Deferred
 
 - Nefario-gated complexity classification -- revisit after 20+ full-process runs.
