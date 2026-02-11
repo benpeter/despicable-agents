@@ -155,7 +155,8 @@ The orchestrator MUST minimize chat output. The user should only see:
 - Verbose git command output (use `--quiet` flags on commit/push/pull)
 
 **CONDENSE** to a single line:
-- Meta-plan result: "Planning: consulting devx-minion, security-minion, ... | Scratch: <actual resolved path>"
+- Meta-plan result: "Planning: consulting devx-minion, security-minion, ... | Skills: N discovered | Scratch: <actual resolved path>"
+  The skills count reflects external skills found during discovery (0 if none).
   The scratch path must be the ACTUAL resolved path (e.g., `/tmp/nefario-scratch-a3F9xK/my-slug/`),
   not a template with variables.
 - Review verdicts (if no BLOCK): "Review: 4 APPROVE, 0 BLOCK"
