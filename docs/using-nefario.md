@@ -57,6 +57,44 @@ workflows. Include interactive examples and troubleshooting tips.
 
 If you have a rough idea but aren't sure how to structure it, run `/despicable-prompter` first — it transforms vague descriptions into structured `/nefario` briefings with clear outcomes, success criteria, and scope.
 
+## GitHub Issue Integration
+
+Both `/nefario` and `/despicable-prompter` accept `#<n>` as the first argument to fetch task context from GitHub issues via the `gh` CLI.
+
+**Usage examples:**
+
+```
+/despicable-prompter #42
+/nefario #42
+```
+
+When you use `#<n>` syntax:
+
+- **With `/despicable-prompter #42`**: Fetches issue #42, generates a structured brief from its body, then writes the brief back to the issue (updates both title and body). The brief is also displayed in chat for your review before starting work.
+
+- **With `/nefario #42`**: Fetches issue #42 and uses its body as the task description for all phases. The issue body is treated as if you had typed it directly after `/nefario`.
+
+**Appending additional context:**
+
+You can add extra instructions after the issue number:
+
+```
+/despicable-prompter #42 also consider caching requirements
+/nefario #42 skip phase 8
+```
+
+For `/despicable-prompter`, trailing text is appended to the issue body before generating the brief. For `/nefario`, trailing text is appended to the task prompt but not written back to the issue.
+
+**Requirements:**
+
+- The `gh` CLI must be installed and authenticated
+- The issue must exist in the current repository
+- For `/despicable-prompter`, the issue body must not contain secrets or sensitive content (checked before writing back)
+
+**Automatic PR linking:**
+
+When `/nefario` completes work started from an issue, it adds `Resolves #N` to the PR description, triggering GitHub's auto-close when the PR merges.
+
 ## What Happens: The Nine Phases
 
 Nefario follows a structured process: plan with specialists, review the plan, execute, then verify the results. Here is what you experience at each phase.
@@ -96,6 +134,39 @@ Nefario operates on whichever project your Claude Code session is in. Reports, f
 **Trust the specialists.** Nefario consults domain experts for planning, which catches issues early. If oauth-minion says "device flow is better than web redirect for CLI tools," that is domain expertise you benefit from.
 
 **Use MODE: PLAN for simpler multi-agent tasks.** The skill supports a simplified mode that skips specialist consultation and has nefario plan directly. This works well when you know which 2-3 agents you need and the handoffs are straightforward.
+
+## Status Line
+
+You can add a live status line to Claude Code that shows the current nefario task while orchestration is running.
+
+### Setup
+
+Requires `jq` (`brew install jq` on macOS if not already installed).
+
+Add the following to `~/.claude/settings.json`. If you already have a `statusLine` entry, merge the nefario-specific part (the `f="/tmp/nefario-status-..."` line) into your existing command.
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "input=$(cat); dir=$(echo \"$input\" | jq -r '.workspace.current_dir // \"?\"'); model=$(echo \"$input\" | jq -r '.model.display_name // \"?\"'); used=$(echo \"$input\" | jq -r '.context_window.used_percentage // \"\"'); result=\"$dir | $model\"; if [ -n \"$used\" ]; then result=\"$result | Context: $(printf '%.1f' \"$used\")% used\"; fi; f=\"/tmp/nefario-status-${CLAUDE_SESSION_ID}\"; [ -f \"$f\" ] && ns=$(cat \"$f\" 2>/dev/null) && [ -n \"$ns\" ] && result=\"$result | $ns\"; echo \"$result\""
+  }
+}
+```
+
+Restart Claude Code or start a new conversation to activate.
+
+### What It Shows
+
+When nefario is orchestrating, the status bar appends the task summary after the standard info:
+
+`~/my-project | Claude Opus 4 | Context: 12.3% used | Build MCP server with OAuth...`
+
+When nefario is not running, the status bar shows just the directory, model, and context usage.
+
+### How It Works
+
+When nefario starts orchestrating, it writes a one-line task summary to a temporary file (`/tmp/nefario-status-<session-id>`). The status line command checks for this file and appends its contents. When orchestration finishes, nefario removes the file. If you run multiple Claude Code windows simultaneously, each shows its own nefario task independently -- no conflicts.
 
 ---
 
