@@ -350,11 +350,13 @@ The plan approval gate occurs after all architecture review verdicts are resolve
 **Format**: Progressive disclosure optimized for anomaly detection. The user knows what they asked for; the gate helps them spot surprises. See `skills/nefario/SKILL.md` (Execution Plan Approval Gate section) for the complete specification. Key sections:
 
 - **Instant orientation** -- One-line goal summary plus task/gate/advisory counts
+- **Original request echo** -- One-line truncated echo of the user's original prompt for alignment verification
+- **Working directory** -- Path to scratch directory for browsing all planning artifacts
 - **Task list** -- Compact numbered list showing title, deliverable, dependencies, agent, and gate markers (2-4 lines per task)
 - **Advisories** -- Structured deltas (CHANGE, WHY) grouped by affected task, domain-attributed not agent-attributed, maximum 3 lines per advisory
 - **Risks and conflict resolutions** -- Identified risks with mitigations, contested decisions with rationales (omitted if none)
 - **Review summary** -- One-line approval/advise/block count
-- **Full plan reference** -- Path to complete synthesis output in scratch files
+- **Full plan reference** -- Path to complete synthesis output (task prompts, agent assignments, dependencies) in scratch files
 
 **Line budget**: Target 25-40 lines for the complete gate output. Soft guidance -- clarity wins over brevity.
 
@@ -383,10 +385,11 @@ Examples of MUST-gate tasks: database schema design, API contract definition, UX
 
 ### Decision Brief Format (Mid-Execution)
 
-Mid-execution gates present individual deliverables using decision briefs with three layers of progressive disclosure to respect the user's time:
+Mid-execution gates present individual deliverables using decision briefs with four layers of progressive disclosure to respect the user's time:
 
 **Layer 1 (5-second scan)**: One-sentence description of the decision.
-**Layer 2 (30-second read)**: Rationale with 3-5 bullets, including at least one rejected alternative and the reason it was rejected.
+**Layer 1.5 (10-second scan)**: Deliverable summary with files changed, scope, and line deltas.
+**Layer 2 (30-second read)**: Rationale with rejected alternatives explicitly prefixed.
 **Layer 3 (deep dive)**: The full deliverable at its file path.
 
 CLI format:
@@ -397,17 +400,23 @@ Agent: <who> | Blocked tasks: <what's waiting>
 
 DECISION: <one sentence>
 
+DELIVERABLE:
+  <file path 1> (<change scope>, +N/-M lines)
+  <file path 2> (<change scope>, +N/-M lines)
+  Summary: <1-2 sentences describing what was produced>
+
 RATIONALE:
 - <point 1>
 - <point 2>
-- <point 3 -- must include at least one rejected alternative>
+- Rejected: <alternative and why>
 
 IMPACT: <consequences of approving vs. rejecting>
-DELIVERABLE: <file path>
 Confidence: HIGH | MEDIUM | LOW
 
 Decision points use Claude Code's `AskUserQuestion` tool for structured selection.
 ```
+
+Target 12-18 lines for mid-execution gates (soft ceiling; clarity wins over brevity).
 
 ### Response Handling (Mid-Execution)
 
@@ -417,7 +426,7 @@ Mid-execution gates present four options via structured prompt:
   "Skip docs", "Skip tests", or "Skip review". Freeform flags for multi-skip.
   Downstream tasks are unblocked.
 - **Request changes** -- A follow-up message asks what changes are needed. The producing agent revises. Capped at 2 revision iterations. If still unsatisfied, the current state is presented with a summary of what was requested, changed, and unresolved. The user then decides to approve as-is, reject, or take over manually.
-- **Reject** -- A confirmation prompt shows downstream impact: "Rejecting this will also drop Task X, Task Y which depend on it." After confirmation, the rejected task and all dependents are removed from the plan.
+- **Reject** -- A confirmation prompt shows downstream impact with dependent task descriptions (not just titles): "Rejecting this will also drop Task N: title -- deliverable description." The prompt also reminds the user that "Request changes" is available as a less drastic alternative. After confirmation, the rejected task and all dependents are removed from the plan.
 - **Skip** -- Gate deferred. Execution continues with non-dependent tasks. Skipped gates are re-presented at wrap-up. If skipped gates still block downstream tasks at wrap-up, those tasks remain incomplete and are flagged in the final report.
 
 ### Anti-Fatigue Rules

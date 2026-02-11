@@ -87,32 +87,41 @@ should be decidable from the first two layers without reading the full
 deliverable.
 
 ```
-APPROVAL GATE: <title>
-Agent: <who> | Blocked tasks: <what's waiting>
+APPROVAL GATE: <Task title>
+Agent: <who produced this> | Blocked tasks: <what's waiting>
 
-DECISION: <one sentence -- Layer 1, 5-second scan>
+DECISION: <one-sentence summary of the deliverable/decision>
+
+DELIVERABLE:
+  <file path 1> (<change scope>, +N/-M lines)
+  <file path 2> (<change scope>, +N/-M lines)
+  Summary: <1-2 sentences describing what was produced>
 
 RATIONALE:
-- <point 1>
-- <point 2>
-- <point 3 -- must include at least one rejected alternative>
+- <key point 1>
+- <key point 2>
+- Rejected: <alternative and why>
 
-IMPACT: <consequences of approving vs. rejecting>
-DELIVERABLE: <file path -- Layer 3, deep dive>
+IMPACT: <what approving/rejecting means for the project>
 Confidence: HIGH | MEDIUM | LOW
-
-Reply: approve / request changes / reject / skip
 ```
+
+Maximum 5 files listed in DELIVERABLE; if more, show top 4 + "and N more files".
+If a gate depends on a prior approved gate, the DECISION line must restate the
+dependency: "Builds on <prior decision description> approved in Task N."
+
+Target 12-18 lines for mid-execution gates (soft ceiling; clarity wins over brevity).
 
 Field definitions:
 - **Title**: Short, descriptive name for the decision point
 - **Agent**: Which specialist produced this deliverable
 - **Blocked tasks**: Downstream tasks waiting on this gate (makes delay cost visible)
 - **Decision**: One-sentence Layer 1 summary
+- **Deliverable**: File paths with change scope, line deltas, and a 1-2 sentence
+  summary. Maximum 5 files listed. Answers: what am I agreeing went into the codebase?
 - **Rationale**: Layer 2 bullets (3-5 items, must include at least one rejected
-  alternative with the reason it was rejected)
+  alternative with "Rejected:" prefix and the reason it was rejected)
 - **Impact**: What happens if approved vs. rejected (makes stakes concrete)
-- **Deliverable**: File path to the full Layer 3 output
 - **Confidence**: HIGH (clear best practice, likely quick approve), MEDIUM
   (reasonable approach but alternatives have merit), LOW (significant uncertainty,
   user should read carefully)
