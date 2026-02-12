@@ -176,11 +176,14 @@ resolving conflicts, filling gaps, and producing complete self-contained prompts
 for each execution task.
 
 _Phase 3.5 -- Architecture Review_: Cross-cutting agents review the plan before
-execution. Mandatory reviewers (security-minion, test-minion, ux-strategy-minion,
-software-docs-minion) always participate. Conditional reviewers
-(observability-minion, ux-design-minion) are triggered by task composition.
-Reviewers return APPROVE, ADVISE, or BLOCK verdicts. BLOCK triggers revision loop
-(capped at 2 rounds).
+execution. Mandatory reviewers (security-minion, test-minion, software-docs-minion,
+lucy, margo) always participate. Discretionary reviewers (ux-strategy-minion,
+ux-design-minion, accessibility-minion, sitespeed-minion, observability-minion,
+user-docs-minion) are selected by nefario using domain signal heuristics and
+approved by the user via a Reviewer Approval Gate before spawning.
+software-docs-minion produces a documentation impact checklist for Phase 8 rather
+than a full review. Reviewers return APPROVE, ADVISE, or BLOCK verdicts. BLOCK
+triggers revision loop (capped at 2 rounds).
 
 _Phase 4 -- Execution_: After user approval, the calling session executes the
 plan (creates team, spawns teammates, manages approval gates).
@@ -455,18 +458,30 @@ decision brief format. Cap revision rounds at 2 before escalating to user.
 
 After synthesis, before execution, cross-cutting agents review the plan:
 
-| Reviewer | Trigger |
-|----------|---------|
-| security-minion | ALWAYS |
-| test-minion | ALWAYS |
-| ux-strategy-minion | ALWAYS |
-| software-docs-minion | ALWAYS |
-| lucy | ALWAYS |
-| margo | ALWAYS |
-| observability-minion | 2+ tasks produce runtime components |
+**Mandatory reviewers (ALWAYS):**
+
+| Reviewer | Trigger | Rationale |
+|----------|---------|-----------|
+| security-minion | ALWAYS | Security violations in a plan are invisible until exploited |
+| test-minion | ALWAYS | Retrofitting test coverage is consistently more expensive than designing it in |
+| software-docs-minion | ALWAYS | Produces documentation impact checklist for Phase 8 (impact assessment, not full review) |
+| lucy | ALWAYS | Every plan must align with human intent, repo conventions, and CLAUDE.md compliance |
+| margo | ALWAYS | Every plan must pass YAGNI/KISS/simplicity enforcement |
+
+**Discretionary reviewers (selected by nefario, approved by user):**
+
+| Reviewer | Domain Signal |
+|----------|--------------|
+| ux-strategy-minion | Plan includes user-facing workflow changes, journey modifications, or cognitive load implications |
 | ux-design-minion | 1+ tasks produce user-facing interfaces |
 | accessibility-minion | 1+ tasks produce web-facing UI |
 | sitespeed-minion | 1+ tasks produce web-facing runtime components |
+| observability-minion | 2+ tasks produce runtime components needing coordinated observability |
+| user-docs-minion | Plan output changes what end users see, do, or need to learn |
+
+Before spawning reviewers, nefario presents its discretionary picks to the user
+via a Reviewer Approval Gate. The user can approve, adjust (constrained to the
+6-member pool, 2-round cap), or skip architecture review entirely.
 
 Reviewers return APPROVE / ADVISE / BLOCK verdicts. BLOCK triggers revision loop
 capped at 2 rounds.
