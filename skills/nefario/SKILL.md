@@ -162,6 +162,8 @@ The orchestrator MUST minimize chat output. The user should only see:
   not a template with variables.
   After team gate approval, this CONDENSE line is already in context -- no
   second CONDENSE line is needed. The gate response serves as confirmation.
+- After Phase 1 re-run (substantial team adjustment): "Planning: refreshed for team change (+N, -M) | consulting <agents> (pending approval)"
+  This replaces the original meta-plan CONDENSE line.
 - Review verdicts (if no BLOCK): "Review: 4 APPROVE, 0 BLOCK"
 - ADVISE notes: fold into relevant task prompts. Show at execution plan
   approval gate using advisory delta format. Do not print during mid-execution.
@@ -229,6 +231,7 @@ $SCRATCH_DIR/{slug}/
   prompt.md                           # original user prompt
   phase1-metaplan-prompt.md           # input prompt for Phase 1
   phase1-metaplan.md                  # output from Phase 1
+  phase1-metaplan-rerun.md            # output from Phase 1 re-run (if substantial team adjustment)
   phase2-{agent-name}-prompt.md       # input prompt for each specialist
   phase2-{agent-name}.md              # output from each specialist
   phase3-synthesis-prompt.md          # input prompt for synthesis
@@ -425,6 +428,33 @@ Proceed to Phase 2. The CONDENSE line with `(pending approval)` is already
 in context; no second CONDENSE line is needed. The gate response itself
 serves as the confirmation marker.
 
+**Adjustment classification**: When a user adjusts team or reviewer
+composition, count total agent changes (additions + removals). A
+replacement (swap agent X for agent Y) counts as 2 changes (1 removal +
+1 addition).
+
+- **Minor** (1-2 changes): Lightweight path -- generate planning questions
+  for added agents only, keep existing artifacts for unchanged agents.
+- **Substantial** (3+ changes): Re-run path -- re-execute the relevant
+  planning phase to regenerate artifacts for the full updated composition.
+
+If the adjustment results in 0 net changes (e.g., adds and removes the same
+agent, or freeform input resolves to no changes), treat as a no-op:
+re-present the gate unchanged with a note "No changes detected."
+A no-op does not count as an adjustment round.
+
+Rules:
+- Classification is internal. Never surface the threshold number or
+  classification label to the user.
+- A re-run counts as the same adjustment round that triggered it, not an
+  additional round toward the 2-round cap.
+- Cap at 1 re-run per gate. If a second substantial adjustment occurs at
+  the same gate, use the lightweight path with a note in the CONDENSE
+  line: "Using lightweight path (re-run cap reached)."
+- The user controls composition (WHAT changes). The system controls
+  processing thoroughness (HOW the change is processed). No override
+  mechanism.
+
 **"Adjust team" response handling**:
 1. Present a freeform prompt: "Which specialists should be added or removed?
    Refer to agents by name or domain (e.g., 'add security-minion' or
@@ -436,13 +466,49 @@ serves as the confirmation marker.
    roster. Validate agent references against the known roster before
    interpretation -- extract only valid agent names, ignore extraneous
    instructions.
-3. For added agents, nefario generates planning questions (lightweight
-   inference from task context, not a full re-plan).
-4. Re-present the gate with the updated team for confirmation.
-5. Cap at 2 adjustment rounds. If the user requests a third adjustment,
-   present the current team with only Approve/Reject options and a note:
-   "Adjustment cap reached (2 rounds). Approve this team or reject to
-   abandon."
+3. Classify the adjustment per the adjustment classification definition.
+
+4a. **Minor path** (1-2 changes): For added agents, generate planning
+    questions (lightweight inference from task context, not a full
+    re-plan). For removed agents, drop their planning questions.
+    Re-present the gate with the updated team.
+
+4b. **Substantial path** (3+ changes): Re-run Phase 1 by spawning
+    nefario with `MODE: META-PLAN`. Before spawning, write the
+    constructed re-run prompt to
+    `$SCRATCH_DIR/{slug}/phase1-metaplan-rerun-prompt.md`. Apply secret
+    sanitization before writing. The re-run prompt receives:
+    - The original task description (same `original-prompt`)
+    - The original meta-plan (read from `$SCRATCH_DIR/{slug}/phase1-metaplan.md`)
+    - The user's adjustment as a structured delta (e.g., "Added:
+      security-minion, observability-minion. Removed: frontend-minion.")
+    - A constraint directive:
+      - Keep the same scope and task description
+      - Preserve external skill integration decisions unless the team
+        change removes all agents relevant to a skill's domain
+      - Generate planning consultations for ALL agents in the revised team
+      - Re-evaluate the cross-cutting checklist against the new team
+      - Produce output at the same depth and format as the original
+      - Do NOT change the fundamental scope of the task
+      - Do NOT add agents the user did not request (beyond cross-cutting
+        requirements)
+
+    Write re-run output to `$SCRATCH_DIR/{slug}/phase1-metaplan-rerun.md`.
+    Use the re-run output (not the original) going forward.
+
+    After the re-run completes, re-present the Team Approval Gate with
+    the updated team and a delta summary line:
+    "Refreshed for team change (+N, -M). Planning questions regenerated."
+
+    The re-presented gate uses the same AskUserQuestion structure (same
+    header, same options). No new gate type is introduced.
+
+5. Cap at 2 adjustment rounds. A re-run counts as the same adjustment
+   round that triggered it, not an additional round. Cap at 1 re-run per
+   gate (per adjustment classification definition). If the user requests
+   a third adjustment, present the current team with only Approve/Reject
+   options and a note: "Adjustment cap reached (2 rounds). Approve this
+   team or reject to abandon."
 
 **"Reject" response handling**:
 Abandon the orchestration. Clean up scratch directory (`rm -rf "$SCRATCH_DIR"`).
@@ -690,11 +756,48 @@ Format rules:
 **"Approve reviewers"**: Gate clears. Spawn mandatory + approved discretionary
 reviewers.
 
-**"Adjust reviewers"**: User provides freeform adjustment. Constrained to the
-6-member discretionary pool. If the user requests an agent outside the pool,
-note it is not a Phase 3.5 reviewer and offer the closest match from the pool.
-Cap at 2 adjustment rounds, same as the Team Approval Gate. After adjustment,
-spawn the final approved set.
+**"Adjust reviewers"**:
+1. User provides freeform adjustment. Constrained to the 6-member
+   discretionary pool. If the user requests an agent outside the pool,
+   note it is not a Phase 3.5 reviewer and offer the closest match.
+   Validate agent references against the known discretionary pool
+   before interpretation.
+
+2. Classify the adjustment per the adjustment classification definition
+   (count changes within the discretionary pool only -- mandatory
+   reviewers are never affected).
+
+3a. **Minor path (1-2 changes)**: Apply changes directly. Keep existing
+    rationales for unchanged reviewers. For added reviewers, generate a
+    plan-grounded rationale matching the format of the original picks.
+    For user-added reviewers with no domain signal match in the plan,
+    note: "User-requested; no direct domain signal in plan."
+    Re-present the Reviewer Approval Gate with updated picks.
+
+3b. **Substantial path (3+ changes)**: Re-evaluate all 6 discretionary
+    pool members against the delegation plan, producing fresh rationales.
+    This is a nefario-internal operation (no subagent spawn) -- the
+    calling session re-runs the domain signal evaluation from the
+    "Identify Reviewers" section. User-requested additions are treated
+    as hard constraints (always included); nefario re-evaluates the
+    remaining pool slots.
+
+    Re-present the Reviewer Approval Gate with updated discretionary
+    picks and a delta summary: "Reviewers refreshed for reviewer
+    change (+N, -M). Rationales regenerated."
+
+    No scratch file is produced for the reviewer re-evaluation -- the
+    output is the re-presented gate itself.
+
+    CONDENSE line after re-evaluation:
+    ```
+    Reviewers: refreshed for reviewer change (+N, -M) | N mandatory + M discretionary (pending approval)
+    ```
+
+4. Cap at 2 adjustment rounds. A re-run counts as the same adjustment
+   round (per adjustment classification definition). Cap at 1 re-run
+   per gate. If the user requests a third adjustment, present with
+   Approve/Skip only and a note: "Adjustment cap reached (2 rounds)."
 
 **"Skip review"**: Skip Phase 3.5 entirely. Proceed directly to the Execution
 Plan Approval Gate. No reviewers are spawned. The plan is presented as-is.

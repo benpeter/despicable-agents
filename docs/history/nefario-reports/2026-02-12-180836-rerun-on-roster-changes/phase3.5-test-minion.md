@@ -1,0 +1,23 @@
+VERDICT: ADVISE
+
+WARNINGS:
+
+- [state-explosion-testability] The plan introduces branching logic at both gates (minor vs. substantial path) plus re-run caps and round-counting semantics. Combined with existing paths (Approve, Adjust, Reject/Skip), the Team Approval Gate now has these distinct adjustment flows: (1) minor adjustment, (2) substantial adjustment with re-run, (3) substantial adjustment after re-run cap reached (falls back to lightweight), (4) third adjustment blocked (cap reached). The Reviewer Gate has a parallel set. This is 4 distinct paths per gate, 8 total, none of which have automated test coverage. This is a pre-existing gap (no test harness for SKILL.md orchestration) that grows meaningfully with this plan. Not a blocker -- the behaviors are well-specified and manually verifiable -- but the combinatorial surface is now substantial enough to warrant tracking.
+  TASK: Cross-cutting
+  RECOMMENDATION: Add to the project backlog (or a comment in SKILL.md) that the gate adjustment paths should be exercised manually in the first 2-3 orchestration sessions after merge, covering: (a) a 1-2 change adjustment at each gate, (b) a 3+ change adjustment triggering re-run, (c) a second substantial adjustment hitting the re-run cap. This is integration testing via observed behavior.
+
+- [edge-case-specification-gap] The plan specifies counting "total agent changes (additions + removals)" but does not specify how to count a replacement (user says "replace X with Y"). Is that 1 change or 2? From the definition, it should be 2 (1 addition + 1 removal), but this is not explicit. A user replacing 2 agents ("swap A and B for C and D") would count as 4 changes and trigger a re-run. This is arguably correct behavior but could surprise the user since they perceive it as a "minor tweak." The spec should make the counting rule unambiguous.
+  TASK: Task 1
+  RECOMMENDATION: Add an explicit note to the adjustment classification definition: "A replacement (remove X, add Y) counts as 2 changes (1 removal + 1 addition)." One sentence, removes ambiguity for the implementing agent.
+
+- [re-run-cap-state-tracking] The spec defines "cap at 1 re-run per gate" but does not specify how this state is tracked. In the current SKILL.md, caps are tracked implicitly by the conversational flow (the agent counts rounds). However, the re-run cap is a secondary counter alongside the adjustment round counter. If nefario loses conversational context (e.g., long session, context window pressure), the re-run cap could be silently ignored. This is low-risk given the short interaction window but worth noting: two counters (adjustment rounds, re-runs) with different semantics tracked in the same conversational state.
+  TASK: Task 2
+  RECOMMENDATION: No action needed for this plan. The cap is simple enough for conversational tracking. If future iterations add more stateful logic to gates, consider persisting gate state to the scratch directory.
+
+- [verification-steps-gap] The plan's Verification Steps (items 1-7) are thorough for checking the specification text was written correctly. However, they do not verify the most testability-critical aspect: that the re-run prompt template in Task 2 (the constraint directive passed to the re-spawned nefario) is complete enough to produce a valid meta-plan. The constraint directive is effectively an untested prompt -- it has never been executed. The first real orchestration session with a 3+ change adjustment will be the first execution of this prompt.
+  TASK: Task 2
+  RECOMMENDATION: Add a verification step: "Review the META-PLAN re-run constraint directive for completeness: does it specify output format, required sections, and scope boundaries clearly enough that a fresh nefario session could produce a valid meta-plan from it?" This is a prompt review, not a code test, but it is the closest analog to test coverage for this domain.
+
+- [0-change-edge-case] The adjustment classification defines Minor as 1-2 and Substantial as 3+. The plan does not address the 0-change case: the user selects "Adjust team" but then requests no actual changes (e.g., types "keep as is" or "no changes"). Current behavior presumably re-presents the same gate, but the classification definition has no 0-change bucket. This is a minor gap -- the lightweight path with 0 additions/removals would be a no-op, which is correct behavior -- but the spec should be explicit.
+  TASK: Task 1
+  RECOMMENDATION: Add to the adjustment classification: "0 changes: no-op. Re-present the gate unchanged. Does not count as an adjustment round." One line, prevents ambiguity.
