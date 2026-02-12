@@ -1,345 +1,292 @@
-# Nefario Execution Report Template
+# Nefario Execution Report Template (v3)
 
-This template defines the format for execution reports generated after nefario orchestration runs. Reports document the planning process, decisions made, and execution outcomes.
+Canonical template for nefario execution reports. Referenced from
+`skills/nefario/SKILL.md`. All reports must follow this skeleton.
 
-## File Naming Convention
+## Skeleton
 
-Reports are written to `docs/history/nefario-reports/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`:
-
-- `<YYYY-MM-DD>`: date of orchestration
-- `<HHMMSS>`: local time at report creation, 24-hour format, zero-padded (e.g., `143022` for 2:30:22 PM). Capture this timestamp at wrap-up time when the report is actually written, not at Phase 1.
-- `<slug>`: kebab-case, lowercase, max 40 chars, derived from task description. Strip articles (a/an/the). Only alphanumeric characters and hyphens.
-
-Create `docs/history/nefario-reports/` directory if it doesn't exist.
-
-## YAML Frontmatter
-
-Reports use exactly 10 fields in the frontmatter:
-
-```yaml
+```markdown
 ---
 type: nefario-report
-version: 2 # v1 reports coexist -- build-index.sh reads both
-date: "<YYYY-MM-DD>"
-time: "HH:MM:SS"
-task: "<one-line task description>"
-mode: full | plan
-agents-involved: [<list>]
-task-count: <N>
-gate-count: <N>
-outcome: completed | partial | aborted
+version: 3
+date: "{YYYY-MM-DD}"
+time: "{HH:MM:SS}"
+task: "{one-line task description}"
+source-issue: {N}
+mode: {full | plan}
+agents-involved: [{agent1}, {agent2}, ...]
+task-count: {N}
+gate-count: {N}
+outcome: {completed | partial | aborted}
 ---
-```
 
-### Field Descriptions
+# {task}
 
-- **type**: Always `nefario-report`
-- **version**: Template version, currently `2`
-- **date**: Orchestration date in YYYY-MM-DD format
-- **time**: Local time of report generation in HH:MM:SS format (24-hour)
-- **task**: One-line description of the orchestration task
-- **mode**: `full` (all phases) or `plan` (planning only, no execution)
-- **agents-involved**: Array of agent names that participated
-- **task-count**: Number of execution tasks in the plan
-- **gate-count**: Number of approval gates presented
-- **outcome**: `completed`, `partial`, or `aborted`
-
-## Body Structure
-
-The report body uses an inverted pyramid: most important information first, detail last.
-
-### 1. Report Title
-
-```markdown
-# <task frontmatter value>
-```
-
-### 2. Summary
-
-2-3 sentences. What happened and why it matters. A PR reviewer reads this and knows whether to care.
-
-```markdown
 ## Summary
 
-Replaced sequential numbering with timestamps in report filenames and replaced
-manual index mutation with an idempotent build script. This eliminates both the
-TOCTOU race and merge conflicts during parallel orchestration.
-```
+{2-3 sentences. What happened and why it matters. A PR reviewer reads this and knows whether to care.}
 
-### 3. Original Prompt
-
-The verbatim user request in a blockquote. Use the text that was passed to nefario (may already be cleaned by despicable-prompter).
-
-The PR description inherits this section automatically, since the PR body is derived from the report body (stripped frontmatter). Renaming here propagates to the PR.
-
-**SECURITY NOTE**: Before including the verbatim prompt, remove any secrets, tokens, API keys, or credentials that may have been in the original text. Replace with `[REDACTED]`.
-
-**Short prompts (<20 lines)** -- inline blockquote:
-
-```markdown
 ## Original Prompt
 
-> Eliminate merge conflicts when multiple nefario sessions generate reports
-> in parallel. The current sequence-number approach has a TOCTOU race.
-```
+> {Verbatim user request, redacted of secrets. If >=20 lines, wrap in <details> instead of blockquote.}
 
-**Long prompts (>=20 lines)** -- collapsible:
+## Key Design Decisions
 
-```markdown
-## Original Prompt
-
-<details>
-<summary>Original prompt (expand)</summary>
-
-> Full verbatim prompt here, redacted of any secrets.
-> Can span many lines.
-
-</details>
-```
-
-### 4. Decisions
-
-Key choices made during planning and execution.
-
-**Non-gate decisions** use the existing format:
-
-```markdown
-## Decisions
-
-#### Timestamps Over Sequence Numbers
+#### {Decision Title}
 
 **Rationale**:
-- Timestamps require no coordination between sessions
-- Sub-second collision probability is negligible
-- Filenames remain human-readable and sort chronologically
+- {Why this choice was made}
+- {Supporting reasoning}
 
 **Alternatives Rejected**:
-- UUID-based filenames: not human-readable, don't sort chronologically
-- Lock file protocol: doesn't solve git merge conflicts across branches
-```
+- {Alternative}: {why rejected}
 
-**Gate decision briefs** include outcome and confidence fields:
-
-```markdown
-#### Naming + Index Strategy
+#### {Decision Title 2}
 
 **Rationale**:
-- Timestamps eliminate coordination needs
-- Idempotent index regeneration removes concurrent-write conflicts
-- Rejected append-only index due to ordering and conflict issues
+- {Why}
 
-**Gate outcome**: approved
-**Confidence**: HIGH
-```
+**Alternatives Rejected**:
+- {Alternative}: {why rejected}
 
-**Conflict Resolutions**: If any conflicts arose between specialist recommendations, document how they were resolved. If none, state "None".
+### Conflict Resolutions
 
-### 5. Agent Contributions
+{Description of conflicts between specialist recommendations and how they were resolved. "None." if no conflicts arose.}
 
-Inside a collapsible `<details>` block. Summary line states counts.
+## Phases
 
-```markdown
+{Narrative account of the orchestration arc. 1-2 paragraphs per phase. NOT tables.}
+
+### Phase 1: Meta-Plan
+
+{What was identified: specialists selected, scope defined, risks anticipated.}
+
+### Phase 2: Specialist Planning
+
+{Per-specialist summary of recommendations, adopted items, and risks flagged.}
+
+### Phase 3: Synthesis
+
+{How specialist input was merged. Conflicts, agreements, final plan shape.}
+
+### Phase 3.5: Architecture Review
+
+{Reviewer count and verdicts. Brief per-reviewer summary.}
+
+### Phase 4: Execution
+
+{What was executed, by whom. Brief per-task summary.}
+
+### Phase 5: Code Review
+
+{Reviewer verdicts and key findings.}
+
+### Phase 6: Test Execution
+
+{Test results or "Skipped ({reason})."}
+
+### Phase 7: Deployment
+
+{Deployment outcome or "Skipped ({reason})."}
+
+### Phase 8: Documentation
+
+{Documentation outcome or "Skipped ({reason})."}
+
 ## Agent Contributions
 
 <details>
-<summary>Agent Contributions (2 planning, 6 review)</summary>
+<summary>Agent Contributions ({N} planning, {N} review)</summary>
 
 ### Planning
 
-**devx-minion**: Recommended timestamp-based filenames for conflict-free parallel writes.
-- Adopted: HHMMSS naming convention, idempotent index script
-- Risks flagged: sub-second collisions (accepted as negligible)
+**{agent-name}**: {Recommendation summary.}
+- Adopted: {items adopted into final plan}
+- Risks flagged: {risks identified, or "none"}
 
-**data-minion**: Analyzed frontmatter parsing requirements for generated index.
-- Adopted: POSIX shell script reading YAML frontmatter
-- Risks flagged: none
+**{agent-name}**: {Recommendation summary.}
+- Adopted: {items adopted}
+- Risks flagged: {risks}
 
 ### Architecture Review
 
-**security-minion**: APPROVE. No concerns.
+**{agent-name}**: APPROVE. No concerns.
 
-**test-minion**: ADVISE. Recommended adding a test for duplicate timestamp detection; accepted as future work.
+**{agent-name}**: ADVISE. {Concern and recommendation.}
 
-**ux-strategy-minion**: APPROVE. No concerns.
+**{agent-name}**: BLOCK. {Issue identified.} Resolved: {resolution.}
 
-**software-docs-minion**: APPROVE. No concerns.
+### Code Review
 
-**lucy**: APPROVE. Consistent with existing conventions.
+**{agent-name}**: APPROVE. {Brief note.}
 
-**margo**: BLOCK. Flagged unnecessary complexity in dual-format fallback. Resolved: kept minimal 5-line handler for legacy reports.
+**{agent-name}**: ADVISE. {Finding and resolution.}
 
 </details>
-```
 
-Important: blank line after `<summary>` and before `</details>` for GitHub rendering.
-
-Proportional detail by verdict:
-- **APPROVE** = 1 line: `**agent**: APPROVE. No concerns.`
-- **ADVISE** = 2-3 lines: verdict + concern + recommendation
-- **BLOCK** = 3-4 lines: verdict + issue + resolution
-
-### 6. Execution
-
-Files changed table and approval gates with enriched briefs.
-
-```markdown
 ## Execution
 
-### Files Created/Modified
+### Tasks
+
+| # | Task | Agent | Status |
+|---|------|-------|--------|
+| 1 | {task description} | {agent} | {completed/partial/failed} |
+| 2 | {task description} | {agent} | {completed/partial/failed} |
+
+### Files Changed
 
 | File Path | Action | Description |
 |-----------|--------|-------------|
-| docs/history/nefario-reports/build-index.sh | created | POSIX shell script to regenerate index |
-| docs/history/nefario-reports/TEMPLATE.md | modified | Updated naming convention |
+| {path/to/file} | {created/modified/deleted} | {what changed} |
+| {path/to/file} | {created/modified/deleted} | {what changed} |
 
 ### Approval Gates
 
 | Gate Title | Agent | Confidence | Outcome | Rounds |
 |------------|-------|------------|---------|--------|
-| Naming + Index Strategy | nefario | HIGH | approved | 1 |
+| {gate title} | {agent} | {HIGH/MEDIUM/LOW} | {approved/rejected} | {N} |
 
-#### Naming + Index Strategy
+#### {Gate Title}
 
-**Decision**: Adopt timestamp naming with idempotent index regeneration.
-**Rationale**: Eliminates coordination between sessions; frontmatter already contains all data needed for index.
-**Rejected**: Append-only index (still conflicts), UUID filenames (not human-readable).
-```
+**Decision**: {What was decided.}
+**Rationale**: {Why this decision was made.}
+**Rejected**: {Alternatives considered and why rejected.}
 
-If no files changed: "None". If no gates: "None".
+## Decisions
 
-### 7. Process Detail
+{Gate briefs with full rationale. One H4 per gate.}
 
-Inside a collapsible `<details>` block.
+#### {Gate Title}
 
-```markdown
-## Process Detail
+**Decision**: {What was decided.}
+**Rationale**: {Full reasoning.}
+**Rejected**: {Alternatives and why.}
+**Confidence**: {HIGH/MEDIUM/LOW}
+**Outcome**: {approved/rejected}
 
-<details>
-<summary>Process Detail</summary>
-
-### Phases Executed
-
-| Phase | Agents |
-|-------|--------|
-| Meta-plan | nefario |
-| Specialist Planning | devx-minion, data-minion |
-| Synthesis | nefario |
-| Architecture Review | security-minion, test-minion, lucy, margo |
-| Execution | devx-minion (5 tasks) |
-| Code Review | code-review-minion, lucy, margo |
-| Test Execution | (skipped -- no tests exist) |
-| Deployment | (skipped -- not requested) |
-| Documentation | (skipped -- docs were the primary deliverables) |
-
-Conditional phases that did not run use the format: `(skipped -- <reason>)` in the Agents column.
-
-### Verification
+## Verification
 
 | Phase | Result |
 |-------|--------|
-| Code Review | 0 BLOCK, 2 ADVISE -- all resolved |
-| Test Execution | 42 pass, 0 fail, 2 skip |
-| Deployment | (skipped -- not requested) |
-| Documentation | 2 files created, 1 modified |
+| Code Review | {outcome} |
+| Test Execution | {outcome or "Skipped ({reason})"} |
+| Deployment | {outcome or "Skipped ({reason})"} |
+| Documentation | {outcome or "Skipped ({reason})"} |
 
-For phases that did not run, use the skipped format: `(skipped -- <reason>)`.
+## External Skills
 
-### Timing
+| Skill | Classification | Recommendation | Tasks Used |
+|-------|---------------|----------------|------------|
+| {skill-name} | {LEAF/ORCHESTRATION} | {how it was used} | {task numbers} |
 
-| Phase | Duration |
-|-------|----------|
-| Meta-plan | ~2m |
-| Specialist Planning | ~8m |
-| Synthesis | ~3m |
-| Architecture Review | ~5m |
-| Execution | ~15m |
-| Code Review | ~4m |
-| Test Execution | ~3m |
-| Deployment | (skipped) |
-| Documentation | ~5m |
-| **Total** | **~45m** |
-
-### Outstanding Items
-
-- [ ] Outstanding item 1
-- [ ] Outstanding item 2
-
-If none: "None"
-
-</details>
-```
-
-Important: blank line after `<summary>` and before `</details>` for GitHub rendering.
-
-### 8. Working Files
-
-Preserved intermediate artifacts from the orchestration run. Inside a
-collapsible `<details>` block.
-
-When a companion directory exists (scratch files were collected at wrap-up):
-
-```markdown
 ## Working Files
 
 <details>
-<summary>Working files (N files)</summary>
+<summary>Working files ({N} files)</summary>
 
-Companion directory: [<YYYY-MM-DD>-<HHMMSS>-<slug>/](./<YYYY-MM-DD>-<HHMMSS>-<slug>/)
+Companion directory: [{YYYY-MM-DD}-{HHMMSS}-{slug}/](./{YYYY-MM-DD}-{HHMMSS}-{slug}/)
 
 - [Phase 1: Meta-plan](./companion-dir/phase1-metaplan.md)
-- [Phase 2: devx-minion](./companion-dir/phase2-devx-minion.md)
-- [Phase 2: software-docs-minion](./companion-dir/phase2-software-docs-minion.md)
+- [Phase 2: {agent-name}](./companion-dir/phase2-{agent-name}.md)
 - [Phase 3: Synthesis](./companion-dir/phase3-synthesis.md)
-- [Phase 3.5: security-minion](./companion-dir/phase3.5-security-minion.md)
-- ...
+- [Phase 3.5: {agent-name}](./companion-dir/phase3.5-{agent-name}.md)
+- [Original Prompt](./companion-dir/prompt.md)
 
 </details>
+
+## Test Plan
+
+{Description of tests produced or modified. Table or prose as appropriate.}
+
+## Post-Nefario Updates
+
+### {YYYY-MM-DD}: {brief description}
+
+{What changed and why. Reference commit or PR.}
 ```
 
-When no companion directory exists (no scratch files for this run):
+## Template Notes
 
-```markdown
-## Working Files
+### Frontmatter Fields
 
-None
-```
+| Field | Required | Description |
+|-------|----------|-------------|
+| `type` | always | Always `nefario-report` |
+| `version` | always | Template version: `3` |
+| `date` | always | Orchestration date, `YYYY-MM-DD` |
+| `time` | always | Local time of report generation, `HH:MM:SS` (24-hour) |
+| `task` | always | One-line task description |
+| `source-issue` | conditional | GitHub issue number. INCLUDE WHEN input was a GitHub issue. OMIT WHEN no issue. |
+| `mode` | always | `full` (all phases) or `plan` (planning only) |
+| `agents-involved` | always | Array of agent names that participated |
+| `task-count` | always | Number of execution tasks |
+| `gate-count` | always | Number of approval gates presented |
+| `outcome` | always | `completed`, `partial`, or `aborted` |
 
-Important notes for the template:
-- The companion directory is a sibling directory in the same
-  `docs/history/nefario-reports/` folder, named as the report filename
-  without `.md` (e.g., `2026-02-10-143322-slug/`)
-- Relative links use `./companion-dir/filename.md` format
-- File list is generated from whatever files actually exist in the companion
-  directory -- not a fixed set
-- Label convention: `Phase N: description` where description is derived from
-  filename (phase1-metaplan -> "Meta-plan", phase2-{agent} -> agent name,
-  phase3-synthesis -> "Synthesis", phase3.5-{agent} -> agent name,
-  prompt.md -> "Original Prompt")
-- N in the summary line is the actual file count
-- Blank line after `<summary>` and before `</details>` for GitHub rendering
-- Section is ABSENT for existing/older reports (backward compatibility:
-  absence = no working files)
+### Conditional Section Rules
 
-### 9. Metrics
+| Section | INCLUDE WHEN | OMIT WHEN |
+|---------|-------------|-----------|
+| Decisions | `gate-count` > 0 | `gate-count` = 0 |
+| External Skills | Meta-plan discovered 1+ external skills | No external skills discovered |
+| Test Plan | Execution produced test files or test strategy decisions were made | No tests involved |
+| Post-Nefario Updates | NEVER in initial report. Appending updates to an existing report after subsequent commits land on the same branch. | Always omit in initial report generation. |
 
-Reference data table (same fields as v1 Layer 1 header block).
+### Collapsibility Rules
 
-```markdown
-## Metrics
+| Section | Collapsed (`<details>`) | Always Visible |
+|---------|------------------------|----------------|
+| Agent Contributions | yes | |
+| Working Files | yes | |
+| Original Prompt | only when >= 20 lines | when < 20 lines (use blockquote) |
+| All other sections | | yes |
 
-| Metric | Value |
-|--------|-------|
-| Date | YYYY-MM-DD |
-| Task | One-line description |
-| Duration | ~Xm (approximate minutes) |
-| Outcome | completed/partial/aborted |
-| Planning Agents | N agents consulted |
-| Review Agents | N reviewers |
-| Execution Agents | N agents spawned |
-| Gates Presented | N of M approved |
-| Files Changed | N created, M modified |
-| Outstanding Items | N items |
-```
+Blank line required after `<summary>` tag and before `</details>` for GitHub
+rendering compatibility.
+
+### Formatting Rules
+
+- **Review verdict proportional detail**:
+  - APPROVE = 1 line: `**agent**: APPROVE. No concerns.`
+  - ADVISE = 2-3 lines: verdict + concern + recommendation
+  - BLOCK = 3-4 lines: verdict + issue + resolution
+- **Phases section**: Narrative prose (1-2 paragraphs per phase), NOT tables.
+  Include all phases that ran. For skipped phases: `Skipped ({reason}).`
+- **Key Design Decisions**: Each decision as H4. Non-gate design decisions.
+  For gate decisions, use the Decisions section instead.
+- **Conflict Resolutions**: Always present as H3 under Key Design Decisions.
+  Write "None." if no conflicts arose.
+- **Files Changed**: Must list ALL files in the PR, not a subset.
+- **Verification**: Even if all phases were skipped, include the table with
+  skipped annotations.
+
+### Working Files
+
+- Companion directory is a sibling in `docs/history/nefario-reports/`, named
+  as the report filename without `.md` (e.g., `2026-02-10-143322-slug/`)
+- Use relative links: `./companion-dir/filename.md`
+- Label convention: `Phase N: description` (phase1-metaplan -> "Meta-plan",
+  phase2-{agent} -> agent name, phase3-synthesis -> "Synthesis",
+  phase3.5-{agent} -> agent name, prompt.md -> "Original Prompt")
+- N in summary line is actual file count
+- "None" if no companion directory exists
+
+### PR Body Generation
+
+The PR body is the report body with YAML frontmatter stripped. The report is
+written so that frontmatter-stripped content reads as a valid PR description.
+
+### File Naming Convention
+
+Reports are written to `docs/history/nefario-reports/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`:
+
+- `<YYYY-MM-DD>`: date of orchestration
+- `<HHMMSS>`: local time at report creation, 24-hour, zero-padded. Capture at
+  wrap-up time, not at Phase 1.
+- `<slug>`: kebab-case, lowercase, max 40 chars, derived from task description.
+  Strip articles (a/an/the). Only alphanumeric and hyphens.
+
+Create `docs/history/nefario-reports/` directory if it doesn't exist.
 
 ## Index File
 
@@ -355,7 +302,9 @@ To preview the index locally before pushing (optional): `docs/history/nefario-re
 
 ## Incremental Writing
 
-For long-running orchestrations, write a partial report after Phase 3 (synthesis). Include available data and mark sections as "In Progress". Overwrite with the complete report at wrap-up.
+For long-running orchestrations, write a partial report after Phase 3
+(synthesis). Include available data and mark sections as "In Progress".
+Overwrite with the complete report at wrap-up.
 
 ## Report Writing Checklist
 
@@ -366,13 +315,17 @@ When generating a report:
 3. Capture current local time as HHMMSS for filename
 4. Sanitize verbatim prompt (redact secrets/tokens/keys)
 4a. Write sanitized prompt to scratch directory as prompt.md
-5. Write YAML frontmatter with all 10 fields (version: 2)
-6. Write Summary
-7. Write Original Prompt (verbatim prompt, inline if <20 lines, collapsible if >=20 lines)
-8. Write Decisions (with enriched gate briefs including rationale + rejected alternatives)
-9. Write Agent Contributions (collapsible, 2 groups: Planning + Architecture Review)
-10. Write Execution (files + gates)
-11. Write Process Detail (collapsible, includes Verification)
-12. Write Working Files section (collapsible, list all files in companion directory with phase labels; or "None" if no companion directory)
-13. Write Metrics
-14. Present report path to user
+5. Write YAML frontmatter with all fields (version: 3; include `source-issue` only if applicable)
+6. Write Summary (2-3 sentences)
+7. Write Original Prompt (inline blockquote if <20 lines, collapsible if >=20 lines)
+8. Write Key Design Decisions (H4 per decision, with Conflict Resolutions H3 subsection)
+9. Write Phases (narrative, 1-2 paragraphs per phase)
+10. Write Agent Contributions (collapsible, groups: Planning + Architecture Review + Code Review)
+11. Write Execution (Tasks table + Files Changed table + Approval Gates table with per-gate H4 briefs)
+12. Write Decisions (if gate-count > 0; gate briefs with full rationale)
+13. Write Verification table
+14. Write External Skills (if any discovered)
+15. Write Working Files (collapsible, relative links to companion directory; or "None")
+16. Write Test Plan (if tests were produced or modified)
+17. Do NOT write Post-Nefario Updates in initial report
+18. Present report path to user

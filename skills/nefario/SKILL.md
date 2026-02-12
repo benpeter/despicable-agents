@@ -776,6 +776,12 @@ After branch resolution (whether creating a new branch or using an existing one)
 create the orchestrated-session marker to suppress commit hook noise:
 `SID=$(cat /tmp/claude-session-id 2>/dev/null); touch /tmp/claude-commit-orchestrated-$SID`
 
+After branch resolution, detect existing PR on current branch:
+```sh
+existing_pr=$(gh pr list --head "$(git branch --show-current)" --json number --jq '.[0].number' 2>/dev/null)
+```
+If non-empty, retain as `existing-pr` in session context.
+
 ### Setup
 
 1. **Create a team** using TeamCreate with the team name from the plan.
@@ -1209,6 +1215,9 @@ not part of the default flow.
 10. **PR creation** — after the report is committed, if in a git repo and on
     a feature branch, offer to create a pull request.
 
+    If `existing-pr` is set, skip this step (PR already exists). Print:
+    "Using existing PR #<N>."
+
     Before presenting the PR gate, run `git diff --stat origin/<default-branch>...HEAD`
     and `git rev-list --count origin/<default-branch>..HEAD` to populate commit count,
     file count, and line deltas. Print the change summary:
@@ -1325,6 +1334,9 @@ Track data at phase boundaries:
   (rationale bullets, rejected alternatives, confidence level, and outcome) in
   session context. These populate the enriched gate briefs in the report's
   Decisions and Execution sections.
+- `existing-pr`: PR number if a PR already exists for the current branch
+  (detected via `gh pr list --head <branch> --json number --jq '.[0].number'`).
+  `null` if no existing PR.
 
 **After Phase 5-8 (Post-Execution)**:
 - Code review findings count (BLOCK/ADVISE/NIT) and resolution status
@@ -1344,8 +1356,14 @@ the report.
 
 ### Report Template
 
-The report format is defined inline below in the Wrap-up Sequence section.
-No external template file dependency is required.
+The canonical report template is defined in
+`docs/history/nefario-reports/TEMPLATE.md`. Read and follow this template
+when generating execution reports. The template defines:
+- v3 YAML frontmatter schema (10-11 fields)
+- Canonical section order (12 top-level H2 sections)
+- Conditional inclusion rules (INCLUDE WHEN / OMIT WHEN)
+- Collapsibility annotations
+- PR body generation: report body minus YAML frontmatter = PR body
 
 ### Incremental Writing
 
@@ -1401,16 +1419,71 @@ skip it, do not defer it, do not stop before it is written.
      scratch files in temp, cleaned on reboot.
 6. **Write execution report** to `<REPORT_DIR>/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`
    — use the HHMMSS captured in step 2
-   — follow the report format defined in this skill (see Data Accumulation above)
+   — follow the canonical template defined in `docs/history/nefario-reports/TEMPLATE.md`
    — include an External Skills section if any were discovered (name, classification,
      recommendation, and which execution tasks used them). Omit if none discovered.
    — include a Verification section with Phase 5-8 outcomes
    — include a Working Files section linking to the companion directory
 7. Commit the report and companion directory together (auto-commit, no prompt needed; skip if no git repo)
-8. Offer PR creation if on a feature branch (skip if no git repo)
-9. Stay on the feature branch (no checkout).
-10. Present report path, PR URL, current branch name, hint to return to default branch (`git checkout <default-branch> && git pull --rebase`), and Verification summary to user
-11. Send shutdown_request to teammates
-12. TeamDelete
-13. Report final status to user
+8. **Post-Nefario Updates** (conditional) — If `existing-pr` is set
+   (a PR already exists for this branch):
+
+   Present using AskUserQuestion:
+   - header: "Existing PR"
+   - question: "PR #<existing-pr> exists on this branch. Update its description with this run's changes?"
+   - options (2, multiSelect: false):
+     1. label: "Append updates", description: "Add Post-Nefario Updates section to PR #<N> body." (recommended)
+     2. label: "Separate report only", description: "Write report file but do not touch the existing PR."
+
+   If "Append updates":
+     a. Generate the Post-Nefario Updates section:
+        ```markdown
+        ## Post-Nefario Updates
+
+        ### {YYYY-MM-DD} {HH:MM:SS} — {one-line task summary}
+
+        {2-3 sentences: what changed and why}
+
+        **Commits**: {N} commits since previous report
+        **Files changed**:
+        | File | Action | Description |
+        |------|--------|-------------|
+        | {path} | {created/modified/deleted} | {one-line description} |
+
+        **Report**: [{report-slug}](./{report-filename})
+        ```
+     b. Append this section to the existing PR body:
+        - Fetch current body: `gh pr view <N> --json body --jq .body > /tmp/pr-body-$$`
+        - Append the update section to the file
+        - Update: `gh pr edit <N> --body-file /tmp/pr-body-$$`
+        - Clean up: `rm -f /tmp/pr-body-$$`
+     c. If the existing PR body already has a "Post-Nefario Updates"
+        section, append the new update entry under it (do not create
+        a duplicate H2). Detect by checking for `## Post-Nefario Updates`
+        in the existing body.
+     d. Print one line: "Updated PR #<N> with Post-Nefario Updates."
+
+   If "Separate report only":
+     Skip PR body update. The new report is written as usual.
+     Print: "Report written. PR #<N> not updated."
+
+   If `existing-pr` is NOT set, skip this step entirely.
+
+9. **PR creation** (skip if no git repo or not on a feature branch) —
+   If `existing-pr` is set, skip this step (PR already exists). Print:
+   "Using existing PR #<N>."
+
+   If `existing-pr` is NOT set, offer to create a pull request
+   (same PR creation logic as Phase 4 wrap-up step 10).
+
+   For manual (non-nefario) changes on a nefario branch after PR creation:
+   edit the report file directly to add a "Post-Nefario Updates" section,
+   then strip YAML frontmatter and update the PR body:
+   `tail -n +2 <report> | sed '1,/^---$/d' | gh pr edit <N> --body-file -`
+
+10. Stay on the feature branch (no checkout).
+11. Present report path, PR URL, current branch name, hint to return to default branch (`git checkout <default-branch> && git pull --rebase`), and Verification summary to user
+12. Send shutdown_request to teammates
+13. TeamDelete
+14. Report final status to user
 
