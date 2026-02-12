@@ -10,6 +10,7 @@ Nefario (orchestrator), Lucy and Margo (governance), and 23 domain-specialist mi
 - `skills/nefario/` -- nefario orchestration skill (symlinked to `~/.claude/skills/nefario`)
 - `skills/despicable-prompter/` -- briefing coach skill (symlinked to `~/.claude/skills/despicable-prompter`)
 - `/despicable-lab` -- project-local skill to check and rebuild agents (`.claude/skills/despicable-lab/`)
+- `/despicable-statusline` -- project-local skill to configure nefario status in Claude Code status line (`.claude/skills/despicable-statusline/`)
 - `gru/` -- AI visionary / technology radar
 - `nefario/` -- task orchestrator (planning only, does not write code)
 - `lucy/` -- governance (consistency, intent alignment)
