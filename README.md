@@ -27,6 +27,10 @@ In any Claude Code session:
 /nefario Build an OAuth-secured API with tests and user docs
 # → orchestrated plan across api-design, oauth, test, and user-docs specialists
 #   reviewed by governance before execution
+
+# Got a GitHub issue? Point nefario at it -- issue in, PR out.
+/nefario #42
+# → orchestrated plan, governance review, parallel execution, PR with "Resolves #42"
 ```
 
 ## Install
