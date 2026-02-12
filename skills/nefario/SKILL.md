@@ -1400,27 +1400,47 @@ not part of the default flow.
 
 #### Phase 8: Documentation (Conditional)
 
-1. **Generate checklist** from execution outcomes:
+1. **Merge documentation checklist** from Phase 3.5 and execution outcomes:
 
-   | Outcome | Action | Owner |
-   |---------|--------|-------|
-   | New API endpoints | API reference, OpenAPI prose | software-docs-minion |
-   | Architecture changed | C4 diagrams, component docs | software-docs-minion |
-   | Gate-approved decision | ADR | software-docs-minion |
-   | New user-facing feature | Getting-started / how-to | user-docs-minion |
-   | New CLI command/flag | Usage docs | user-docs-minion |
-   | User-visible bug fix | Release notes | user-docs-minion |
-   | README not updated | README review | software-docs + product-marketing |
-   | New project (git init) | Full README (blocking) | software-docs + product-marketing |
-   | Breaking change | Migration guide | user-docs-minion |
-   | Config changed | Config reference | software-docs-minion |
+   a. **Read Phase 3.5 checklist**: If `$SCRATCH_DIR/{slug}/phase3.5-docs-checklist.md`
+      exists, read it as the starting checklist. These items were identified
+      from the plan before execution and have owner tags ([software-docs] or
+      [user-docs]), scope, file paths, and priority already assigned.
 
-   Write checklist to: `$SCRATCH_DIR/{slug}/phase8-checklist.md`
+   b. **Supplement with execution outcomes**: Evaluate execution outcomes
+      against the outcome-action table below. For each outcome, check whether
+      the Phase 3.5 checklist already covers it. If not, add a new item.
+
+      | Outcome | Action | Owner |
+      |---------|--------|-------|
+      | New API endpoints | API reference, OpenAPI prose | software-docs-minion |
+      | Architecture changed | C4 diagrams, component docs | software-docs-minion |
+      | Gate-approved decision | ADR | software-docs-minion |
+      | New user-facing feature | Getting-started / how-to | user-docs-minion |
+      | New CLI command/flag | Usage docs | user-docs-minion |
+      | User-visible bug fix | Release notes | user-docs-minion |
+      | README not updated | README review | software-docs + product-marketing |
+      | New project (git init) | Full README (blocking) | software-docs + product-marketing |
+      | Breaking change | Migration guide | user-docs-minion |
+      | Config changed | Config reference | software-docs-minion |
+
+   c. **Flag divergence**: For items in the Phase 3.5 checklist that do not
+      correspond to any execution outcome, mark them as: "Planned but not
+      implemented -- verify if still needed."
+
+   Write the merged checklist to: `$SCRATCH_DIR/{slug}/phase8-checklist.md`
 
 2. If checklist is empty, skip entirely.
 
 3. **Sub-step 8a** (parallel): spawn software-docs-minion + user-docs-minion
    with their respective checklist items and paths to execution artifacts.
+
+   Each agent's prompt should reference:
+   - Work order: `$SCRATCH_DIR/{slug}/phase8-checklist.md`
+   - Items tagged with their owner ([software-docs] or [user-docs])
+   - Note: Items from Phase 3.5 are pre-analyzed with scope and file paths.
+     Execution-derived items may need the agent to inspect changed files for
+     full scope.
 
    **Before spawning each documentation agent**: Write the constructed prompt to
    `$SCRATCH_DIR/{slug}/phase8-{agent-name}-prompt.md`. Apply secret sanitization
