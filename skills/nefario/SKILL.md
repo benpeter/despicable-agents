@@ -776,6 +776,12 @@ After branch resolution (whether creating a new branch or using an existing one)
 create the orchestrated-session marker to suppress commit hook noise:
 `SID=$(cat /tmp/claude-session-id 2>/dev/null); touch /tmp/claude-commit-orchestrated-$SID`
 
+After branch resolution, detect existing PR on current branch:
+```sh
+existing_pr=$(gh pr list --head "$(git branch --show-current)" --json number --jq '.[0].number' 2>/dev/null)
+```
+If non-empty, retain as `existing-pr` in session context.
+
 ### Setup
 
 1. **Create a team** using TeamCreate with the team name from the plan.
@@ -1209,6 +1215,9 @@ not part of the default flow.
 10. **PR creation** — after the report is committed, if in a git repo and on
     a feature branch, offer to create a pull request.
 
+    If `existing-pr` is set, skip this step (PR already exists). Print:
+    "Using existing PR #<N>."
+
     Before presenting the PR gate, run `git diff --stat origin/<default-branch>...HEAD`
     and `git rev-list --count origin/<default-branch>..HEAD` to populate commit count,
     file count, and line deltas. Print the change summary:
@@ -1325,6 +1334,9 @@ Track data at phase boundaries:
   (rationale bullets, rejected alternatives, confidence level, and outcome) in
   session context. These populate the enriched gate briefs in the report's
   Decisions and Execution sections.
+- `existing-pr`: PR number if a PR already exists for the current branch
+  (detected via `gh pr list --head <branch> --json number --jq '.[0].number'`).
+  `null` if no existing PR.
 
 **After Phase 5-8 (Post-Execution)**:
 - Code review findings count (BLOCK/ADVISE/NIT) and resolution status
@@ -1413,22 +1425,64 @@ skip it, do not defer it, do not stop before it is written.
    — include a Verification section with Phase 5-8 outcomes
    — include a Working Files section linking to the companion directory
 7. Commit the report and companion directory together (auto-commit, no prompt needed; skip if no git repo)
-8. **PR handling** (skip if no git repo or not on a feature branch):
-   - Run `gh pr list --head "$(git branch --show-current)" --state open --json number,url --limit 1`
-   - **If no existing PR**: Offer PR creation as before.
-   - **If existing PR found**: This branch already has an open PR from a
-     previous nefario session. Present two options to the user:
-     1. **Append post-nefario update** -- append a `## Post-Nefario Updates`
-        section (or add an entry under the existing one) to the report file,
-        then update the PR body via `gh pr edit <number> --body "$(...)"`
-        (PR body = report body minus YAML frontmatter).
-     2. **Skip** -- do nothing; the new commits are already on the branch.
-   - When appending: read the existing report, add an H3 entry under
-     `## Post-Nefario Updates` with today's date and a brief description
-     of what this session changed. Auto-commit the updated report.
-9. Stay on the feature branch (no checkout).
-10. Present report path, PR URL, current branch name, hint to return to default branch (`git checkout <default-branch> && git pull --rebase`), and Verification summary to user
-11. Send shutdown_request to teammates
-12. TeamDelete
-13. Report final status to user
+8. **Post-Nefario Updates** (conditional) — If `existing-pr` is set
+   (a PR already exists for this branch):
+
+   Present using AskUserQuestion:
+   - header: "Existing PR"
+   - question: "PR #<existing-pr> exists on this branch. Update its description with this run's changes?"
+   - options (2, multiSelect: false):
+     1. label: "Append updates", description: "Add Post-Nefario Updates section to PR #<N> body." (recommended)
+     2. label: "Separate report only", description: "Write report file but do not touch the existing PR."
+
+   If "Append updates":
+     a. Generate the Post-Nefario Updates section:
+        ```markdown
+        ## Post-Nefario Updates
+
+        ### {YYYY-MM-DD} {HH:MM:SS} — {one-line task summary}
+
+        {2-3 sentences: what changed and why}
+
+        **Commits**: {N} commits since previous report
+        **Files changed**:
+        | File | Action | Description |
+        |------|--------|-------------|
+        | {path} | {created/modified/deleted} | {one-line description} |
+
+        **Report**: [{report-slug}](./{report-filename})
+        ```
+     b. Append this section to the existing PR body:
+        - Fetch current body: `gh pr view <N> --json body --jq .body > /tmp/pr-body-$$`
+        - Append the update section to the file
+        - Update: `gh pr edit <N> --body-file /tmp/pr-body-$$`
+        - Clean up: `rm -f /tmp/pr-body-$$`
+     c. If the existing PR body already has a "Post-Nefario Updates"
+        section, append the new update entry under it (do not create
+        a duplicate H2). Detect by checking for `## Post-Nefario Updates`
+        in the existing body.
+     d. Print one line: "Updated PR #<N> with Post-Nefario Updates."
+
+   If "Separate report only":
+     Skip PR body update. The new report is written as usual.
+     Print: "Report written. PR #<N> not updated."
+
+   If `existing-pr` is NOT set, skip this step entirely.
+
+9. **PR creation** (skip if no git repo or not on a feature branch) —
+   If `existing-pr` is set, skip this step (PR already exists). Print:
+   "Using existing PR #<N>."
+
+   If `existing-pr` is NOT set, offer to create a pull request
+   (same PR creation logic as Phase 4 wrap-up step 10).
+
+   For manual (non-nefario) changes on a nefario branch after PR creation:
+   edit the report file directly to add a "Post-Nefario Updates" section,
+   then update the PR body with `gh pr edit <N> --body-file <report>`.
+
+10. Stay on the feature branch (no checkout).
+11. Present report path, PR URL, current branch name, hint to return to default branch (`git checkout <default-branch> && git pull --rebase`), and Verification summary to user
+12. Send shutdown_request to teammates
+13. TeamDelete
+14. Report final status to user
 

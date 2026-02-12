@@ -474,13 +474,18 @@ Reports follow an inverted pyramid: most important information first, progressiv
 
 - **Summary**: 2-3 sentences covering what happened and why it matters. Enough for a PR reviewer to decide whether to read further.
 - **Original Prompt**: The verbatim user request (inline blockquote for short prompts, collapsible for long ones). Secrets and credentials are redacted before inclusion. Also written as a standalone `prompt.md` file in the report's companion directory for traceability.
-- **Decisions**: Structured entries for each key choice. Non-gate decisions include rationale and rejected alternatives. Gate decision briefs additionally include outcome and confidence fields. Conflict resolutions between specialists are documented here if any occurred.
-- **Agent Contributions**: Collapsible section grouped into Planning (specialist input with adopted recommendations and flagged risks) and Architecture Review (verdicts with proportional detail -- one line for APPROVE, 2-3 lines for ADVISE, 3-4 lines for BLOCK with resolution).
-- **Execution**: Files changed table (path, action, description) and approval gates table (title, agent, confidence, outcome, rounds) with enriched briefs for each gate.
-- **Process Detail**: Collapsible section containing phases executed (with agents per phase), verification results, timing breakdown, and outstanding items checklist.
-- **Metrics**: Reference data table with key numbers (date, duration, outcome, agent counts, gates, files changed, outstanding items).
+- **Key Design Decisions**: Non-gate design decisions with rationale and rejected alternatives. Includes a Conflict Resolutions subsection (present even if "None.").
+- **Phases**: Narrative account of the orchestration arc, 1-2 paragraphs per phase.
+- **Agent Contributions**: Collapsible section grouped into Planning (specialist input with adopted recommendations and flagged risks), Architecture Review, and Code Review (verdicts with proportional detail -- one line for APPROVE, 2-3 lines for ADVISE, 3-4 lines for BLOCK with resolution).
+- **Execution**: Tasks table, files changed table, and approval gates table with enriched briefs for each gate.
+- **Decisions**: Gate briefs with full rationale, rejected alternatives, confidence, and outcome. Conditional: included only when gate-count > 0.
+- **Verification**: Phase-by-phase results table. Always present, even if all phases were skipped.
+- **External Skills**: Table of external skills discovered during meta-plan. Conditional: included only when skills were discovered.
+- **Working Files**: Collapsible section linking to companion directory with intermediate artifacts.
+- **Test Plan**: Conditional: included when tests were produced or modified.
+- **Post-Nefario Updates**: Conditional: never in the initial report, appended when subsequent commits land on the same branch.
 
-The operational report format is defined in `skills/nefario/SKILL.md`. A human-readable format reference is maintained at `docs/history/nefario-reports/TEMPLATE.md`.
+The canonical report template is defined in `docs/history/nefario-reports/TEMPLATE.md`. SKILL.md references this template for report generation.
 
 ### Index
 
