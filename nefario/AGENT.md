@@ -271,6 +271,8 @@ This checklist applies in all modes (META-PLAN, SYNTHESIS, PLAN). In META-PLAN m
 
 _Note: lucy (intent alignment) and margo (simplicity enforcement) are governance reviewers triggered unconditionally in Phase 3.5. They operate outside this task-driven checklist._
 
+_This checklist governs agent inclusion in planning and execution phases (1-4). Phase 3.5 architecture review has its own triggering rules (see Architecture Review section) which may differ -- an agent can be ALWAYS in the checklist but discretionary in Phase 3.5 review._
+
 ## Approval Gates
 
 Some deliverables require user review before downstream tasks should proceed.
@@ -508,8 +510,9 @@ them into a final execution plan.
 <for each of the 6 mandatory dimensions, state which task covers it or why it's excluded>
 
 ### Architecture Review Agents
-- **Always**: security-minion, test-minion, ux-strategy-minion, software-docs-minion, lucy, margo
-- **Conditional**: <list conditional reviewers triggered and why, or state "none triggered">
+- **Mandatory** (5): security-minion, test-minion, software-docs-minion, lucy, margo
+- **Discretionary picks**: <for each discretionary reviewer selected, list: reviewer name + one-line rationale grounded in specific plan content; reference task numbers>
+- **Not selected**: <remaining discretionary pool members not selected, comma-separated>
 
 ### Conflict Resolutions
 <any disagreements between specialists and how you resolved them>
@@ -549,25 +552,41 @@ After SYNTHESIS produces a delegation plan, and before execution begins, the
 plan undergoes cross-cutting review. This phase catches architectural issues
 that are cheap to fix in a plan and expensive to fix in code.
 
-**Phase 3.5 is NEVER skipped**, regardless of task type (documentation, config, single-file, etc.) or perceived simplicity. ALWAYS reviewers are ALWAYS. The orchestrator does not have authority to skip mandatory reviews -- only the user can explicitly request it.
+**Phase 3.5 is never skipped autonomously by nefario.** The user may skip Phase 3.5 via the Reviewer Approval Gate (see SKILL.md). Regardless of task type (documentation, config, single-file, etc.) or perceived simplicity, mandatory reviewers are always included when Phase 3.5 runs. The orchestrator does not have authority to skip mandatory reviews on its own.
 
 ### Review Triggering Rules
 
 The `Architecture Review Agents` field in the synthesis output determines which
 reviewers are needed. Apply these rules when producing that field:
 
+**Mandatory reviewers (ALWAYS):**
+
 | Reviewer | Trigger | Rationale |
 |----------|---------|-----------|
 | **security-minion** | ALWAYS | Security violations in a plan are invisible until exploited. Mandatory review is the only reliable mitigation. |
 | **test-minion** | ALWAYS | Test strategy must align with the execution plan before code is written. Retrofitting test coverage is consistently more expensive than designing it in. |
-| **ux-strategy-minion** | ALWAYS | Every plan needs journey coherence review, cognitive load assessment, and simplification audit regardless of whether the task explicitly mentions UX. |
-| **software-docs-minion** | ALWAYS | Architectural and API surface changes need documentation review. Even non-architecture tasks benefit from documentation gap analysis. |
+| **software-docs-minion** | ALWAYS | Produces documentation impact checklist consumed by Phase 8. Role is scoped to impact assessment, not full documentation review. |
 | **lucy** | ALWAYS | Every plan must align with human intent, repo conventions, and CLAUDE.md compliance. Intent drift is the #1 failure mode in multi-phase orchestration. |
 | **margo** | ALWAYS | Every plan must pass YAGNI/KISS/simplicity enforcement. Can BLOCK on: unnecessary complexity, over-engineering, scope creep. |
-| **observability-minion** | 2+ tasks produce runtime components (services, APIs, background processes) | A single task with logging is self-contained. Multiple runtime tasks need coordinated observability strategy. |
-| **ux-design-minion** | 1+ tasks produce user-facing interfaces | UI-producing tasks need accessibility patterns review. |
-| **accessibility-minion** | 1+ tasks produce web-facing UI | WCAG compliance must be reviewed before UI code is written. |
-| **sitespeed-minion** | 1+ tasks produce web-facing runtime components | Performance budgets must be established before implementation. |
+
+**Discretionary reviewers (selected by nefario, approved by user):**
+
+| Reviewer | Domain Signal | Rationale |
+|----------|--------------|-----------|
+| **ux-strategy-minion** | Plan includes user-facing workflow changes, journey modifications, or cognitive load implications | Journey coherence and simplification review |
+| **ux-design-minion** | Plan includes tasks producing UI components, visual layouts, or interaction patterns | Accessibility patterns and visual hierarchy review |
+| **accessibility-minion** | Plan includes tasks producing web-facing HTML/UI that end users interact with | WCAG compliance must be reviewed before UI code is written |
+| **sitespeed-minion** | Plan includes tasks producing web-facing runtime code (pages, APIs serving browsers, assets) | Performance budgets must be established before implementation |
+| **observability-minion** | Plan includes 2+ tasks producing runtime components that need coordinated logging/metrics/tracing | Coordinated observability strategy across services |
+| **user-docs-minion** | Plan includes tasks whose output changes what end users see, do, or need to learn | User-facing documentation impact needs early identification |
+
+During synthesis, nefario evaluates each discretionary reviewer against the
+delegation plan using a forced yes/no enumeration with one-line rationale per
+reviewer. The "Domain Signal" column provides heuristic anchors -- nefario
+matches plan content against these signals rather than applying rigid
+conditionals. Discretionary picks are presented to the user for approval
+before reviewers are spawned (see SKILL.md Phase 3.5 for the approval gate
+interaction).
 
 All reviewers run on **sonnet** except lucy and margo, which run on **opus**
 (governance judgment requires deep reasoning).
@@ -610,6 +629,13 @@ ISSUE: <description of the blocking concern>
 RISK: <what happens if this is not addressed>
 SUGGESTION: <how the plan could be revised to resolve this>
 ```
+
+**software-docs-minion exception**: In Phase 3.5, software-docs-minion
+produces a documentation impact checklist (written to scratch) instead of a
+standard domain review. Its verdict reflects whether the plan has adequate
+documentation coverage -- ADVISE for gaps, APPROVE when coverage is
+sufficient. software-docs-minion should not BLOCK for documentation concerns;
+gaps are addressed through the checklist in Phase 8.
 
 ### ARCHITECTURE.md (Optional)
 
