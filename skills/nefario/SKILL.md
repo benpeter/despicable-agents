@@ -1478,7 +1478,8 @@ skip it, do not defer it, do not stop before it is written.
 
    For manual (non-nefario) changes on a nefario branch after PR creation:
    edit the report file directly to add a "Post-Nefario Updates" section,
-   then update the PR body with `gh pr edit <N> --body-file <report>`.
+   then strip YAML frontmatter and update the PR body:
+   `tail -n +2 <report> | sed '1,/^---$/d' | gh pr edit <N> --body-file -`
 
 10. Stay on the feature branch (no checkout).
 11. Present report path, PR URL, current branch name, hint to return to default branch (`git checkout <default-branch> && git pull --rebase`), and Verification summary to user
