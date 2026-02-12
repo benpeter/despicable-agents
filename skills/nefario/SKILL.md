@@ -1344,8 +1344,14 @@ the report.
 
 ### Report Template
 
-The report format is defined inline below in the Wrap-up Sequence section.
-No external template file dependency is required.
+The canonical report template is defined in
+`docs/history/nefario-reports/TEMPLATE.md`. Read and follow this template
+when generating execution reports. The template defines:
+- v3 YAML frontmatter schema (10-11 fields)
+- Canonical section order (12 top-level H2 sections)
+- Conditional inclusion rules (INCLUDE WHEN / OMIT WHEN)
+- Collapsibility annotations
+- PR body generation: report body minus YAML frontmatter = PR body
 
 ### Incremental Writing
 
@@ -1401,13 +1407,25 @@ skip it, do not defer it, do not stop before it is written.
      scratch files in temp, cleaned on reboot.
 6. **Write execution report** to `<REPORT_DIR>/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`
    — use the HHMMSS captured in step 2
-   — follow the report format defined in this skill (see Data Accumulation above)
+   — follow the canonical template defined in `docs/history/nefario-reports/TEMPLATE.md`
    — include an External Skills section if any were discovered (name, classification,
      recommendation, and which execution tasks used them). Omit if none discovered.
    — include a Verification section with Phase 5-8 outcomes
    — include a Working Files section linking to the companion directory
 7. Commit the report and companion directory together (auto-commit, no prompt needed; skip if no git repo)
-8. Offer PR creation if on a feature branch (skip if no git repo)
+8. **PR handling** (skip if no git repo or not on a feature branch):
+   - Run `gh pr list --head "$(git branch --show-current)" --state open --json number,url --limit 1`
+   - **If no existing PR**: Offer PR creation as before.
+   - **If existing PR found**: This branch already has an open PR from a
+     previous nefario session. Present two options to the user:
+     1. **Append post-nefario update** -- append a `## Post-Nefario Updates`
+        section (or add an entry under the existing one) to the report file,
+        then update the PR body via `gh pr edit <number> --body "$(...)"`
+        (PR body = report body minus YAML frontmatter).
+     2. **Skip** -- do nothing; the new commits are already on the branch.
+   - When appending: read the existing report, add an H3 entry under
+     `## Post-Nefario Updates` with today's date and a brief description
+     of what this session changed. Auto-commit the updated report.
 9. Stay on the feature branch (no checkout).
 10. Present report path, PR URL, current branch name, hint to return to default branch (`git checkout <default-branch> && git pull --rebase`), and Verification summary to user
 11. Send shutdown_request to teammates
