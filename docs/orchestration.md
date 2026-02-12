@@ -21,7 +21,7 @@ The main session spawns nefario with `MODE: META-PLAN`. Nefario reads the codeba
 - Anticipated approval gates
 - Scope boundaries (in/out)
 
-The meta-plan is informational. No user approval is required before proceeding to Phase 2.
+The meta-plan output is presented to the user via a Team Approval Gate before Phase 2 proceeds. The user sees the selected specialists with rationale and can approve the team, adjust the team composition, or reject the orchestration entirely. See Section 3 for full gate details.
 
 ### Phase 2: Specialist Planning
 
@@ -172,6 +172,10 @@ sequenceDiagram
     Note over Main,Nef: Phase 1: Meta-Plan
     Main->>Nef: Task(MODE: META-PLAN)
     Nef->>Main: Meta-plan (specialists to consult)
+
+    Note over User,Main: Team Approval Gate
+    Main->>User: Team composition (selected + available)
+    User->>Main: Approve / Adjust / Reject
 
     Note over Main,Spec: Phase 2: Specialist Planning
     par Parallel Consultation
@@ -335,11 +339,37 @@ The checklist applies in all modes (META-PLAN, SYNTHESIS, PLAN). The default is 
 
 Approval gates pause execution to get user input before downstream work proceeds. The mechanism is designed to gate high-impact decisions without creating approval fatigue.
 
-Two types of gates exist with distinct semantics:
+Three types of gates exist with distinct semantics:
 
-**Plan approval gate** -- Occurs once, after Phase 3.5 (Architecture Review) and before Phase 4 (Execution). The user reviews the complete execution plan (task list with incorporated advisories) and decides whether to approve, request changes, or reject the entire plan.
+**Team approval gate** -- Occurs once, after Phase 1 (Meta-Plan) and before Phase 2 (Specialist Planning). The user reviews the selected specialist team and decides whether to approve the team, adjust the composition, or reject the orchestration.
+
+**Execution plan approval gate** -- Occurs once, after Phase 3.5 (Architecture Review) and before Phase 4 (Execution). The user reviews the complete execution plan (task list with incorporated advisories) and decides whether to approve, request changes, or reject the entire plan.
 
 **Mid-execution gates** -- Occur during Phase 4 at batch boundaries. Each gate covers a single deliverable that downstream tasks depend on. The user reviews the deliverable and decides whether to approve, request changes, reject, or skip (defer for later review).
+
+### Team Approval Gate
+
+The team approval gate occurs after the meta-plan identifies which specialists to consult and before those specialists are spawned. It gives the user visibility into team selection and prevents wasted compute on irrelevant specialists.
+
+**When it occurs**: After Phase 1 (Meta-Plan), before Phase 2 (Specialist Planning).
+
+**Format**: Compact presentation targeting 8-12 lines:
+
+- **SELECTED block** -- Each selected agent on its own line with a one-line rationale explaining why it was chosen (not the planning question). Left-aligned for scannability.
+- **ALSO AVAILABLE list** -- Flat comma-separated list of all roster agents not selected. Users scan for surprises, not read each entry.
+- **Meta-plan link** -- Path to the full meta-plan scratch file for deep-dive into planning questions, cross-cutting checklist, and exclusion rationale.
+
+The total output must be visibly lighter than the Execution Plan Approval Gate (which targets 25-40 lines).
+
+**Response options**: Three choices presented via `AskUserQuestion`:
+
+1. **Approve team** (recommended) -- Proceed to Phase 2 with the selected specialists.
+2. **Adjust team** -- Add or remove specialists before planning begins. The user provides freeform natural language (e.g., "add security-minion" or "drop lucy"). Nefario interprets the request against the 27-agent roster, generates planning questions for any added agents, and re-presents the gate with the updated team. Adjustment is capped at 2 rounds; after that, only Approve or Reject options remain.
+3. **Reject** -- Abandon the orchestration entirely. Scratch files are cleaned up and session markers removed.
+
+**MODE: PLAN exemption**: This gate does not apply in MODE: PLAN. MODE: PLAN bypasses specialist consultation entirely, so there is no team to approve. The gate applies only in META-PLAN mode (the default).
+
+**Second-round specialists**: If Phase 2 specialists recommend additional agents, those agents are spawned without re-gating. The user already approved the task scope and initial team; specialist-recommended additions are refinements within that scope.
 
 ### Execution Plan Approval Gate
 

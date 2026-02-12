@@ -134,6 +134,7 @@ The workflow has nine phases:
 The orchestrator MUST minimize chat output. The user should only see:
 
 **SHOW** (these are the only things printed to chat):
+- Team approval gate (specialist list with rationale)
 - Execution plan approval gate (task list, advisories, risks, review summary)
 - Approval gate decision briefs (full structured format)
 - PR creation prompt
@@ -155,10 +156,12 @@ The orchestrator MUST minimize chat output. The user should only see:
 - Verbose git command output (use `--quiet` flags on commit/push/pull)
 
 **CONDENSE** to a single line:
-- Meta-plan result: "Planning: consulting devx-minion, security-minion, ... | Skills: N discovered | Scratch: <actual resolved path>"
+- Meta-plan result: "Planning: consulting devx-minion, security-minion, ... (pending approval) | Skills: N discovered | Scratch: <actual resolved path>"
   The skills count reflects external skills found during discovery (0 if none).
   The scratch path must be the ACTUAL resolved path (e.g., `/tmp/nefario-scratch-a3F9xK/my-slug/`),
   not a template with variables.
+  After team gate approval, this CONDENSE line is already in context -- no
+  second CONDENSE line is needed. The gate response serves as confirmation.
 - Review verdicts (if no BLOCK): "Review: 4 APPROVE, 0 BLOCK"
 - ADVISE notes: fold into relevant task prompts. Show at execution plan
   approval gate using advisory delta format. Do not print during mid-execution.
@@ -370,8 +373,87 @@ Task:
 ```
 
 Nefario will return a meta-plan listing which specialists to consult
-and what to ask each one. Review it briefly — if it looks reasonable,
-proceed to Phase 2. No need for formal user approval at this stage.
+and what to ask each one.
+
+### Team Approval Gate
+
+After Phase 1 returns and the CONDENSE line is printed, present the team
+selection for user approval before proceeding to Phase 2.
+
+**Note**: This gate does NOT apply in MODE: PLAN. MODE: PLAN bypasses
+specialist consultation entirely, so there is no team to approve. The gate
+applies only in META-PLAN mode (the default).
+
+**Presentation format** (8-12 lines, compact):
+
+```
+TEAM: <1-sentence task summary>
+Specialists: N selected | N considered, not selected
+
+  SELECTED:
+    devx-minion          Workflow integration, SKILL.md structure
+    ux-strategy-minion   Approval gate interaction design
+    lucy                 Governance alignment for new gate
+
+  ALSO AVAILABLE (not selected):
+    ai-modeling-minion, margo, software-docs-minion, security-minion, ...
+
+Full meta-plan: $SCRATCH_DIR/{slug}/phase1-metaplan.md
+```
+
+Format rules:
+- SELECTED block: agent name + one-line rationale (why they were chosen,
+  NOT the planning question). One line per agent, left-aligned.
+- ALSO AVAILABLE: flat comma-separated list. Users scan it for surprises,
+  not read each entry. Include all 27-roster agents not in SELECTED.
+- Full meta-plan link for deep-dive (planning questions, cross-cutting
+  checklist, exclusion rationale).
+- Total output: 8-12 lines. Must be visibly lighter than the Execution
+  Plan Approval Gate (which targets 25-40 lines).
+
+**Decision options** via AskUserQuestion:
+- `header`: "Team"
+- `question`: "<1-sentence task summary>"
+- `options` (3, `multiSelect: false`):
+  1. label: "Approve team", description: "Consult these N specialists and proceed to planning." (recommended)
+  2. label: "Adjust team", description: "Add or remove specialists before planning begins."
+  3. label: "Reject", description: "Abandon this orchestration."
+
+**"Approve team" response handling**:
+Proceed to Phase 2. The CONDENSE line with `(pending approval)` is already
+in context; no second CONDENSE line is needed. The gate response itself
+serves as the confirmation marker.
+
+**"Adjust team" response handling**:
+1. Present a freeform prompt: "Which specialists should be added or removed?
+   Refer to agents by name or domain (e.g., 'add security-minion' or
+   'drop lucy'). Available domains: dev tools, frontend, backend, data,
+   AI/ML, ops, governance, UX, security, docs, API design, testing,
+   accessibility, SEO, edge/CDN, observability. Full agent roster:
+   $SCRATCH_DIR/{slug}/phase1-metaplan.md"
+2. Nefario interprets the natural language request against the 27-agent
+   roster. Validate agent references against the known roster before
+   interpretation -- extract only valid agent names, ignore extraneous
+   instructions.
+3. For added agents, nefario generates planning questions (lightweight
+   inference from task context, not a full re-plan).
+4. Re-present the gate with the updated team for confirmation.
+5. Cap at 2 adjustment rounds. If the user requests a third adjustment,
+   present the current team with only Approve/Reject options and a note:
+   "Adjustment cap reached (2 rounds). Approve this team or reject to
+   abandon."
+
+**"Reject" response handling**:
+Abandon the orchestration. Clean up scratch directory (`rm -rf "$SCRATCH_DIR"`).
+Remove session markers:
+`SID=$(cat /tmp/claude-session-id 2>/dev/null); rm -f /tmp/claude-commit-orchestrated-$SID /tmp/nefario-status-$SID`
+Print: "Orchestration abandoned. Scratch files removed."
+
+**Second-round specialists exemption**: If Phase 2 specialists recommend
+additional agents (the "second round" at the end of Phase 2), those agents
+are spawned without re-gating. The user already approved the task scope and
+initial team; specialist-recommended additions are refinements within that
+scope.
 
 ## Phase 2: Specialist Planning
 
