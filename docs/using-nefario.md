@@ -99,9 +99,9 @@ When `/nefario` completes work started from an issue, it adds `Resolves #N` to t
 
 Nefario follows a structured process: plan with specialists, review the plan, execute, then verify the results. Here is what you experience at each phase.
 
-**Phase 1 -- Meta-Planning.** Nefario reads your codebase and figures out which specialists to consult. You see the list of specialists and what each will be asked. No action needed from you -- this is informational.
+**Phase 1 -- Meta-Planning.** Nefario reads your codebase and figures out which specialists to consult. You see the proposed team -- each specialist listed with a brief rationale for why they were selected, plus a list of available specialists that were not selected. You then approve the team, adjust it (add or remove specialists), or reject the orchestration entirely. This is a quick confirmation, not a detailed review -- glance at the names, make sure nothing is missing or surprising, and approve.
 
-**Phase 2 -- Specialist Planning.** Specialists are consulted in parallel for domain-specific input. This runs in the background. Each specialist contributes recommendations, proposed tasks, and risk assessments from their area of expertise. You wait while this happens.
+**Phase 2 -- Specialist Planning.** The specialists you confirmed in Phase 1 are consulted in parallel for domain-specific input. This runs in the background. Each specialist contributes recommendations, proposed tasks, and risk assessments from their area of expertise. You wait while this happens.
 
 **Phase 3 -- Synthesis.** Nefario consolidates all specialist input into a single execution plan: specific tasks, owners, dependencies, and agent prompts. Conflicts between specialists are resolved. Cross-cutting concerns (security, testing, documentation, usability, observability) are verified -- if a specialist did not raise them, nefario adds them. You receive the plan for review.
 
