@@ -379,6 +379,21 @@ These decisions were made during the nefario v2.0 update, extending orchestratio
 
 ---
 
+## Configuration (Decision 29)
+
+### Decision 29: Reject DESPICABLE.md, Adopt CLAUDE.md Section Convention
+
+| Field | Value |
+|-------|-------|
+| **Status** | Decided |
+| **Date** | 2026-02-12 |
+| **Choice** | Do not introduce DESPICABLE.md or DESPICABLE.local.md. Consuming projects configure despicable-agents behavior via a `## Despicable Agents` section in their existing CLAUDE.md (public) and CLAUDE.local.md (private). Nefario reads this section via Claude Code's automatic CLAUDE.md loading -- no new discovery logic required. Re-evaluate when 2+ consuming projects demonstrate configuration needs that CLAUDE.md sections cannot serve, or when Claude Code adopts AGENTS.md support (whichever comes first). |
+| **Alternatives rejected** | (1) **Dedicated DESPICABLE.md + DESPICABLE.local.md files** for framework-specific config. Rejected because: zero consuming projects exist to demonstrate need (YAGNI); contradicts Decisions 26 (.nefario.yml rejected) and 27 (overlay removal) made within the same week; requires explicit Read calls in agents since Claude Code does not auto-load custom files; creates precedence complexity (4-file hierarchy); industry consolidating toward fewer config files (AGENTS.md standard). (2) **Status quo with no guidance**. Rejected because consuming projects would rediscover configuration patterns inconsistently. |
+| **Rationale** | 4 of 5 consulted specialists recommended against DESPICABLE.md. Key factors: CLAUDE.md is auto-loaded by Claude Code (zero infrastructure); the configuration surface is small (few preferences, not a plugin architecture); Decision 5 establishes CLAUDE.md as the canonical project customization surface; the ecosystem is consolidating config files, not proliferating them. The dissenting view (software-docs-minion) valued separation of concerns, but the configuration volume does not justify a dedicated file -- the analogy is Prettier (section in package.json) not ESLint (dedicated file). Lucy additionally identified that any configuration mechanism must protect ALWAYS reviewers (security-minion, test-minion, lucy, margo) from exclusion -- this constraint applies regardless of config surface and should be enforced in nefario. |
+| **Consequences** | Consuming projects add a `## Despicable Agents` section to CLAUDE.md for framework preferences. CLAUDE.local.md handles private/local overrides. No new files, discovery logic, or precedence rules needed. Future documentation should include examples of the section convention when external adoption occurs. ALWAYS reviewer protection should be enforced in nefario (separate future task). If AGENTS.md support arrives in Claude Code, the section convention migrates trivially. |
+
+---
+
 ## Deferred
 
 - Nefario-gated complexity classification -- revisit after 20+ full-process runs.
