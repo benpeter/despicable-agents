@@ -186,19 +186,27 @@ outcome: {completed | partial | aborted}
 
 Companion directory: [{YYYY-MM-DD}-{HHMMSS}-{slug}/](./{YYYY-MM-DD}-{HHMMSS}-{slug}/)
 
+- [Original Prompt](./companion-dir/prompt.md)
+
 **Outputs**
 - [Phase 1: Meta-plan](./companion-dir/phase1-metaplan.md)
 - [Phase 2: {agent-name}](./companion-dir/phase2-{agent-name}.md)
 - [Phase 3: Synthesis](./companion-dir/phase3-synthesis.md)
 - [Phase 3.5: {agent-name}](./companion-dir/phase3.5-{agent-name}.md)
+- [Phase 5: {agent-name}](./companion-dir/phase5-{agent-name}.md)
+- [Phase 6: Test results](./companion-dir/phase6-test-results.md)
+- [Phase 7: Deployment](./companion-dir/phase7-deployment.md)
+- [Phase 8: Checklist](./companion-dir/phase8-checklist.md)
+- [Phase 8: {agent-name}](./companion-dir/phase8-{agent-name}.md)
 
 **Prompts**
 - [Phase 1: Meta-plan prompt](./companion-dir/phase1-metaplan-prompt.md)
 - [Phase 2: {agent-name} prompt](./companion-dir/phase2-{agent-name}-prompt.md)
 - [Phase 3: Synthesis prompt](./companion-dir/phase3-synthesis-prompt.md)
 - [Phase 3.5: {agent-name} prompt](./companion-dir/phase3.5-{agent-name}-prompt.md)
-
-- [Original Prompt](./companion-dir/prompt.md)
+- [Phase 4: {agent-name} prompt](./companion-dir/phase4-{agent-name}-prompt.md)
+- [Phase 5: {agent-name} prompt](./companion-dir/phase5-{agent-name}-prompt.md)
+- [Phase 8: {agent-name} prompt](./companion-dir/phase8-{agent-name}-prompt.md)
 
 </details>
 
