@@ -186,10 +186,18 @@ outcome: {completed | partial | aborted}
 
 Companion directory: [{YYYY-MM-DD}-{HHMMSS}-{slug}/](./{YYYY-MM-DD}-{HHMMSS}-{slug}/)
 
+**Outputs**
 - [Phase 1: Meta-plan](./companion-dir/phase1-metaplan.md)
 - [Phase 2: {agent-name}](./companion-dir/phase2-{agent-name}.md)
 - [Phase 3: Synthesis](./companion-dir/phase3-synthesis.md)
 - [Phase 3.5: {agent-name}](./companion-dir/phase3.5-{agent-name}.md)
+
+**Prompts**
+- [Phase 1: Meta-plan prompt](./companion-dir/phase1-metaplan-prompt.md)
+- [Phase 2: {agent-name} prompt](./companion-dir/phase2-{agent-name}-prompt.md)
+- [Phase 3: Synthesis prompt](./companion-dir/phase3-synthesis-prompt.md)
+- [Phase 3.5: {agent-name} prompt](./companion-dir/phase3.5-{agent-name}-prompt.md)
+
 - [Original Prompt](./companion-dir/prompt.md)
 
 </details>
@@ -267,14 +275,18 @@ rendering compatibility.
 - Use relative links: `./companion-dir/filename.md`
 - Label convention: `Phase N: description` (phase1-metaplan -> "Meta-plan",
   phase2-{agent} -> agent name, phase3-synthesis -> "Synthesis",
-  phase3.5-{agent} -> agent name, prompt.md -> "Original Prompt")
-- N in summary line is actual file count
+  phase3.5-{agent} -> agent name, prompt.md -> "Original Prompt").
+  Files ending in `-prompt.md` get " prompt" appended to their label
+  (e.g., phase2-devx-minion-prompt.md -> "Phase 2: devx-minion prompt").
+- N in summary line is actual file count (includes both output and prompt files)
 - "None" if no companion directory exists
 
 ### PR Body Generation
 
 The PR body is the report body with YAML frontmatter stripped. The report is
 written so that frontmatter-stripped content reads as a valid PR description.
+
+Where the report references files within the repository, these references MUST link to the file. Use relative links.
 
 ### File Naming Convention
 
