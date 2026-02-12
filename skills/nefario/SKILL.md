@@ -441,6 +441,7 @@ replacement (swap agent X for agent Y) counts as 2 changes (1 removal +
 If the adjustment results in 0 net changes (e.g., adds and removes the same
 agent, or freeform input resolves to no changes), treat as a no-op:
 re-present the gate unchanged with a note "No changes detected."
+A no-op does not count as an adjustment round.
 
 Rules:
 - Classification is internal. Never surface the threshold number or
@@ -473,7 +474,10 @@ Rules:
     Re-present the gate with the updated team.
 
 4b. **Substantial path** (3+ changes): Re-run Phase 1 by spawning
-    nefario with `MODE: META-PLAN`. The re-run prompt receives:
+    nefario with `MODE: META-PLAN`. Before spawning, write the
+    constructed re-run prompt to
+    `$SCRATCH_DIR/{slug}/phase1-metaplan-rerun-prompt.md`. Apply secret
+    sanitization before writing. The re-run prompt receives:
     - The original task description (same `original-prompt`)
     - The original meta-plan (read from `$SCRATCH_DIR/{slug}/phase1-metaplan.md`)
     - The user's adjustment as a structured delta (e.g., "Added:
@@ -779,7 +783,7 @@ reviewers.
     remaining pool slots.
 
     Re-present the Reviewer Approval Gate with updated discretionary
-    picks and a delta summary: "Reviewers refreshed for substantial
+    picks and a delta summary: "Reviewers refreshed for reviewer
     change (+N, -M). Rationales regenerated."
 
     No scratch file is produced for the reviewer re-evaluation -- the
