@@ -34,8 +34,7 @@ Source: GitHub issue #34
 
 | File | Location | Lines | Description |
 |------|----------|-------|-------------|
-| SKILL.md | `~/github/benpeter/claude-skills/despicable-statusline/SKILL.md` | 111 | Skill definition |
-| Symlink | `~/.claude/skills/despicable-statusline` | - | Points to skills repo |
+| SKILL.md | `.claude/skills/despicable-statusline/SKILL.md` | 111 | Project-local skill definition |
 
 ## Decisions
 
