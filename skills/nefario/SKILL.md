@@ -6,6 +6,7 @@ description: >
   contribute domain expertise, nefario synthesizes, cross-cutting agents
   review the plan, you execute, then post-execution phases verify code
   quality, run tests, optionally deploy, and update documentation.
+  Use --advisory for recommendation-only mode (phases 1-3, no code changes).
 argument-hint: "[--advisory] #<issue> | <task description>"
 ---
 
@@ -149,6 +150,10 @@ The workflow has nine phases:
 6. **Test Execution** — Run and validate tests (conditional: tests exist)
 7. **Deployment** — Run deployment commands (conditional: user-requested)
 8. **Documentation** — Generate/update project documentation (conditional: checklist has items)
+
+When `--advisory` is passed, only phases 1-3 run. The synthesis produces a
+team recommendation instead of an execution plan. No code is changed, no
+branch is created, no PR is opened. See Advisory Termination below.
 
 ## Communication Protocol
 
