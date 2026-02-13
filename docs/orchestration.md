@@ -76,7 +76,7 @@ Before execution begins, cross-cutting specialists review the synthesized plan. 
 | observability-minion | 2+ tasks produce runtime components needing coordinated observability |
 | user-docs-minion | Plan output changes what end users see, do, or need to learn |
 
-Before spawning reviewers, nefario presents its discretionary picks to the user via a Reviewer Approval Gate. The user can approve the reviewer set, adjust discretionary picks (constrained to the 5-member pool, 2-round adjustment cap), or skip architecture review entirely to proceed directly to the Execution Plan Approval Gate. Adjustment classification follows the same magnitude-based branching as the Team Approval Gate: minor changes apply directly, while substantial changes trigger an in-session re-evaluation of all discretionary pool members against the plan.
+Before spawning reviewers, nefario presents its discretionary picks to the user via a Reviewer Approval Gate. The user can approve the reviewer set, adjust discretionary picks (constrained to the 5-member pool, 2-round adjustment cap), or skip architecture review entirely to proceed directly to the Execution Plan Approval Gate. Minor adjustments (1-2 reviewer changes) apply directly, while substantial adjustments (3+ reviewer changes) trigger an in-session re-evaluation of all discretionary pool members against the plan.
 
 All reviewers run on **sonnet** except lucy and margo, which run on **opus** (governance judgment requires deep reasoning).
 
@@ -382,7 +382,7 @@ The total output must be visibly lighter than the Execution Plan Approval Gate (
 **Response options**: Three choices presented via `AskUserQuestion`:
 
 1. **Approve team** (recommended) -- Proceed to Phase 2 with the selected specialists.
-2. **Adjust team** -- Add or remove specialists before planning begins. The user provides freeform natural language (e.g., "add security-minion" or "drop lucy"). Nefario interprets the request against the 27-agent roster and classifies the adjustment by magnitude: minor changes (1-2 agents) use a lightweight path that generates questions for added agents only, while substantial changes (3+ agents) trigger a Phase 1 META-PLAN re-run to regenerate planning artifacts for the full updated team. See `skills/nefario/SKILL.md` for the adjustment classification definition and procedural details. Adjustment is capped at 2 rounds; after that, only Approve or Reject options remain.
+2. **Adjust team** -- Add or remove specialists before planning begins. The user provides freeform natural language (e.g., "add security-minion" or "drop lucy"). Nefario interprets the request against the 27-agent roster. Any non-zero roster change triggers a full Phase 1 META-PLAN re-run, regenerating planning questions for the complete updated team. See `skills/nefario/SKILL.md` for procedural details. Adjustment is capped at 2 rounds; after that, only Approve or Reject options remain.
 3. **Reject** -- Abandon the orchestration entirely. Scratch files are cleaned up and session markers removed.
 
 **MODE: PLAN exemption**: This gate does not apply in MODE: PLAN. MODE: PLAN bypasses specialist consultation entirely, so there is no team to approve. The gate applies only in META-PLAN mode (the default).
