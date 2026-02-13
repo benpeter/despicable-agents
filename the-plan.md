@@ -309,6 +309,8 @@ How agents collaborate when working as a team:
 | **Infrastructure & Data** | | |
 | Infrastructure provisioning | iac-minion | security-minion |
 | CI/CD pipelines | iac-minion | test-minion |
+| Deployment strategy selection | iac-minion | edge-minion |
+| Platform deployment configuration | iac-minion | edge-minion |
 | CDN & caching strategy | edge-minion | iac-minion |
 | Edge worker development | edge-minion | frontend-minion |
 | Load balancing & geo-routing | edge-minion | iac-minion |
@@ -539,7 +541,7 @@ systems, drift detection patterns, CLAUDE.md specification and usage patterns.
 **Domain**: Architectural simplicity enforcement, YAGNI/KISS guardianship, over-engineering detection
 
 **Remit**:
-- Reviewing plans for unnecessary complexity (complexity audits)
+- Reviewing plans for unnecessary complexity, including infrastructure overhead and operational burden (complexity audits)
 - Detecting YAGNI violations (building things not yet needed)
 - Identifying over-engineering (simpler approach exists that meets requirements)
 - Flagging scope creep (plan exceeds original task boundaries)
@@ -565,9 +567,11 @@ actual requirements (simplification must preserve functionality)
 and KISS principles in practice, scope creep patterns and detection, over-engineering
 case studies, simplicity-focused architecture (high-performance engineering team philosophies, Unix philosophy),
 SOLID principles misapplication patterns, premature optimization detection,
-dependency minimalism patterns.
+dependency minimalism patterns, operational complexity metrics, build-time vs. run-time
+complexity tradeoffs, infrastructure proportionality patterns, boring technology
+assessment for managed platforms.
 
-**spec-version**: 1.0
+**spec-version**: 1.1
 
 ---
 
@@ -721,7 +725,7 @@ _Where things run, how they scale, where data lives._
 
 #### iac-minion
 
-**Domain**: Infrastructure as Code, CI/CD, containerization, deployment
+**Domain**: Infrastructure as Code, CI/CD, containerization, serverless platforms, deployment
 
 **Remit**:
 - Terraform (HCL) for cloud provisioning
@@ -732,9 +736,12 @@ _Where things run, how they scale, where data lives._
 - Cost optimization for infrastructure
 - Server deployment and operations
 - SSL/TLS certificate management
+- Serverless platforms (AWS Lambda, Cloudflare Workers/Pages, Cloud Functions, Vercel Functions)
+- Deployment strategy selection (evaluating serverless vs. container vs. self-managed for a given workload)
 
 **Does NOT do**: Application-level security audits (-> security-minion),
-OAuth implementation (-> oauth-minion), application code (-> relevant minion)
+OAuth implementation (-> oauth-minion), application code (-> relevant minion),
+edge-layer runtime behavior (caching strategy, edge function optimization, CDN routing rules) (-> edge-minion)
 
 **Tools**: Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch
 
@@ -742,10 +749,12 @@ OAuth implementation (-> oauth-minion), application code (-> relevant minion)
 
 **Research focus**: Terraform best practices, Docker multi-stage builds,
 GitHub Actions reusable workflows, Caddy v2 configuration, Hetzner Cloud API
-and pricing, infrastructure cost optimization patterns.
+and pricing, infrastructure cost optimization patterns, serverless deployment
+patterns, cold start optimization, FaaS cost modeling, serverless vs. container
+decision criteria, when serverless is inappropriate (long-running processes,
+stateful workloads, cold-start-sensitive workloads).
 
-
-**spec-version**: 1.0
+**spec-version**: 2.0
 ---
 
 #### edge-minion
@@ -764,12 +773,20 @@ and pricing, infrastructure cost optimization patterns.
 - Edge key-value stores (KV, R2, D1)
 - Origin shielding and connection coalescing
 
+Cloudflare Workers/Pages, Vercel, and Netlify function as full-stack serverless
+platforms. Edge-minion covers edge-layer behavior (caching, routing, edge
+functions, storage bindings) on these platforms; deployment strategy and CI/CD
+are iac-minion's domain.
+
 **Principles**: Cache everything that can be cached. Push logic to the edge
 when it reduces latency. The fastest request is the one that never reaches
 your origin.
 
-**Does NOT do**: Origin server infrastructure (-> iac-minion), application
-security policies (-> security-minion), API design (-> api-design-minion)
+**Does NOT do**: Origin server infrastructure (-> iac-minion), full-stack
+serverless deployment configuration (Vercel project settings, Netlify build
+config, wrangler.toml deployment targets) (-> iac-minion), application security
+policies (-> security-minion), API design (-> api-design-minion). Edge-minion
+covers edge runtime behavior on these platforms.
 
 **Tools**: Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
 
@@ -781,7 +798,7 @@ rendering patterns, multi-CDN architectures, edge database patterns (D1, Turso),
 performance measurement (TTFB, cache hit ratios).
 
 
-**spec-version**: 1.0
+**spec-version**: 1.1
 ---
 
 #### data-minion
