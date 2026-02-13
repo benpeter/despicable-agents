@@ -993,9 +993,13 @@ reviewers.
    Validate agent references against the known discretionary pool
    before interpretation.
 
-2. Classify the adjustment per the adjustment classification definition
-   (count changes within the discretionary pool only -- mandatory
-   reviewers are never affected).
+2. Count total reviewer changes within the discretionary pool (additions +
+   removals; mandatory reviewers are never affected). A replacement counts as
+   2 changes. If 0 net changes, treat as a no-op: re-present the gate
+   unchanged with "No changes detected." A no-op does not count as an
+   adjustment round.
+   - **Minor** (1-2 changes): Go to step 3a.
+   - **Substantial** (3+ changes): Go to step 3b.
 
 3a. **Minor path (1-2 changes)**: Apply changes directly. Keep existing
     rationales for unchanged reviewers. For added reviewers, generate a
@@ -1024,10 +1028,17 @@ reviewers.
     Reviewers: refreshed for reviewer change (+N, -M) | N mandatory + M discretionary (pending approval)
     ```
 
-4. Cap at 2 adjustment rounds. A re-run counts as the same adjustment
-   round (per adjustment classification definition). Cap at 1 re-run
-   per gate. If the user requests a third adjustment, present with
-   Approve/Skip only and a note: "Adjustment cap reached (2 rounds)."
+4. Cap at 2 adjustment rounds. A re-evaluation counts as the same
+   adjustment round that triggered it, not an additional round. Cap at
+   1 re-evaluation per gate. If a second substantial adjustment occurs,
+   use the minor path. If the user requests a third adjustment, present
+   with Approve/Skip only and a note: "Adjustment cap reached (2 rounds)."
+
+   Rules:
+   - Classification is internal. Never surface the threshold number or
+     classification label to the user.
+   - The user controls reviewer composition. The system controls processing
+     thoroughness. No override mechanism.
 
 **"Skip review"**: Skip Phase 3.5 entirely. Proceed directly to the Execution
 Plan Approval Gate. No reviewers are spawned. The plan is presented as-is.
