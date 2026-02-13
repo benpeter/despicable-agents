@@ -273,11 +273,11 @@ rendering compatibility.
 - **Conflict Resolutions**: Always present as H3 under Key Design Decisions.
   Write "None." if no conflicts arose.
 - **Files Changed**: Must list ALL files in the PR, not a subset. File paths
-  in the table must be relative markdown links. Reports live at
-  `docs/history/nefario-reports/` (3 levels from repo root), so:
-  - Repo-root files (e.g., `nefario/AGENT.md`): `../../../nefario/AGENT.md`
-  - `docs/` files (e.g., `docs/orchestration.md`): `../../orchestration.md`
-  - `skills/` files (e.g., `skills/nefario/SKILL.md`): `../../../skills/nefario/SKILL.md`
+  in the table must be relative markdown links. Compute the correct `../`
+  depth from the actual report directory (which varies — see Report Directory
+  detection in SKILL.md). Count directory levels between the report file and
+  the repo root, then prepend that many `../` segments to each repo-root-relative
+  file path.
 - **Verification**: Even if all phases were skipped, include the table with
   skipped annotations.
 
