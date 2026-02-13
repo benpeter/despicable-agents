@@ -1,0 +1,1 @@
+The post-execution skip interview (after Phase 4) currently uses single-choice AskUserQuestion options like "Skip to Phase 8" or "Run Phase 5". Change this to a multi-select so the user can pick exactly which post-execution phases to run (e.g., run Phase 5 code review and Phase 8 docs but skip Phase 6 tests and Phase 7 deploy).

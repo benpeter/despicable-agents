@@ -1549,17 +1549,16 @@ A batch contains all tasks that can run before the next gate.
    ```
    - **"Approve"**: Present a FOLLOW-UP AskUserQuestion for post-execution options:
      - `header`: "Post-exec"
-     - `question`: "Post-execution phases for Task N: <task title>?\n\nRun: $summary_full"
-     - `options` (4, `multiSelect: false`):
-       1. label: "Run all", description: "Code review + tests + docs after execution completes." (recommended)
-       2. label: "Skip docs", description: "Skip documentation updates (Phase 8)."
-       3. label: "Skip tests", description: "Skip test execution (Phase 6)."
-       4. label: "Skip review", description: "Skip code review (Phase 5)."
+     - `question`: "Skip any post-execution phases for Task N: <task title>? (confirm with none selected to run all)\n\nRun: $summary_full"
+     - `options` (3, `multiSelect: true`):
+       1. label: "Skip docs", description: "Skip documentation updates (Phase 8)."
+       2. label: "Skip tests", description: "Skip test execution (Phase 6)."
+       3. label: "Skip review", description: "Skip code review (Phase 5)."
      Options are ordered by ascending risk (docs = lowest, review = highest).
-     If "Run all": run post-execution phases (5-8) after execution completes.
-     If "Skip docs/tests/review": skip the selected phase, run the rest.
+     If no options selected: run all post-execution phases (5-8).
+     If one or more options selected: skip those phases, run the rest.
      Then auto-commit changes (see below) and continue to next batch.
-     The user may also type a freeform response instead of selecting an option,
+     The user may also type freeform flags at the same prompt,
      using flags to skip multiple phases (e.g., "--skip-docs --skip-tests",
      or "--skip-post" to skip all). Interpret natural language skip intent as
      equivalent to the corresponding flags. Flag reference:
@@ -1568,6 +1567,8 @@ A batch contains all tasks that can run before the next gate.
      - `--skip-review` = skip Phase 5
      - `--skip-post` = skip Phases 5, 6, 8 (all post-execution)
      Flags can be combined: `--skip-docs --skip-tests` skips both.
+     If the user provides both structured selection and freeform text,
+     freeform text overrides on conflict.
    - **"Request changes"**: Follow up with a brief conversational message asking
      "What changes are needed?" (keep it minimal). Send feedback to agent.
      Cap at 2 revision rounds.
@@ -1642,17 +1643,19 @@ These phases follow the **dark kitchen** pattern: they run silently. The
 user sees one CONDENSE line at the start and one consolidated result in
 the wrap-up summary.
 
-Determine which post-execution phases to run based on the user's follow-up
-response (structured selection or freeform text flags):
-- Phase 5 (Code Review): Skip if user selected "Skip review" or typed
-  --skip-review or --skip-post. Also skip if Phase 4 produced no code
-  files (existing conditional, unchanged).
-- Phase 6 (Test Execution): Skip if user selected "Skip tests" or typed
-  --skip-tests or --skip-post. Also skip if no tests exist (existing
-  conditional, unchanged).
-- Phase 8 (Documentation): Skip if user selected "Skip docs" or typed
-  --skip-docs or --skip-post. Also skip if checklist has no items
-  (existing conditional, unchanged).
+Determine which post-execution phases to run based on the user's
+multi-select response and/or freeform text flags:
+- Phase 5 (Code Review): Skip if the user's selection includes
+  "Skip review", or freeform contains --skip-review or --skip-post.
+  Also skip if Phase 4 produced no code files.
+- Phase 6 (Test Execution): Skip if the user's selection includes
+  "Skip tests", or freeform contains --skip-tests or --skip-post.
+  Also skip if no tests exist.
+- Phase 8 (Documentation): Skip if the user's selection includes
+  "Skip docs", or freeform contains --skip-docs or --skip-post.
+  Also skip if checklist has no items.
+- If no options were selected and no freeform skip flags were typed,
+  run all phases.
 
 Print a CONDENSE status line listing only the phases that will actually run:
 - No skips: `Verifying: code review, tests, documentation...`
