@@ -57,7 +57,7 @@ sudo dnf install -y gh
 
 ### Windows
 
-Not currently supported. See the project README for WSL workaround.
+Not currently supported. See the project README [Platform Notes](../README.md#platform-notes) for WSL workaround.
 
 ## Quick Setup via Claude Code
 
@@ -82,3 +82,4 @@ git --version    # Should show 2.20+
 jq --version     # Should show 1.6+
 gh --version     # Optional, should show 2.x+
 ```
+
