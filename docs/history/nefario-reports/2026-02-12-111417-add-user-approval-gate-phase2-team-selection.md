@@ -169,9 +169,9 @@ Skipped (deliverables are themselves documentation; no additional docs needed).
 
 | File Path | Action | Description |
 |-----------|--------|-------------|
-| [skills/nefario/SKILL.md](../../skills/nefario/SKILL.md) | modified | New Team Approval Gate section (+67 lines), CONDENSE line update, SHOW list addition |
-| [docs/orchestration.md](../orchestration.md) | modified | Three-gate taxonomy, new Team Approval Gate subsection, Mermaid diagram update (+33/-3 lines) |
-| [docs/using-nefario.md](../using-nefario.md) | modified | Phase 1/2 descriptions updated to reflect user confirmation step (+2/-2 lines) |
+| [skills/nefario/SKILL.md](../../../skills/nefario/SKILL.md) | modified | New Team Approval Gate section (+67 lines), CONDENSE line update, SHOW list addition |
+| [docs/orchestration.md](../../orchestration.md) | modified | Three-gate taxonomy, new Team Approval Gate subsection, Mermaid diagram update (+33/-3 lines) |
+| [docs/using-nefario.md](../../using-nefario.md) | modified | Phase 1/2 descriptions updated to reflect user confirmation step (+2/-2 lines) |
 
 ### Approval Gates
 

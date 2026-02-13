@@ -82,7 +82,7 @@ Specialist input was merged into a 4-task sequential plan. Key conflict resoluti
 
 ### Phase 4: Execution
 
-4 tasks executed sequentially in 4 batches. Task 1 (devx-minion) updated [nefario/AGENT.md](../../nefario/AGENT.md) with new roster tables, synthesis template, cross-cutting clarification, and two advisory additions. Task 2 (devx-minion) rewrote [SKILL.md](../../skills/nefario/SKILL.md) Phase 3.5 with mandatory/discretionary split, Reviewer Approval Gate, and software-docs-minion checklist prompt. Task 3 (devx-minion) updated SKILL.md Phase 8 with merge logic consuming the Phase 3.5 checklist. Task 4 (software-docs-minion) updated [docs/orchestration.md](../../docs/orchestration.md) with new reviewer tables, gate description, Phase 8 checklist source, and Mermaid diagram. All tasks completed successfully.
+4 tasks executed sequentially in 4 batches. Task 1 (devx-minion) updated [nefario/AGENT.md](../../../nefario/AGENT.md) with new roster tables, synthesis template, cross-cutting clarification, and two advisory additions. Task 2 (devx-minion) rewrote [SKILL.md](../../../skills/nefario/SKILL.md) Phase 3.5 with mandatory/discretionary split, Reviewer Approval Gate, and software-docs-minion checklist prompt. Task 3 (devx-minion) updated SKILL.md Phase 8 with merge logic consuming the Phase 3.5 checklist. Task 4 (software-docs-minion) updated [docs/orchestration.md](../../orchestration.md) with new reviewer tables, gate description, Phase 8 checklist source, and Mermaid diagram. All tasks completed successfully.
 
 ### Phase 5: Code Review
 
@@ -160,9 +160,9 @@ Skipped (orchestration.md update was Task 4 of execution -- documentation was th
 
 | File Path | Action | Description |
 |-----------|--------|-------------|
-| [nefario/AGENT.md](../../nefario/AGENT.md) | modified | New ALWAYS/discretionary reviewer tables, synthesis template, cross-cutting clarification, verdict exception, "NEVER skipped" annotation (+35/-9) |
-| [skills/nefario/SKILL.md](../../skills/nefario/SKILL.md) | modified | Phase 3.5 rewrite (mandatory/discretionary, Reviewer Approval Gate, software-docs prompt) + Phase 8 merge logic (+201/-31) |
-| [docs/orchestration.md](../../docs/orchestration.md) | modified | Reviewer tables, gate description, Mermaid diagram, Phase 8 checklist source (+43/-24) |
+| [nefario/AGENT.md](../../../nefario/AGENT.md) | modified | New ALWAYS/discretionary reviewer tables, synthesis template, cross-cutting clarification, verdict exception, "NEVER skipped" annotation (+35/-9) |
+| [skills/nefario/SKILL.md](../../../skills/nefario/SKILL.md) | modified | Phase 3.5 rewrite (mandatory/discretionary, Reviewer Approval Gate, software-docs prompt) + Phase 8 merge logic (+201/-31) |
+| [docs/orchestration.md](../../orchestration.md) | modified | Reviewer tables, gate description, Mermaid diagram, Phase 8 checklist source (+43/-24) |
 
 ### Approval Gates
 

@@ -135,10 +135,10 @@ outcome: {completed | partial | aborted}
 
 ### Files Changed
 
-| File Path | Action | Description |
-|-----------|--------|-------------|
-| {path/to/file} | {created/modified/deleted} | {what changed} |
-| {path/to/file} | {created/modified/deleted} | {what changed} |
+| File | Action | Description |
+|------|--------|-------------|
+| [{display-path}]({relative-link}) | {created/modified/deleted} | {what changed} |
+| [{display-path}]({relative-link}) | {created/modified/deleted} | {what changed} |
 
 ### Approval Gates
 
@@ -272,7 +272,12 @@ rendering compatibility.
   For gate decisions, use the Decisions section instead.
 - **Conflict Resolutions**: Always present as H3 under Key Design Decisions.
   Write "None." if no conflicts arose.
-- **Files Changed**: Must list ALL files in the PR, not a subset.
+- **Files Changed**: Must list ALL files in the PR, not a subset. File paths
+  in the table must be relative markdown links. Reports live at
+  `docs/history/nefario-reports/` (3 levels from repo root), so:
+  - Repo-root files (e.g., `nefario/AGENT.md`): `../../../nefario/AGENT.md`
+  - `docs/` files (e.g., `docs/orchestration.md`): `../../orchestration.md`
+  - `skills/` files (e.g., `skills/nefario/SKILL.md`): `../../../skills/nefario/SKILL.md`
 - **Verification**: Even if all phases were skipped, include the table with
   skipped annotations.
 

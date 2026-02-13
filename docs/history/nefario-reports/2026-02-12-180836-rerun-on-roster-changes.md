@@ -165,9 +165,9 @@ Six-item checklist from Phase 3.5. Items 1-4 (software-docs, orchestration.md) h
 
 | File Path | Action | Description |
 |-----------|--------|-------------|
-| [skills/nefario/SKILL.md](../../skills/nefario/SKILL.md) | modified | Added adjustment classification definition, restructured both gate adjustment flows with minor/substantial branching |
-| [docs/orchestration.md](../orchestration.md) | modified | Added brief architectural notes about re-run behavior at both gates |
-| [docs/using-nefario.md](../using-nefario.md) | modified | Added user-facing clauses about planning refresh and reviewer re-evaluation |
+| [skills/nefario/SKILL.md](../../../skills/nefario/SKILL.md) | modified | Added adjustment classification definition, restructured both gate adjustment flows with minor/substantial branching |
+| [docs/orchestration.md](../../orchestration.md) | modified | Added brief architectural notes about re-run behavior at both gates |
+| [docs/using-nefario.md](../../using-nefario.md) | modified | Added user-facing clauses about planning refresh and reviewer re-evaluation |
 
 ### Approval Gates
 
