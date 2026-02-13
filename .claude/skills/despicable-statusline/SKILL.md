@@ -102,18 +102,19 @@ Outside orchestration, it is hidden.
 
 ## Known Limitations
 
-**Parallel session status bleed**: The status line identifies the active
-nefario session via a shared `/tmp/claude-session-id` file. If two Claude
-Code sessions run simultaneously, the status line may briefly show the
-orchestration phase from the other session. This is rare in practice —
-it only occurs when both sessions are actively running `/nefario` at the
-same time — but it can be confusing when it happens.
-
-The root cause is tracked in [#74](https://github.com/benpeter/despicable-agents/issues/74).
-A proper fix (e.g., per-session env vars via `SessionStart` hooks) would
-be worthwhile, but all known approaches add meaningful complexity to the
-skill and its deployment. For now, the shared-file approach stays as the
-simplest thing that works for the common single-session case.
+**Parallel session status bleed** (very rare): The nefario skill reads
+`/tmp/claude-session-id` at each phase transition to know which status
+file to update. If a second session's status line refreshes in the narrow
+window between the orchestrating session's last status-line refresh and
+the nefario phase-transition command, nefario writes to the wrong
+session's status file. The effect is cosmetic and self-correcting — the
+wrong session briefly shows a nefario phase, and the right session
+briefly loses it, until the next refresh restores both. With only 5-9
+phase transitions per run and the second session needing to be actively
+running (idle sessions rarely refresh), this is extremely unlikely in
+practice. See [#74](https://github.com/benpeter/despicable-agents/issues/74)
+for the tracked fix; all known solutions add complexity that conflicts
+with KISS.
 
 ## Important Notes
 
