@@ -410,4 +410,4 @@ These decisions were made during the nefario v2.0 update, extending orchestratio
 
 - Nefario-gated complexity classification -- revisit after 20+ full-process runs.
 - git-minion specialist agent (Decision 19) -- revisit when concrete demand for branching strategy, PR workflow, or commit hook maintenance emerges.
-- Automatic context usage monitoring -- revisit if Claude Code exposes context metrics to agents.
+- Automatic context usage monitoring -- best-effort extraction from `<system_warning>` implemented at compaction checkpoints (SKILL.md). Revisit for a stable API if Claude Code exposes one.

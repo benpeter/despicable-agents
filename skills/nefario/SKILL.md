@@ -798,8 +798,25 @@ count, execution order) in session context. **Proceed to Phase 3.5
 After writing the synthesis to the scratch file, present a compaction gate
 using AskUserQuestion:
 
+<!-- The <system_warning> token usage format ("Token usage: {used}/{total};
+     {remaining} remaining") is empirically observed Claude Code behavior, not a
+     stable API. If the format changes, the context line is silently omitted. -->
+
+Before presenting the AskUserQuestion, extract context usage from the most recent
+`<system_warning>` in the conversation:
+
+1. Scan backward for the most recent text matching:
+   `Token usage: {used}/{total}; {remaining} remaining`
+   (values may contain commas as thousand separators)
+2. If found: compute `$context_pct = floor(used / total * 100)` and
+   `$context_remaining_k = floor(remaining / 1000)` (strip commas before arithmetic).
+3. If not found or format does not match: skip the context line (silent omission).
+   When context data is unavailable, omit the `[Context: ...]` prefix and its
+   trailing `\n\n` from the question. The question then begins with the phase
+   completion sentence.
+
 - `header`: "P3 Compact"
-- `question`: "Phase 3 complete. Specialist details are now in the synthesis. Compact context before continuing?\n\nRun: $summary"
+- `question`: "[Context: {$context_pct}% used -- {$context_remaining_k}k remaining]\n\nPhase 3 complete. Specialist details are now in the synthesis. Compact context before continuing?\n\nRun: $summary_full"
 - `options` (2, `multiSelect: false`):
   1. label: "Skip", description: "Continue without compaction. Auto-compaction may interrupt later phases." (recommended)
   2. label: "Compact", description: "Pause to compact context before Phase 3.5."
@@ -809,9 +826,16 @@ Print: `Continuing without compaction.`
 Proceed to Phase 3.5.
 
 **"Compact" response handling**:
+Silently copy the `/compact` command to the clipboard before printing:
+
+    echo '/compact focus="Preserve: current phase (3.5 review next), synthesized execution plan, inline agent summaries, task list, approval gates, team name, branch name, $summary, scratch directory path. Discard: individual specialist contributions from Phase 2."' | pbcopy 2>/dev/null
+
+The `$summary` and scratch directory path in the pbcopy command must be interpolated
+to their actual resolved values, matching the printed code block below.
+
 Print the `/compact` command for the user to copy and run:
 
-    Copy and run:
+    Copied to clipboard. Paste and run:
 
         /compact focus="Preserve: current phase (3.5 review next), synthesized execution plan, inline agent summaries, task list, approval gates, team name, branch name, $summary, scratch directory path. Discard: individual specialist contributions from Phase 2."
 
@@ -1210,8 +1234,12 @@ Follow these steps exactly. **Global cap: 2 revision rounds total.**
 After processing all review verdicts, present a compaction gate using
 AskUserQuestion:
 
+Before presenting the AskUserQuestion, extract context usage from the most recent
+`<system_warning>` in the conversation (same extraction and fallback as the
+Phase 3 checkpoint above).
+
 - `header`: "P3.5 Compact"
-- `question`: "Phase 3.5 complete. Review verdicts are folded into the plan. Compact context before execution?\n\nRun: $summary"
+- `question`: "[Context: {$context_pct}% used -- {$context_remaining_k}k remaining]\n\nPhase 3.5 complete. Review verdicts are folded into the plan. Compact context before execution?\n\nRun: $summary_full"
 - `options` (2, `multiSelect: false`):
   1. label: "Skip", description: "Continue without compaction. Auto-compaction may interrupt execution." (recommended)
   2. label: "Compact", description: "Pause to compact context before Phase 4."
@@ -1221,9 +1249,16 @@ Print: `Continuing without compaction.`
 Proceed to the Execution Plan Approval Gate.
 
 **"Compact" response handling**:
+Silently copy the `/compact` command to the clipboard before printing:
+
+    echo '/compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, inline agent summaries, gate decision briefs, task list with dependencies, approval gates, team name, branch name, $summary, scratch directory path, skills-invoked. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."' | pbcopy 2>/dev/null
+
+The `$summary` and scratch directory path in the pbcopy command must be interpolated
+to their actual resolved values, matching the printed code block below.
+
 Print the `/compact` command for the user to copy and run:
 
-    Copy and run:
+    Copied to clipboard. Paste and run:
 
         /compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, inline agent summaries, gate decision briefs, task list with dependencies, approval gates, team name, branch name, $summary, scratch directory path, skills-invoked. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."
 
