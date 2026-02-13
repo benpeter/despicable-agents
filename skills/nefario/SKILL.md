@@ -360,11 +360,11 @@ Detect the report directory (see Path Resolution above). Resolve both paths
 before proceeding. Both resolved paths must be included in CONDENSE checkpoints.
 
 Extract a status summary from the first line of the user's task description.
-Truncate to 48 characters; if truncated, append "..." (so "Nefario: " 9-char
-prefix + 48 + 3 = 60 chars max). Write the sentinel file:
+Truncate to 40 characters; if truncated, append "..." (prefix ~16 chars +
+" | " 3 chars + 40 + 3 = ~62 chars max). Write the sentinel file:
 ```sh
 SID=$(cat /tmp/claude-session-id 2>/dev/null)
-echo "$summary" > /tmp/nefario-status-$SID
+echo "P1 Meta-Plan | $summary" > /tmp/nefario-status-$SID
 chmod 600 /tmp/nefario-status-$SID   # Status file: read from custom statusline scripts
 ```
 Use this summary text in Task `description` fields and TaskCreate `activeForm`
@@ -464,7 +464,11 @@ Format rules:
   Plan Approval Gate (which targets 25-40 lines).
 
 **Decision options** via AskUserQuestion:
-- `header`: "Team"
+
+> Note: AskUserQuestion `header` values must not exceed 12 characters.
+> The `P<N> <Label>` convention reserves 3-5 chars for the phase prefix.
+
+- `header`: "P1 Team"
 - `question`: "<1-sentence task summary>"
 - `options` (3, `multiSelect: false`):
   1. label: "Approve team", description: "Consult these N specialists and proceed to planning." (recommended)
@@ -570,6 +574,12 @@ are spawned without re-gating. The user already approved the task scope and
 initial team; specialist-recommended additions are refinements within that
 scope.
 
+Update the status file before entering Phase 2:
+```sh
+SID=$(cat /tmp/claude-session-id 2>/dev/null)
+echo "P2 Planning | $summary" > /tmp/nefario-status-$SID
+```
+
 ## Phase 2: Specialist Planning
 
 For each specialist in the meta-plan, spawn them as a subagent **in parallel**.
@@ -637,6 +647,12 @@ file path forward -- do not paste the full contribution into later prompts.
 **Important**: If any specialist recommends additional agents, spawn those
 agents for planning too (a second round of Phase 2 consultations), then
 include their contributions in Phase 3.
+
+Update the status file before entering Phase 3:
+```sh
+SID=$(cat /tmp/claude-session-id 2>/dev/null)
+echo "P3 Synthesis | $summary" > /tmp/nefario-status-$SID
+```
 
 ## Phase 3: Synthesis
 
@@ -707,6 +723,12 @@ If the user runs `/compact`, wait for them to say "continue" then proceed.
 If the user types anything else (or says "skip"/"continue"), print:
 `Continuing without compaction. Auto-compaction may interrupt later phases.`
 Then proceed to Phase 3.5. Do NOT re-prompt at subsequent boundaries.
+
+Update the status file before entering Phase 3.5:
+```sh
+SID=$(cat /tmp/claude-session-id 2>/dev/null)
+echo "P3.5 Review | $summary" > /tmp/nefario-status-$SID
+```
 
 ## Phase 3.5: Architecture Review
 
@@ -783,7 +805,7 @@ Format rules:
   the 6-member discretionary pool only.
 
 **AskUserQuestion**:
-- `header`: "Review"
+- `header`: "P3.5 Review"
 - `question`: "<1-sentence plan summary>"
 - `options` (3, `multiSelect: false`):
   1. label: "Approve reviewers"
@@ -1014,7 +1036,7 @@ Follow these steps exactly. **Global cap: 2 revision rounds total.**
      ```
 
      Then present using AskUserQuestion:
-     - `header`: "Impasse"
+     - `header`: "P3 Impasse"
      - `question`: the one-sentence disagreement description
      - `options` (4, `multiSelect: false`):
        1. label: "Override blockers", description: "Accept the plan despite unresolved concerns."
@@ -1140,7 +1162,7 @@ Do not include at the plan approval gate:
 ### Decision Options
 
 Present the plan for approval using AskUserQuestion:
-- `header`: "Plan"
+- `header`: "P3.5 Plan"
 - `question`: "<the orientation line goal summary>"
 - `options` (3, `multiSelect: false`):
   1. label: "Approve", description: "Accept plan and begin execution." (recommended)
@@ -1155,6 +1177,12 @@ When the user selects "Request changes":
 3. The gate is presented again with the updated plan
 
 After "Approve", proceed to Phase 4 execution.
+
+Update the status file before entering Phase 4:
+```sh
+SID=$(cat /tmp/claude-session-id 2>/dev/null)
+echo "P4 Execution | $summary" > /tmp/nefario-status-$SID
+```
 
 ## Phase 4: Execution
 
@@ -1280,16 +1308,28 @@ A batch contains all tasks that can run before the next gate.
 
    Target 12-18 lines for mid-execution gates (soft ceiling; clarity wins over brevity).
 
+   Before presenting the gate, update the status file to reflect the gate state:
+   ```sh
+   SID=$(cat /tmp/claude-session-id 2>/dev/null)
+   echo "P4 Gate | $task_title" > /tmp/nefario-status-$SID
+   ```
+   (where `$task_title` is the task title, truncated to 40 characters.)
+
    Then present the decision using AskUserQuestion:
-   - `header`: "Gate"
-   - `question`: the DECISION line from the brief
+   - `header`: "P4 Gate"
+   - `question`: "Task N: <task title>" followed by " -- " and the DECISION line from the brief
    - `options` (4, `multiSelect: false`):
      1. label: "Approve", description: "Accept and continue execution." (recommended)
      2. label: "Request changes", description: "Send feedback for revision (max 2 rounds)."
      3. label: "Reject", description: "Drop this task and its dependents from the plan."
      4. label: "Skip", description: "Defer; re-presented before wrap-up."
 
-   Response handling:
+   Response handling — after the gate is resolved (any option), revert the
+   status file to execution state:
+   ```sh
+   SID=$(cat /tmp/claude-session-id 2>/dev/null)
+   echo "P4 Execution | $summary" > /tmp/nefario-status-$SID
+   ```
    - **"Approve"**: Present a FOLLOW-UP AskUserQuestion for post-execution options:
      - `header`: "Post-exec"
      - `question`: "Post-execution phases for this task?"
@@ -1355,7 +1395,7 @@ A batch contains all tasks that can run before the next gate.
    - Set confidence based on: number of viable alternatives (more = lower),
      reversibility (harder = lower), downstream dependents (more = lower).
    - Calibration check: After 5 consecutive approvals without changes, present using AskUserQuestion:
-     - `header`: "Calibrate"
+     - `header`: "P4 Calibrate"
      - `question`: "5 consecutive approvals without changes. Gates well-calibrated?"
      - `options` (2, `multiSelect: false`):
        1. label: "Gates are fine", description: "Continue with current gating level."
@@ -1464,7 +1504,7 @@ Task:
   ```
 
   Then present using AskUserQuestion:
-  - `header`: "Security"
+  - `header`: "P5 Security"
   - `question`: the one-sentence finding description
   - `options` (4, `multiSelect: false`):
     1. label: "Proceed with auto-fix", description: "Apply the proposed fix automatically." (recommended)
@@ -1493,7 +1533,7 @@ Task:
   snippet with: "Code omitted (potential secret). Review: <path>:<lines>"
 
   Then present the decision using AskUserQuestion:
-  - `header`: "Issue"
+  - `header`: "P5 Issue"
   - `question`: the one-sentence finding description from the brief
   - `options` (3, `multiSelect: false`):
     1. label: "Accept as-is", description: "Proceed with current code. Log finding for later." (recommended)

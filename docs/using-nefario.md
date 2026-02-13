@@ -97,7 +97,7 @@ When `/nefario` completes work started from an issue, it adds `Resolves #N` to t
 
 ## What Happens: The Nine Phases
 
-Nefario follows a structured process: plan with specialists, review the plan, execute, then verify the results. Here is what you experience at each phase.
+Nefario follows a structured process: plan with specialists, review the plan, execute, then verify the results. The status line and all approval prompts include the current phase, so you always know where you are in the process. Here is what you experience at each phase.
 
 **Phase 1 -- Meta-Planning.** Nefario reads your codebase and figures out which specialists to consult. You see the proposed team -- each specialist listed with a brief rationale for why they were selected, plus a list of available specialists that were not selected. You then approve the team, adjust it (add or remove specialists), or reject the orchestration entirely; if you make large changes, nefario refreshes the plan to account for the new team composition. This is a quick confirmation, not a detailed review -- glance at the names, make sure nothing is missing or surprising, and approve.
 
@@ -186,15 +186,15 @@ Restart Claude Code or start a new conversation to activate.
 
 ### What It Shows
 
-When nefario is orchestrating, the status bar appends the task summary after the standard info:
+When nefario is orchestrating, the status bar appends the current phase and task summary after the standard info, updating at each phase transition:
 
-`~/my-project | Claude Opus 4 | Context: 12% | Build MCP server with OAuth...`
+`~/my-project | Claude Opus 4 | Context: 12% | P2 Planning | Build MCP server with OAuth...`
 
 When nefario is not running, the status bar shows just the directory, model, and context usage.
 
 ### How It Works
 
-The status line command extracts `session_id` from the JSON that Claude Code pipes to it, and writes it to `/tmp/claude-session-id` so the nefario skill can discover it. When nefario starts orchestrating, it reads the session ID from that file and writes a one-line task summary to `/tmp/nefario-status-<session-id>`. The status line command checks for this file and appends its contents. When orchestration finishes, nefario removes the file.
+The status line command extracts `session_id` from the JSON that Claude Code pipes to it, and writes it to `/tmp/claude-session-id` so the nefario skill can discover it. When nefario starts orchestrating, it reads the session ID from that file and writes the current phase and task summary to `/tmp/nefario-status-<session-id>`. The file is updated at each phase transition so the status line always reflects the current phase. The status line command checks for this file and appends its contents. When orchestration finishes, nefario removes the file.
 
 <details>
 <summary>Manual configuration (alternative)</summary>
