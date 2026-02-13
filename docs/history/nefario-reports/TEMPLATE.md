@@ -206,7 +206,7 @@ should be re-evaluated.}
 ## Session Resources
 
 <details>
-<summary>Session resources ({N} skills, {M} tool types)</summary>
+<summary>Session resources ({N} skills)</summary>
 
 ### External Skills
 
@@ -219,20 +219,7 @@ should be re-evaluated.}
 - `/nefario` -- orchestration workflow
 - `/{skill-name}` -- {brief description} ({task numbers or context})
 
-### Tool Usage
-
-| Tool | Count |
-|------|-------|
-| Task (subagent) | {N} |
-| Read | {N} |
-| Edit | {N} |
-| Write | {N} |
-| Bash | {N} |
-| Grep | {N} |
-| Glob | {N} |
-
-Counts are best-effort, reflecting the orchestrator's own tool usage only.
-Subagent internal tool usage is not tracked.
+Context compaction: {N} events
 
 </details>
 
@@ -308,7 +295,6 @@ Companion directory: [{YYYY-MM-DD}-{HHMMSS}-{slug}/](./{YYYY-MM-DD}-{HHMMSS}-{sl
 | Session Resources | Always (section is structurally present in all reports) | Never omitted entirely |
 | Session Resources: External Skills subsection | Meta-plan discovered 1+ external skills | No external skills discovered |
 | Session Resources: Skills Invoked subsection | Always included | Never omitted |
-| Session Resources: Tool Usage subsection | `mode` != `advisory` AND tool counts extractable | `mode` = `advisory` OR counts not available |
 | Test Plan | Execution produced test files or test strategy decisions were made | No tests involved or `mode` = `advisory` |
 | Post-Nefario Updates | NEVER in initial report. Appending updates to an existing report after subsequent commits land on the same branch. | Always omit in initial report generation. |
 | Agent Contributions: Architecture Review subsection | Phase 3.5 ran | `mode` = `advisory` or Phase 3.5 skipped |
@@ -354,15 +340,12 @@ rendering compatibility.
   file path.
 - **Verification**: Even if all phases were skipped, include the table with
   skipped annotations.
-- **Session Resources**: Always collapsed. Summary tag includes inline counts
-  (e.g., "Session resources (2 skills, 5 tool types)"). Skills Invoked list
-  always includes `/nefario` as first entry. Tool Usage table omits tools
-  with zero usage. If tool counts are not available (e.g., context was heavily
-  compacted), replace the Tool Usage subsection with: "Tool counts not
-  available for this session." If the entire section would contain only
-  `/nefario` in Skills Invoked and no other data, the section still appears
-  (collapsed) for structural consistency. In advisory mode, the Tool Usage
-  subsection is omitted entirely (not replaced with a fallback message).
+- **Session Resources**: Always collapsed. Summary tag includes skill count
+  (e.g., "Session resources (2 skills)"). Skills Invoked list always includes
+  `/nefario` as first entry. Include a compaction signal line: "Context
+  compaction: {N} events" (0 if no compaction occurred). If the entire section
+  would contain only `/nefario` in Skills Invoked and no other data, the
+  section still appears (collapsed) for structural consistency.
 
 ### Working Files
 
@@ -438,8 +421,7 @@ When generating a report:
 12. Write Decisions (if gate-count > 0; gate briefs with full rationale)
 13. Write Verification table
 14. Write Session Resources (collapsed; External Skills subsection if any discovered;
-    Skills Invoked list always; Tool Usage table if mode != advisory and counts
-    available, otherwise omit Tool Usage subsection gracefully)
+    Skills Invoked list always; compaction signal line always)
 15. Write Working Files (collapsible, relative links to companion directory; or "None")
 16. Write Test Plan (if tests were produced or modified)
 17. Do NOT write Post-Nefario Updates in initial report

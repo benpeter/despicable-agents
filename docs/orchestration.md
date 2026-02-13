@@ -528,7 +528,7 @@ Reports follow an inverted pyramid: most important information first, progressiv
 - **Execution**: Tasks table, files changed table, and approval gates table with enriched briefs for each gate.
 - **Decisions**: Gate briefs with full rationale, rejected alternatives, confidence, and outcome. Conditional: included only when gate-count > 0.
 - **Verification**: Phase-by-phase results table. Always present, even if all phases were skipped.
-- **Session Resources**: Collapsed section with three subsections: External Skills (table of skills discovered during meta-plan, conditional), Skills Invoked (list of skills used during the session, always present), and Tool Usage (best-effort orchestrator tool counts, omitted in advisory mode). Always structurally present.
+- **Session Resources**: Collapsed section with two subsections: External Skills (table of skills discovered during meta-plan, conditional) and Skills Invoked (list of skills used during the session, always present). Includes a compaction signal line. Always structurally present.
 - **Working Files**: Collapsible section linking to companion directory with intermediate artifacts.
 - **Test Plan**: Conditional: included when tests were produced or modified.
 - **Post-Nefario Updates**: Conditional: never in the initial report, appended when subsequent commits land on the same branch.

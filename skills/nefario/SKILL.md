@@ -2025,14 +2025,9 @@ Track data at phase boundaries:
   When writing the `skills-used` frontmatter field, include only skills beyond
   `/nefario` (which is implicit for all nefario reports). If only `/nefario`
   was invoked, omit the `skills-used` frontmatter field entirely.
-- `orchestrator-tools` (best-effort): approximate counts of tools the
-  orchestrator itself called during the session. Scan conversation context and
-  tally by tool name. Include tools with non-zero counts only. Common tools:
-  Task, TaskList, TaskUpdate, TeamCreate, SendMessage, AskUserQuestion, Bash,
-  Read, Write, Edit, Glob, Grep, Skill. If context was compacted and counts
-  cannot be reliably determined, note "not available". These counts reflect
-  orchestration overhead only, not subagent tool usage (which is opaque to
-  the calling session).
+- `compaction-events`: number of context compaction events during the session.
+  Count how many times `/compact` was run or auto-compaction triggered.
+  This tells the report reader how much to trust the report's completeness.
 
 **Fallback for compacted summaries**: If inline summaries or gate decision
 briefs were lost to compaction, read scratch files from
@@ -2111,9 +2106,8 @@ skip it, do not defer it, do not stop before it is written.
      subsection within Session Resources when skills were discovered.
    — include a Session Resources section (collapsed). Always include Skills
      Invoked list (from skills-invoked). Include External Skills subsection
-     if any were discovered. Include Tool Usage table if mode != advisory
-     and orchestrator-tools data is available. Omit Tool Usage subsection
-     gracefully if counts are not available.
+     if any were discovered. Include compaction signal line (from
+     compaction-events).
    — include a Verification section with Phase 5-8 outcomes
    — include a Working Files section linking to the companion directory
 7. Commit the report and companion directory together (auto-commit, no prompt needed; skip if no git repo)

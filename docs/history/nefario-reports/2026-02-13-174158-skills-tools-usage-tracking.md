@@ -144,26 +144,13 @@ Approved the replacement of External Skills with Session Resources containing th
 ## Session Resources
 
 <details>
-<summary>Session resources (1 skill, 7 tool types)</summary>
+<summary>Session resources (1 skill)</summary>
 
 ### Skills Invoked
 
 - `/nefario` -- orchestration workflow
 
-### Tool Usage
-
-| Tool | Count |
-|------|-------|
-| Task (subagent) | 12 |
-| Read | 5 |
-| Edit | 2 |
-| Write | 8 |
-| Bash | 18 |
-| Grep | 1 |
-| Glob | 0 |
-
-Counts are best-effort, reflecting the orchestrator's own tool usage only.
-Subagent internal tool usage is not tracked.
+Context compaction: 2 events
 
 </details>
 
