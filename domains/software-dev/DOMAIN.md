@@ -270,7 +270,7 @@ When recommending agents for the plan, specify model based on task type:
 
 ## Architecture Review
 
-### Mandatory Reviewers
+**Mandatory reviewers (ALWAYS):**
 
 | Reviewer | Trigger | Rationale |
 |----------|---------|-----------|
@@ -280,7 +280,7 @@ When recommending agents for the plan, specify model based on task type:
 | **lucy** | ALWAYS | Every plan must align with human intent, repo conventions, and CLAUDE.md compliance. Intent drift is the #1 failure mode in multi-phase orchestration. |
 | **margo** | ALWAYS | Every plan must pass YAGNI/KISS/simplicity enforcement. Can BLOCK on: unnecessary complexity, over-engineering, scope creep. |
 
-### Discretionary Reviewers
+**Discretionary reviewers (selected by nefario, approved by user):**
 
 | Reviewer | Domain Signal | Rationale |
 |----------|--------------|-----------|
@@ -290,102 +290,34 @@ When recommending agents for the plan, specify model based on task type:
 | **observability-minion** | Plan includes 2+ tasks producing runtime components that need coordinated logging/metrics/tracing | Coordinated observability strategy across services |
 | **user-docs-minion** | Plan includes tasks whose output changes what end users see, do, or need to learn | User-facing documentation impact needs early identification |
 
-All reviewers run on **sonnet** except lucy and margo, which run on **opus** (governance judgment requires deep reasoning).
+During synthesis, nefario evaluates each discretionary reviewer against the
+delegation plan using a forced yes/no enumeration with one-line rationale per
+reviewer. The "Domain Signal" column provides heuristic anchors -- nefario
+matches plan content against these signals rather than applying rigid
+conditionals. Discretionary picks are presented to the user for approval
+before reviewers are spawned (see SKILL.md Phase 3.5 for the approval gate
+interaction).
 
-### Review Focus Descriptions
-
-- **security-minion**: security gaps, authentication/authorization flaws, injection vectors, secret management
-- **test-minion**: test coverage gaps, missing test types, test strategy alignment
-- **ux-strategy-minion**: journey coherence, cognitive load, simplification opportunities
-- **lucy**: intent alignment, convention adherence, goal drift
-- **margo**: over-engineering, unnecessary complexity, scope creep
-- **ux-design-minion**: visual hierarchy, interaction patterns, component design, accessibility
-- **accessibility-minion**: WCAG compliance, screen reader compatibility, keyboard navigation
-- **sitespeed-minion**: performance budgets, Core Web Vitals impact, loading strategy
-- **observability-minion**: logging strategy, metrics coverage, tracing integration
-- **user-docs-minion**: user-facing documentation impact, getting-started coverage
-
-### Review Examples
-
-**ADVISE example (good -- self-contained):**
-```
-- [security]: Open redirect risk in callback handler
-  SCOPE: OAuth callback endpoint in auth/callback.ts
-  CHANGE: Validate redirect_uri against allowlist before issuing redirect
-  WHY: Unvalidated redirect_uri allows attackers to redirect users to malicious sites after authentication
-  TASK: Task 3
-```
-
-**ADVISE example (bad -- references invisible context):**
-```
-- [security]: Issue with the approach
-  SCOPE: The callback handler
-  CHANGE: Add the validation we discussed
-  WHY: See the security analysis above
-  TASK: Task 3
-```
-
-**BLOCK example (good -- self-contained):**
-```
-- SCOPE: JWT token validation in middleware/auth.ts
-  ISSUE: Token signature verification uses HS256 with a hardcoded secret
-  RISK: Any attacker who discovers the secret can forge valid tokens for any user
-  SUGGESTION: Use RS256 with rotating key pairs from a secrets manager
-```
-
-## Custom Reviewer Prompts
-
-### ux-strategy-minion
-
-```
-You are reviewing a delegation plan before execution begins.
-Your role: evaluate journey coherence, cognitive load, and simplification
-opportunities across the plan.
-
-## Delegation Plan
-Read the full plan from: $SCRATCH_DIR/{slug}/phase3-synthesis.md
-
-## Your Review Focus
-1. Journey coherence: Do the planned deliverables form a coherent user
-   experience? Are there gaps or contradictions in the user-facing flow?
-2. Cognitive load: Will the planned changes increase complexity for users?
-   Are there simpler alternatives that achieve the same goal?
-3. Simplification: Can any planned deliverables be combined, removed, or
-   simplified without losing value?
-4. User jobs-to-be-done: Does each user-facing task serve a real user need,
-   or is it feature creep?
-
-## Original User Request
-Read the original user request from: $SCRATCH_DIR/{slug}/prompt.md
-
-## Instructions
-Return exactly one verdict:
-
-- APPROVE: No concerns from your domain.
-
-- ADVISE: Return warnings using this format for each concern:
-  - [your-domain]: <one-sentence description>
-    SCOPE: <file, component, or concept affected>
-    CHANGE: <what should change, in domain terms>
-    WHY: <risk or rationale, self-contained>
-    TASK: <task number affected>
-
-  Each advisory must be understandable by a reader who has not seen the plan
-  or this review session. SCOPE names the artifact, not a plan step number.
-  CHANGE and WHY use domain terms, not plan-internal references.
-
-- BLOCK: Return using this format:
-  SCOPE: <file, component, or concept affected>
-  ISSUE: <description of the blocking concern>
-  RISK: <what happens if this is not addressed>
-  SUGGESTION: <how the plan could be revised>
-
-Write your verdict to: $SCRATCH_DIR/{slug}/phase3.5-ux-strategy-minion.md
-
-Be concise. Only flag issues within your domain expertise.
-```
+All reviewers run on **sonnet** except lucy and margo, which run on **opus**
+(governance judgment requires deep reasoning).
 
 ## Post-Execution Pipeline
+
+- **Phase 5: Code Review** -- Runs when Phase 4 produced code or logic-bearing markdown (AGENT.md, SKILL.md, RESEARCH.md, CLAUDE.md). Three parallel reviewers: code-review-minion (sonnet), lucy (opus), margo (opus). BLOCK findings routed to producing agent, 2-round cap. Security-severity BLOCKs surface to user.
+- **Phase 6: Test Execution** -- Runs when tests exist. 4-step discovery, layered execution (lint, unit, integration/E2E), baseline delta analysis. Failures routed to producing agent, 2-round cap.
+- **Phase 7: Deployment** -- Conditional: only when user explicitly requests at plan approval. Runs existing deployment commands.
+- **Phase 8: Documentation** -- Conditional: runs when documentation checklist has items. Sub-step 8a: software-docs-minion + user-docs-minion in parallel. Sub-step 8b: product-marketing-minion reviews (conditional on README/user-facing docs).
+
+When creating plans in SYNTHESIS mode, include awareness that these phases will
+run after execution. This means:
+- Test strategy does not need a dedicated execution task (Phase 6 handles it)
+- Documentation updates can be deferred to Phase 8 if not gated
+- Code quality review is handled by Phase 5 (not a separate execution task)
+
+Users can skip post-execution phases via multi-select at approval gates:
+check "Skip docs", "Skip tests", and/or "Skip review" (confirm with none
+selected to run all). Freeform flags --skip-docs, --skip-tests,
+--skip-review, --skip-post also accepted.
 
 ### Phase 5: Code Review
 
@@ -633,7 +565,7 @@ Check:
 
 ## File-Domain Routing
 
-When analyzing which domains a task involves, consider the semantic nature of the files being modified, not just their extension. Agent definition files (AGENT.md), orchestration rules (SKILL.md), domain research (RESEARCH.md), and project instructions (CLAUDE.md) are prompt engineering and multi-agent architecture artifacts. Changes to these files should route through ai-modeling-minion. Documentation files (README.md, docs/*.md, changelogs) route through software-docs-minion or user-docs-minion.
+**File-Domain Awareness**: When analyzing which domains a task involves, consider the semantic nature of the files being modified, not just their extension. Agent definition files (AGENT.md), orchestration rules (SKILL.md), domain research (RESEARCH.md), and project instructions (CLAUDE.md) are prompt engineering and multi-agent architecture artifacts. Changes to these files should route through ai-modeling-minion. Documentation files (README.md, docs/*.md, changelogs) route through software-docs-minion or user-docs-minion.
 
 ## Phase Announcement Names
 

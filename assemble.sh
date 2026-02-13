@@ -63,14 +63,17 @@ export SECTIONS_DIR="$sections_dir"
 trap 'rm -rf "$sections_dir"' EXIT
 
 awk '
-BEGIN { fm_count = 0; fm_done = 0; cur_key = ""; outdir = ENVIRON["SECTIONS_DIR"] }
+BEGIN { fm_count = 0; fm_done = 0; cur_key = ""; in_fence = 0; outdir = ENVIRON["SECTIONS_DIR"] }
 
 # Skip YAML frontmatter
 !fm_done && $0 == "---" { fm_count++; if (fm_count == 2) fm_done = 1; next }
 !fm_done && fm_count >= 1 { next }
 
-# H2 heading (## but not ### or deeper)
-/^## [^#]/ {
+# Track code fences (``` blocks) to avoid splitting on headings inside them
+/^```/ { in_fence = !in_fence }
+
+# H2 heading (## but not ### or deeper) -- only outside code fences
+!in_fence && /^## [^#]/ {
   if (cur_key != "") close(outdir "/" cur_key)
 
   heading = substr($0, 4)
