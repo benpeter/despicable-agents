@@ -15,6 +15,7 @@ task: "{one-line task description}"
 source-issue: {N}
 mode: {full | plan | advisory}
 agents-involved: [{agent1}, {agent2}, ...]
+skills-used: [{skill1}, {skill2}]
 task-count: {N}
 gate-count: {N}
 outcome: {completed | partial | aborted}
@@ -202,11 +203,25 @@ should be re-evaluated.}
 | Deployment | {outcome or "Skipped ({reason})"} |
 | Documentation | {outcome or "Skipped ({reason})"} |
 
-## External Skills
+## Session Resources
+
+<details>
+<summary>Session resources ({N} skills)</summary>
+
+### External Skills
 
 | Skill | Classification | Recommendation | Tasks Used |
 |-------|---------------|----------------|------------|
 | {skill-name} | {LEAF/ORCHESTRATION} | {how it was used} | {task numbers} |
+
+### Skills Invoked
+
+- `/nefario` -- orchestration workflow
+- `/{skill-name}` -- {brief description} ({task numbers or context})
+
+Context compaction: {N} events
+
+</details>
 
 ## Working Files
 
@@ -264,6 +279,7 @@ Companion directory: [{YYYY-MM-DD}-{HHMMSS}-{slug}/](./{YYYY-MM-DD}-{HHMMSS}-{sl
 | `source-issue` | conditional | GitHub issue number. INCLUDE WHEN input was a GitHub issue. OMIT WHEN no issue. |
 | `mode` | always | `full` (all phases), `plan` (planning only), or `advisory` (recommendation only) |
 | `agents-involved` | always | Array of agent names that participated |
+| `skills-used` | conditional | Array of skill names invoked during session (beyond `/nefario`). INCLUDE WHEN 1+ additional skills used. OMIT WHEN only `/nefario` was invoked. |
 | `task-count` | always | Number of execution tasks |
 | `gate-count` | always | Number of approval gates presented |
 | `outcome` | always | `completed`, `partial`, or `aborted` |
@@ -276,7 +292,9 @@ Companion directory: [{YYYY-MM-DD}-{HHMMSS}-{slug}/](./{YYYY-MM-DD}-{HHMMSS}-{sl
 | Execution | `mode` != `advisory` | `mode` = `advisory` |
 | Verification | `mode` != `advisory` | `mode` = `advisory` |
 | Decisions | `gate-count` > 0 | `gate-count` = 0 |
-| External Skills | Meta-plan discovered 1+ external skills | No external skills discovered |
+| Session Resources | Always (section is structurally present in all reports) | Never omitted entirely |
+| Session Resources: External Skills subsection | Meta-plan discovered 1+ external skills | No external skills discovered |
+| Session Resources: Skills Invoked subsection | Always included | Never omitted |
 | Test Plan | Execution produced test files or test strategy decisions were made | No tests involved or `mode` = `advisory` |
 | Post-Nefario Updates | NEVER in initial report. Appending updates to an existing report after subsequent commits land on the same branch. | Always omit in initial report generation. |
 | Agent Contributions: Architecture Review subsection | Phase 3.5 ran | `mode` = `advisory` or Phase 3.5 skipped |
@@ -288,6 +306,7 @@ Companion directory: [{YYYY-MM-DD}-{HHMMSS}-{slug}/](./{YYYY-MM-DD}-{HHMMSS}-{sl
 |---------|------------------------|----------------|
 | Agent Contributions | yes | |
 | Working Files | yes | |
+| Session Resources | yes | |
 | Original Prompt | only when >= 20 lines | when < 20 lines (use blockquote) |
 | All other sections | | yes |
 
@@ -321,6 +340,12 @@ rendering compatibility.
   file path.
 - **Verification**: Even if all phases were skipped, include the table with
   skipped annotations.
+- **Session Resources**: Always collapsed. Summary tag includes skill count
+  (e.g., "Session resources (2 skills)"). Skills Invoked list always includes
+  `/nefario` as first entry. Include a compaction signal line: "Context
+  compaction: {N} events" (0 if no compaction occurred). If the entire section
+  would contain only `/nefario` in Skills Invoked and no other data, the
+  section still appears (collapsed) for structural consistency.
 
 ### Working Files
 
@@ -395,7 +420,8 @@ When generating a report:
 11. Write Execution (Tasks table + Files Changed table + Approval Gates table with per-gate H4 briefs)
 12. Write Decisions (if gate-count > 0; gate briefs with full rationale)
 13. Write Verification table
-14. Write External Skills (if any discovered)
+14. Write Session Resources (collapsed; External Skills subsection if any discovered;
+    Skills Invoked list always; compaction signal line always)
 15. Write Working Files (collapsible, relative links to companion directory; or "None")
 16. Write Test Plan (if tests were produced or modified)
 17. Do NOT write Post-Nefario Updates in initial report

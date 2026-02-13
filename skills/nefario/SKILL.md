@@ -1225,7 +1225,7 @@ Print the `/compact` command for the user to copy and run:
 
     Copy and run:
 
-        /compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, inline agent summaries, gate decision briefs, task list with dependencies, approval gates, team name, branch name, $summary, scratch directory path. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."
+        /compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, inline agent summaries, gate decision briefs, task list with dependencies, approval gates, team name, branch name, $summary, scratch directory path, skills-invoked. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."
 
     Type `continue` when ready to resume.
 
@@ -2017,6 +2017,17 @@ Track data at phase boundaries:
 **At Wrap-up**:
 - Outstanding items
 - Approximate total duration
+- `skills-invoked`: list of skills invoked during the session. Always includes
+  `/nefario`. Add any other skills the session invoked (e.g., `/despicable-lab`,
+  `/despicable-prompter`). Scan conversation context for skill invocations
+  (look for Skill tool calls). For each: skill name and brief usage context.
+  This data populates the Skills Invoked subsection in the report body.
+  When writing the `skills-used` frontmatter field, include only skills beyond
+  `/nefario` (which is implicit for all nefario reports). If only `/nefario`
+  was invoked, omit the `skills-used` frontmatter field entirely.
+- `compaction-events`: number of context compaction events during the session.
+  Count how many times `/compact` was run or auto-compaction triggered.
+  This tells the report reader how much to trust the report's completeness.
 
 **Fallback for compacted summaries**: If inline summaries or gate decision
 briefs were lost to compaction, read scratch files from
@@ -2029,8 +2040,8 @@ the report.
 The canonical report template is defined in
 `docs/history/nefario-reports/TEMPLATE.md`. Read and follow this template
 when generating execution reports. The template defines:
-- v3 YAML frontmatter schema (10-11 fields)
-- Canonical section order (12 top-level H2 sections)
+- v3 YAML frontmatter schema (10-12 fields)
+- Canonical section order (13 top-level H2 sections)
 - Conditional inclusion rules (INCLUDE WHEN / OMIT WHEN)
 - Collapsibility annotations
 - PR body generation: report body minus YAML frontmatter = PR body
@@ -2090,8 +2101,13 @@ skip it, do not defer it, do not stop before it is written.
 6. **Write execution report** to `<REPORT_DIR>/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`
    — use the HHMMSS captured in step 2
    — follow the canonical template defined in `docs/history/nefario-reports/TEMPLATE.md`
-   — include an External Skills section if any were discovered (name, classification,
-     recommendation, and which execution tasks used them). Omit if none discovered.
+   — the External Skills data (if any were discovered) is now a subsection within
+     Session Resources, not a standalone section. Include the External Skills
+     subsection within Session Resources when skills were discovered.
+   — include a Session Resources section (collapsed). Always include Skills
+     Invoked list (from skills-invoked). Include External Skills subsection
+     if any were discovered. Include compaction signal line (from
+     compaction-events).
    — include a Verification section with Phase 5-8 outcomes
    — include a Working Files section linking to the companion directory
 7. Commit the report and companion directory together (auto-commit, no prompt needed; skip if no git repo)
