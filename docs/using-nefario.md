@@ -216,6 +216,13 @@ If the skill's default command changes in the future, the SKILL.md at `.claude/s
 
 </details>
 
+<details>
+<summary>Upgrading from the old status line</summary>
+
+If you set up the status line before the `SessionStart` hook was introduced, your `~/.claude/settings.json` may still contain a `echo "$sid" > /tmp/claude-session-id` fragment. This is harmless (it writes a file nothing reads), but you can clean it up by re-running `/despicable-statusline` from the despicable-agents repository. The skill detects the old command and replaces it with the updated version.
+
+</details>
+
 ---
 
 For the technical architecture behind the orchestration process, see [Orchestration Architecture](orchestration.md).
