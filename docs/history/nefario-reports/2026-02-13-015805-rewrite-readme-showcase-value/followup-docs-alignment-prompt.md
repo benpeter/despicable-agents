@@ -2,21 +2,24 @@ Align docs/ files with rewritten README
 
 **Outcome**: All documentation files are consistent with the rewritten README.md. No stale reviewer counts, no orphaned references, no terminology drift.
 
-**Context**: The README was rewritten in PR nefario/rewrite-readme-showcase-value. A Phase 8 audit identified inconsistencies in docs/ files that were out of scope for the README rewrite. This task addresses those findings.
+**Context**: The README was rewritten in [PR #58](https://github.com/benpeter/despicable-agents/pull/58). A Phase 8 audit identified inconsistencies in docs/ files that were out of scope for the README rewrite. This task addresses those findings.
+
+**Audit report**: [phase8-software-docs.md](https://github.com/benpeter/despicable-agents/blob/nefario/rewrite-readme-showcase-value/docs/history/nefario-reports/2026-02-13-015805-rewrite-readme-showcase-value/phase8-software-docs.md)
+**Full nefario report**: [2026-02-13-015805-rewrite-readme-showcase-value.md](https://github.com/benpeter/despicable-agents/blob/nefario/rewrite-readme-showcase-value/docs/history/nefario-reports/2026-02-13-015805-rewrite-readme-showcase-value.md)
 
 **Success criteria**:
-- All four MUST findings in decisions.md are resolved
+- All four MUST findings in [decisions.md](https://github.com/benpeter/despicable-agents/blob/nefario/rewrite-readme-showcase-value/docs/decisions.md) are resolved
 - Both SHOULD findings are evaluated and addressed if warranted
 - No new inconsistencies introduced
 - ADR immutability respected (historical decisions get addendum notes, not rewrites)
 
 **Scope**:
-- In: docs/decisions.md, docs/orchestration.md, docs/architecture.md
+- In: [docs/decisions.md](https://github.com/benpeter/despicable-agents/blob/nefario/rewrite-readme-showcase-value/docs/decisions.md), [docs/orchestration.md](https://github.com/benpeter/despicable-agents/blob/nefario/rewrite-readme-showcase-value/docs/orchestration.md), [docs/architecture.md](https://github.com/benpeter/despicable-agents/blob/nefario/rewrite-readme-showcase-value/docs/architecture.md)
 - Out: README.md (already done), the-plan.md, AGENT.md files, skills/
 
 **Findings to address**:
 
-### MUST Fix (all in decisions.md)
+### MUST Fix (all in [decisions.md](https://github.com/benpeter/despicable-agents/blob/nefario/rewrite-readme-showcase-value/docs/decisions.md))
 
 1. **Decision 10 (line ~128)**: States "Six ALWAYS reviewers (security-minion, test-minion, ux-strategy-minion, software-docs-minion, lucy, margo)". ux-strategy-minion is now discretionary, not ALWAYS. Add an addendum note cross-referencing the rework decision.
 
@@ -28,9 +31,9 @@ Align docs/ files with rewritten README
 
 ### SHOULD Fix
 
-5. **"Six cross-cutting dimensions" (orchestration.md lines 20, 44, 334; architecture.md line 113)**: Technically correct (the checklist HAS six dimensions, distinct from five reviewers). But the word "six" near reviewer discussions causes confusion. Consider adding a parenthetical clarification: "six cross-cutting dimensions (distinct from the five mandatory reviewers)" in at least one prominent location.
+5. **"Six cross-cutting dimensions" ([orchestration.md](https://github.com/benpeter/despicable-agents/blob/nefario/rewrite-readme-showcase-value/docs/orchestration.md) lines 20, 44, 334; [architecture.md](https://github.com/benpeter/despicable-agents/blob/nefario/rewrite-readme-showcase-value/docs/architecture.md) line 113)**: Technically correct (the checklist HAS six dimensions, distinct from five reviewers). But the word "six" near reviewer discussions causes confusion. Consider adding a parenthetical clarification: "six cross-cutting dimensions (distinct from the five mandatory reviewers)" in at least one prominent location.
 
-6. **"Six domain groups" (orchestration.md line ~318)**: States "all six domain groups" but the agent roster shows seven groups. Verify correct count against the-plan.md and fix if it's a pre-existing error.
+6. **"Six domain groups" ([orchestration.md](https://github.com/benpeter/despicable-agents/blob/nefario/rewrite-readme-showcase-value/docs/orchestration.md) line ~318)**: States "all six domain groups" but the agent roster shows seven groups. Verify correct count against [the-plan.md](https://github.com/benpeter/despicable-agents/blob/nefario/rewrite-readme-showcase-value/the-plan.md) and fix if it's a pre-existing error.
 
 **Approach for ADR entries**: Decisions 10, 12, and 20 are historical records. Do NOT rewrite the original decision text. Instead, add an addendum at the end of each decision entry:
 
