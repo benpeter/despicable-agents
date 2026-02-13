@@ -793,6 +793,9 @@ The advisory synthesis output goes to the same scratch file path
 (`phase3-synthesis.md`) as a normal synthesis. The content differs
 (advisory report vs. delegation plan) but the file location is consistent.
 
+When `advisory-mode` is active, skip the standard post-synthesis steps below
+and proceed directly to Advisory Termination.
+
 Nefario will return a structured delegation plan. **After synthesis returns**:
 Write the full execution plan to `$SCRATCH_DIR/{slug}/phase3-synthesis.md`
 (if nefario did not already do so). Record a compact summary (task count, gate

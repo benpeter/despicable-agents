@@ -13,7 +13,7 @@ date: "{YYYY-MM-DD}"
 time: "{HH:MM:SS}"
 task: "{one-line task description}"
 source-issue: {N}
-mode: {full | plan}
+mode: {full | plan | advisory}
 agents-involved: [{agent1}, {agent2}, ...]
 task-count: {N}
 gate-count: {N}
