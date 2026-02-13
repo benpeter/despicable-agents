@@ -124,6 +124,35 @@ outcome: {completed | partial | aborted}
 
 </details>
 
+## Team Recommendation
+
+**{One-line recommendation.}**
+
+### Consensus
+
+| Position | Agents | Strength |
+|----------|--------|----------|
+| {position} | {agents} | {strength assessment} |
+
+### When to Revisit
+
+{Numbered list of concrete trigger conditions under which the recommendation
+should be re-evaluated.}
+
+### Strongest Arguments
+
+**For {adopted position}** (adopted):
+
+| Argument | Agent |
+|----------|-------|
+| {argument} | {agent} |
+
+**For {rejected position}** (not adopted, but preserved):
+
+| Argument | Agent |
+|----------|-------|
+| {argument} | {agent} |
+
 ## Execution
 
 ### Tasks
@@ -233,7 +262,7 @@ Companion directory: [{YYYY-MM-DD}-{HHMMSS}-{slug}/](./{YYYY-MM-DD}-{HHMMSS}-{sl
 | `time` | always | Local time of report generation, `HH:MM:SS` (24-hour) |
 | `task` | always | One-line task description |
 | `source-issue` | conditional | GitHub issue number. INCLUDE WHEN input was a GitHub issue. OMIT WHEN no issue. |
-| `mode` | always | `full` (all phases) or `plan` (planning only) |
+| `mode` | always | `full` (all phases), `plan` (planning only), or `advisory` (recommendation only) |
 | `agents-involved` | always | Array of agent names that participated |
 | `task-count` | always | Number of execution tasks |
 | `gate-count` | always | Number of approval gates presented |
@@ -243,10 +272,15 @@ Companion directory: [{YYYY-MM-DD}-{HHMMSS}-{slug}/](./{YYYY-MM-DD}-{HHMMSS}-{sl
 
 | Section | INCLUDE WHEN | OMIT WHEN |
 |---------|-------------|-----------|
+| Team Recommendation | `mode` = `advisory` | `mode` != `advisory` |
+| Execution | `mode` != `advisory` | `mode` = `advisory` |
+| Verification | `mode` != `advisory` | `mode` = `advisory` |
 | Decisions | `gate-count` > 0 | `gate-count` = 0 |
 | External Skills | Meta-plan discovered 1+ external skills | No external skills discovered |
-| Test Plan | Execution produced test files or test strategy decisions were made | No tests involved |
+| Test Plan | Execution produced test files or test strategy decisions were made | No tests involved or `mode` = `advisory` |
 | Post-Nefario Updates | NEVER in initial report. Appending updates to an existing report after subsequent commits land on the same branch. | Always omit in initial report generation. |
+| Agent Contributions: Architecture Review subsection | Phase 3.5 ran | `mode` = `advisory` or Phase 3.5 skipped |
+| Agent Contributions: Code Review subsection | Phase 5 ran | `mode` = `advisory` or Phase 5 skipped |
 
 ### Collapsibility Rules
 
@@ -268,6 +302,13 @@ rendering compatibility.
   - BLOCK = 3-4 lines: verdict + issue + resolution
 - **Phases section**: Narrative prose (1-2 paragraphs per phase), NOT tables.
   Include all phases that ran. For skipped phases: `Skipped ({reason}).`
+- **Advisory mode Phases**: Phases 1-3 get full narrative. Phases 3.5-8 each
+  get a single line: `Skipped (advisory-only orchestration).`
+- **Team Recommendation**: One-line recommendation in bold, followed by
+  Consensus table (always required). When to Revisit, Escalation Path, and
+  Strongest Arguments subsections are recommended but optional.
+- **Agent Contributions summary**: Use `({N} planning)` not
+  `({N} planning, {N} review)` when no review phases ran.
 - **Key Design Decisions**: Each decision as H4. Non-gate design decisions.
   For gate decisions, use the Decisions section instead.
 - **Conflict Resolutions**: Always present as H3 under Key Design Decisions.
@@ -331,6 +372,9 @@ For long-running orchestrations, write a partial report after Phase 3
 (synthesis). Include available data and mark sections as "In Progress".
 Overwrite with the complete report at wrap-up.
 
+For advisory-mode orchestrations (`mode: advisory`), the report is written once
+at Advisory Wrap-up, not incrementally. Phase 3 is the final phase.
+
 ## Report Writing Checklist
 
 When generating a report:
@@ -346,6 +390,8 @@ When generating a report:
 8. Write Key Design Decisions (H4 per decision, with Conflict Resolutions H3 subsection)
 9. Write Phases (narrative, 1-2 paragraphs per phase)
 10. Write Agent Contributions (collapsible, groups: Planning + Architecture Review + Code Review)
+10a. If `mode` = `advisory`: Write Team Recommendation (bold one-line recommendation, Consensus table, optional subsections: When to Revisit, Escalation Path, Strongest Arguments)
+10b. If `mode` = `advisory`: Skip steps 11-13, 16 (Execution, Decisions, Verification, Test Plan)
 11. Write Execution (Tasks table + Files Changed table + Approval Gates table with per-gate H4 briefs)
 12. Write Decisions (if gate-count > 0; gate briefs with full rationale)
 13. Write Verification table
