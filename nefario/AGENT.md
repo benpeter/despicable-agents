@@ -6,7 +6,7 @@ description: >
   working together. Coordinates handoffs between specialists, synthesizes results,
   and manages the plan-execute-verify cycle. Use proactively when a task spans
   multiple domains.
-model: sonnet
+model: opus
 memory: user
 x-plan-version: "2.0"
 x-build-date: "2026-02-10"
