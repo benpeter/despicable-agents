@@ -19,50 +19,10 @@ Tools required to install and use despicable-agents.
 |------|---------|
 | [GitHub CLI (`gh`)](https://cli.github.com/) | PR creation suggestions from commit checkpoints |
 
-## Install by Platform
+## Quick Setup
 
-### macOS
-
-macOS ships bash 3.2 (2007) due to GPLv3 licensing. The commit hooks require
-bash 4+. Install a current version via Homebrew:
-
-```bash
-brew install bash jq
-# Optional:
-brew install gh
-```
-
-The Homebrew bash installs to `/opt/homebrew/bin/bash` (Apple Silicon) or
-`/usr/local/bin/bash` (Intel). The hook scripts use `#!/usr/bin/env bash` which
-resolves to the first `bash` on `$PATH`. Ensure Homebrew's bin directory appears
-before `/bin` in your `$PATH` (Homebrew's installer does this by default).
-
-### Linux (Debian / Ubuntu)
-
-```bash
-sudo apt update && sudo apt install -y jq
-# Optional:
-sudo apt install -y gh
-```
-
-Bash 4+ and git are pre-installed on most Linux distributions.
-
-### Linux (Fedora / RHEL)
-
-```bash
-sudo dnf install -y jq
-# Optional:
-sudo dnf install -y gh
-```
-
-### Windows
-
-Not currently supported. See the project README [Platform Notes](../README.md#platform-notes) for WSL workaround.
-
-## Quick Setup via Claude Code
-
-Already have Claude Code? Paste the following into a Claude Code session and it
-will detect your platform, check what is missing, and install it:
+Paste the following into a Claude Code session and it will detect your platform,
+check what is missing, and install it:
 
 ```
 Check if these tools are installed and install or upgrade any that are

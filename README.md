@@ -10,7 +10,12 @@ Structured orchestration, domain specialists, and governance gates for [Claude C
 - **Phased orchestration** -- nine structured phases from meta-planning through parallel execution to post-execution verification (code review, test runs, docs updates). User approval gates at every phase transition so you stay in control.
 - **Research-backed domain experts** -- 27 agents built from domain research, each with strict boundaries so delegation is unambiguous. Security questions go to security-minion, not a generalist. OAuth goes to oauth-minion, not the API designer.
 - **Built-in governance and quality gates** -- five mandatory reviewers (security-minion, test-minion, ux-strategy-minion, lucy, margo) examine every plan before code runs. Post-execution code review and test execution verify the output.
-- **Goodies** -- execution reports committed to repo history. `/despicable-prompter` skill turns a rough idea or `#42` issue reference into a structured brief. Install once, available everywhere via symlinks. `/despicable-lab` for version-tracked agent maintenance.
+- **Goodies**
+  - Execution reports committed to repo history
+  - `/despicable-prompter` turns a rough idea or `#42` issue reference into a structured brief
+  - `/despicable-lab` for version-tracked agent maintenance
+  - Automatic [context management](docs/compaction-strategy.md) -- scratch files, compaction checkpoints, and context-aware gating keep long orchestrations on track
+  - Install once, available everywhere via symlinks
 
 ## Examples
 
@@ -59,7 +64,7 @@ Symlinks 27 agents and 2 skills (`/nefario`, `/despicable-prompter`) to `~/.clau
 
 Tested on macOS and Linux. Windows is not currently supported -- see [Platform Notes](#platform-notes).
 
-The install script needs only `git`. The commit workflow hooks additionally need **bash 4+** and **jq** -- see [Prerequisites](docs/prerequisites.md) for per-platform install commands, or paste the [quick setup prompt](docs/prerequisites.md#quick-setup-via-claude-code) into Claude Code.
+The install script needs only `git`. The commit workflow hooks additionally need **bash 4+** and **jq** -- see [Prerequisites](docs/prerequisites.md) for details, or paste the [quick setup prompt](docs/prerequisites.md#quick-setup) into Claude Code.
 
 ### Using on Other Projects
 
@@ -137,8 +142,6 @@ See [Agent Catalog](docs/agent-catalog.md) for per-agent details.
 
 - **Claude Code dependency.** Agents are AGENT.md files consumed by Claude Code's agent loading. They are not standalone tools.
 - **No subagent nesting.** Claude Code does not allow subagents to spawn other subagents. Only the main session dispatches to agents.
-- **Context window pressure.** Complex orchestrations with many specialists can approach context limits. The project uses temporary scratch files and compaction checkpoints to manage context, but very large plans may require manual intervention.
-- **AI-assisted prompt authoring.** The research is real and the architecture is deliberate, the prompt prose was generated with AI assistance and refined iteratively.
 
 ## Contributing
 
