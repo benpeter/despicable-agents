@@ -234,13 +234,11 @@ Orchestration messages use three visual weights:
 |--------|---------|-----|
 | **Decision** | `` `─── ···` `` border + `` `LABEL:` `` highlighted fields + structured content | Approval gates, escalations -- requires user action |
 | **Orientation** | `**--- ⚗️ Phase N: Name ---**` | Phase transitions -- glance and continue |
-| **Advisory** | `>` blockquote with bold label | Compaction checkpoints -- optional user action |
 | **Inline** | Plain text, no framing | CONDENSE lines, heartbeats, informational notes |
 
 Decision blocks are the heaviest: multi-line with structured fields. Orientation
-is a single bold line. Advisory uses blockquote indentation. Inline flows without
-interruption. This hierarchy maps to attention demands: the heavier the visual
-signal, the more attention needed.
+is a single bold line. Inline flows without interruption. This hierarchy maps to
+attention demands: the heavier the visual signal, the more attention needed.
 
 ## Path Resolution
 
@@ -815,19 +813,37 @@ count, execution order) in session context. **Proceed to Phase 3.5
 
 ### Compaction Checkpoint
 
-After writing the synthesis to the scratch file, present a compaction prompt:
+After writing the synthesis to the scratch file, present a compaction gate
+using AskUserQuestion:
 
-> **COMPACT** -- Phase 3 complete. Specialist details are now in the synthesis.
->
-> Run: `/compact focus="Preserve: current phase (3.5 review next), synthesized execution plan, inline agent summaries, task list, approval gates, team name, branch name, $summary, $summary_full, scratch directory path. Discard: individual specialist contributions from Phase 2."`
->
-> After compaction, type `continue` to resume at Phase 3.5 (Architecture Review).
-> Skipping is fine if context is short. Risk: auto-compaction in later phases may lose orchestration state.
+- `header`: "P3 Compact"
+- `question`: "Phase 3 complete. Specialist details are now in the synthesis. Compact context before continuing?\n\nRun: $summary"
+- `options` (2, `multiSelect: false`):
+  1. label: "Skip", description: "Continue without compaction. Auto-compaction may interrupt later phases." (recommended)
+  2. label: "Compact", description: "Pause to compact context before Phase 3.5."
 
-If the user runs `/compact`, wait for them to say "continue" then proceed.
-If the user types anything else (or says "skip"/"continue"), print:
-`Continuing without compaction. Auto-compaction may interrupt later phases.`
-Then proceed to Phase 3.5. Do NOT re-prompt at subsequent boundaries.
+**"Skip" response handling**:
+Print: `Continuing without compaction.`
+Proceed to Phase 3.5.
+
+**"Compact" response handling**:
+Print the `/compact` command for the user to copy and run:
+
+    Copy and run:
+
+        /compact focus="Preserve: current phase (3.5 review next), synthesized execution plan, inline agent summaries, task list, approval gates, team name, branch name, $summary, scratch directory path. Discard: individual specialist contributions from Phase 2."
+
+    Type `continue` when ready to resume.
+
+<!-- Focus strings are printed verbatim in terminal output.
+     Avoid backticks, single quotes, and backslashes in focus string values. -->
+
+The `$summary` and scratch directory path references in the focus string must be
+interpolated to their actual resolved values before display. Do not show template
+variables in user-facing output (per the Path display rule).
+
+Wait for the user to say "continue" (or synonyms: "go", "next", "ok", "resume",
+"proceed"). Then proceed to Phase 3.5. Do NOT re-prompt at subsequent boundaries.
 
 ### Advisory Termination (when `advisory-mode` is active)
 
@@ -1198,17 +1214,37 @@ Follow these steps exactly. **Global cap: 2 revision rounds total.**
 
 ### Compaction Checkpoint
 
-After processing all review verdicts, present a compaction prompt:
+After processing all review verdicts, present a compaction gate using
+AskUserQuestion:
 
-> **COMPACT** -- Phase 3.5 complete. Review verdicts are folded into the plan.
->
-> Run: `/compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, inline agent summaries, gate decision briefs, task list with dependencies, approval gates, team name, branch name, $summary, $summary_full, scratch directory path. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."`
->
-> After compaction, type `continue` to resume at Phase 4 (Execution).
-> Skipping is fine if context is short. Risk: auto-compaction during execution may lose task/agent tracking.
+- `header`: "P3.5 Compact"
+- `question`: "Phase 3.5 complete. Review verdicts are folded into the plan. Compact context before execution?\n\nRun: $summary"
+- `options` (2, `multiSelect: false`):
+  1. label: "Skip", description: "Continue without compaction. Auto-compaction may interrupt execution." (recommended)
+  2. label: "Compact", description: "Pause to compact context before Phase 4."
 
-Same response handling: if user runs `/compact`, wait for "continue". If
-anything else, print the continuation message and proceed. Do NOT re-prompt.
+**"Skip" response handling**:
+Print: `Continuing without compaction.`
+Proceed to the Execution Plan Approval Gate.
+
+**"Compact" response handling**:
+Print the `/compact` command for the user to copy and run:
+
+    Copy and run:
+
+        /compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, inline agent summaries, gate decision briefs, task list with dependencies, approval gates, team name, branch name, $summary, scratch directory path. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."
+
+    Type `continue` when ready to resume.
+
+<!-- Focus strings are printed verbatim in terminal output.
+     Avoid backticks, single quotes, and backslashes in focus string values. -->
+
+The `$summary` and scratch directory path references in the focus string must be
+interpolated to their actual resolved values before display. Do not show template
+variables in user-facing output (per the Path display rule).
+
+Wait for the user to say "continue" (or synonyms: "go", "next", "ok", "resume",
+"proceed"). Then proceed to the Execution Plan Approval Gate.
 
 ## Execution Plan Approval Gate
 
