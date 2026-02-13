@@ -224,7 +224,9 @@ the orchestration and must be included in every CONDENSE checkpoint.
 **Path display rule**: All file references shown to the user must use the
 resolved absolute path. Never abbreviate, elide, or use template variables
 in user-facing output. Users copy-paste these paths into `cat`, `less`, or
-their editor -- shortened or templated paths break that workflow.
+their editor -- shortened or templated paths break that workflow. Markdown
+links with role-label display text (e.g., `[meta-plan](full-path)`) are
+permitted; the full resolved path must be the link target.
 
 ### Scratch Directory (secure creation, mandatory)
 
@@ -439,18 +441,20 @@ applies only in META-PLAN mode (the default).
 **Presentation format** (8-12 lines, compact):
 
 ```
-⚗️ TEAM: <1-sentence task summary>
-Specialists: N selected | N considered, not selected
+`────────────────────────────────────────────────────`
+⚗️ `TEAM:` <1-sentence task summary>
+`Specialists:` N selected | N considered, not selected
 
-  SELECTED:
+  `SELECTED:`
     devx-minion          Workflow integration, SKILL.md structure
     ux-strategy-minion   Approval gate interaction design
     lucy                 Governance alignment for new gate
 
-  ALSO AVAILABLE (not selected):
+  `ALSO AVAILABLE (not selected):`
     ai-modeling-minion, margo, software-docs-minion, security-minion, ...
 
-Details: $SCRATCH_DIR/{slug}/phase1-metaplan.md  (planning questions, cross-cutting checklist)
+`Details:` [meta-plan]($SCRATCH_DIR/{slug}/phase1-metaplan.md)
+`────────────────────────────────────────────────────`
 ```
 
 Format rules:
@@ -780,17 +784,19 @@ skip the gate.
 **Presentation format** (target 6-10 lines):
 
 ```
-⚗️ REVIEWERS: <1-sentence plan summary>
-Mandatory: security, test, ux-strategy, lucy, margo (always review)
+`────────────────────────────────────────────────────`
+⚗️ `REVIEWERS:` <1-sentence plan summary>
+`Mandatory:` security, test, ux-strategy, lucy, margo (always review)
 
-  DISCRETIONARY (nefario recommends):
+  `DISCRETIONARY (nefario recommends):`
     <agent-name>       <rationale, max 60 chars, reference tasks>
     <agent-name>       <rationale, max 60 chars, reference tasks>
 
-  NOT SELECTED from pool:
+  `NOT SELECTED from pool:`
     <remaining pool members, comma-separated>
 
-Details: $SCRATCH_DIR/{slug}/phase3-synthesis.md  (task prompts, agent assignments, dependencies)
+`Details:` [plan]($SCRATCH_DIR/{slug}/phase3-synthesis.md)
+`────────────────────────────────────────────────────`
 ```
 
 Format rules:
@@ -1036,15 +1042,16 @@ what they asked for; they need to spot surprises and decide whether to proceed.
 
 **Instant orientation** (one line + stats):
 ```
-⚗️ EXECUTION PLAN: <1-sentence goal summary>
-REQUEST: "<truncated original prompt, max 80 chars>..."
-Tasks: N | Gates: N | Advisories incorporated: N
-Working dir: $SCRATCH_DIR/{slug}/
+`────────────────────────────────────────────────────`
+⚗️ `EXECUTION PLAN:` <1-sentence goal summary>
+`REQUEST:` "<truncated original prompt, max 80 chars>..."
+`Tasks:` N | `Gates:` N | `Advisories incorporated:` N
+`Working dir:` [{slug}/]($SCRATCH_DIR/{slug}/)
 ```
 
 **Task list** (compact numbered list, 2-4 lines per task):
 ```
-TASKS:
+`TASKS:`
   1. <Task title>                                    [agent-name, model]
      Produces: <deliverable summary>
      Depends on: none
@@ -1068,7 +1075,7 @@ the DOMAIN (testing, security, usability, etc.), not the agent name.
 
 Format:
 ```
-ADVISORIES:
+`ADVISORIES:`
   [<domain>] Task N: <task title>
     CHANGE: <one sentence describing the concrete change to the task>
     WHY: <one sentence explaining the concern that motivated it>
@@ -1082,8 +1089,8 @@ Advisory principles:
 - Two-field format (CHANGE, WHY) makes each advisory self-contained
 - Maximum 3 lines per advisory. If more complex, add:
   ```
-  Details: $SCRATCH_DIR/{slug}/phase3.5-{reviewer}.md  (reviewer analysis and recommendations)
-  Prompt: $SCRATCH_DIR/{slug}/phase3.5-{reviewer}-prompt.md
+  `Details:` [verdict]($SCRATCH_DIR/{slug}/phase3.5-{reviewer}.md)
+  `Prompt:` [prompt]($SCRATCH_DIR/{slug}/phase3.5-{reviewer}-prompt.md)
   ```
   Include the `Prompt:` reference only when the advisory already includes a
   `Details:` line. For simple two-line advisories (CHANGE + WHY), omit the
@@ -1095,22 +1102,23 @@ Advisory principles:
 
 **Risks and conflict resolutions** (if any exist):
 ```
-RISKS:
+`RISKS:`
   - <risk description> — Mitigation: <what the plan does about it>
 
-CONFLICTS RESOLVED:
+`CONFLICTS RESOLVED:`
   - <what was contested>: Resolved in favor of <approach> because <rationale>
 ```
 Omit if no conflicts. If no risks, note: "No risks identified by specialists."
 
 **Review summary** (one line):
 ```
-REVIEW: N APPROVE, N ADVISE, N BLOCK
+`REVIEW:` N APPROVE, N ADVISE, N BLOCK
 ```
 
 **Full plan reference**:
 ```
-Details: $SCRATCH_DIR/{slug}/phase3-synthesis.md  (task prompts, agent assignments, dependencies)
+`Details:` [plan]($SCRATCH_DIR/{slug}/phase3-synthesis.md)
+`────────────────────────────────────────────────────`
 ```
 
 **Line budget guidance**: Target 25-40 lines for the complete gate output
@@ -1265,6 +1273,7 @@ A batch contains all tasks that can run before the next gate.
 
    `IMPACT:` <what approving/rejecting means for the project>
    `Confidence:` HIGH | MEDIUM | LOW
+   `Details:` [task-prompt]($SCRATCH_DIR/{slug}/phase4-{agent}-prompt.md)
    `────────────────────────────────────────────────────`
    ```
 
@@ -1674,12 +1683,14 @@ not part of the default flow.
     file count, and line deltas. Print the change summary:
 
     ```
-    PR: Create PR for nefario/<slug>?
-    Branch: nefario/<slug>
-    Commits: N | Files changed: N | Lines: +N/-M
+    `────────────────────────────────────────────────────`
+    ⚗️ `PR:` Create PR for nefario/<slug>?
+    `Branch:` nefario/<slug>
+    `Commits:` N | `Files changed:` N | `Lines:` +N/-M
       <file path 1> (+N/-M)
       <file path 2> (+N/-M)
       ... (max 5 files, then "and N more")
+    `────────────────────────────────────────────────────`
     ```
 
     If verification had accepted-as-is findings, append:
