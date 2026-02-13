@@ -11,7 +11,7 @@ Structured orchestration, domain specialists, and governance gates for [Claude C
 
 - **Phased orchestration** -- nine structured phases from meta-planning through parallel execution to post-execution verification (code review, test runs, docs updates). User approval gates at every phase transition so you stay in control.
 - **Research-backed domain experts** -- 27 agents built from domain research, each with strict boundaries so delegation is unambiguous. Security questions go to security-minion, not a generalist. OAuth goes to oauth-minion, not the API designer.
-- **Built-in governance and quality gates** -- five mandatory reviewers (security-minion, test-minion, software-docs-minion, lucy, margo) examine every plan before code runs. Post-execution code review and test execution verify the output.
+- **Built-in governance and quality gates** -- five mandatory reviewers (security-minion, test-minion, ux-strategy-minion, lucy, margo) examine every plan before code runs. Post-execution code review and test execution verify the output.
 - **Goodies** -- execution reports committed to repo history. `/despicable-prompter` skill turns a rough idea or `#42` issue reference into a structured brief. Install once, available everywhere via symlinks. `/despicable-lab` for version-tracked agent maintenance.
 
 ## Examples
@@ -61,7 +61,7 @@ Nefario automatically discovers and delegates to project-local skills (`.skills/
 
 ## How It Works
 
-You describe a task. Nefario (orchestrator) figures out which specialists to consult, gathers their domain input in parallel, and synthesizes an execution plan. Five mandatory reviewers -- security-minion, test-minion, software-docs-minion, Lucy (intent alignment), and Margo (simplicity) -- examine the plan before any code runs. You approve the plan. Specialists execute in parallel where possible, with approval gates at high-impact decisions. After execution, code review and test runs verify the output. You get a wrap-up summary and an execution report committed to the repo.
+You describe a task. Nefario (orchestrator) figures out which specialists to consult, gathers their domain input in parallel, and synthesizes an execution plan. Five mandatory reviewers -- security-minion, test-minion, ux-strategy-minion, Lucy (intent alignment), and Margo (simplicity) -- examine the plan before any code runs. You approve the plan. Specialists execute in parallel where possible, with approval gates at high-impact decisions. After execution, code review and test runs verify the output. You get a wrap-up summary and an execution report committed to the repo.
 
 The four named roles:
 
