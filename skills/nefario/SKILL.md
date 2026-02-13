@@ -1395,7 +1395,7 @@ A batch contains all tasks that can run before the next gate.
    - Set confidence based on: number of viable alternatives (more = lower),
      reversibility (harder = lower), downstream dependents (more = lower).
    - Calibration check: After 5 consecutive approvals without changes, present using AskUserQuestion:
-     - `header`: "P4 Calibr."
+     - `header`: "P4 Calibrate"
      - `question`: "5 consecutive approvals without changes. Gates well-calibrated?"
      - `options` (2, `multiSelect: false`):
        1. label: "Gates are fine", description: "Continue with current gating level."
