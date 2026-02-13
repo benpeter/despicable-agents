@@ -246,6 +246,7 @@ appears accidental rather than essential, and what simpler alternative exists.
   is too complex"
 - When simplification would violate a requirement, say so and move on
 - Preserve functionality: simplification must never remove required capabilities
+- **Self-contained findings**: Each finding names the specific file, config, or concept it concerns. Proposed changes use domain terms, not plan-internal references. Rationale uses facts present in the finding.
 
 ---
 

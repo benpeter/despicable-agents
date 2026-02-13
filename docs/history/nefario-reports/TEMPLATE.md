@@ -113,7 +113,11 @@ outcome: {completed | partial | aborted}
 
 **{agent-name}**: APPROVE. No concerns.
 
-**{agent-name}**: ADVISE. {Concern and recommendation.}
+**{agent-name}**: ADVISE. SCOPE: {artifact or concept}. CHANGE: {what was proposed}. WHY: {rationale}.
+
+**{agent-name}**: ADVISE.
+- SCOPE: {artifact 1}. CHANGE: {proposal}. WHY: {reason}.
+- SCOPE: {artifact 2}. CHANGE: {proposal}. WHY: {reason}.
 
 **{agent-name}**: BLOCK. {Issue identified.} Resolved: {resolution.}
 
@@ -121,7 +125,7 @@ outcome: {completed | partial | aborted}
 
 **{agent-name}**: APPROVE. {Brief note.}
 
-**{agent-name}**: ADVISE. {Finding and resolution.}
+**{agent-name}**: ADVISE. SCOPE: {artifact or concept}. CHANGE: {what was proposed}. WHY: {rationale}.
 
 </details>
 
@@ -317,7 +321,7 @@ rendering compatibility.
 
 - **Review verdict proportional detail**:
   - APPROVE = 1 line: `**agent**: APPROVE. No concerns.`
-  - ADVISE = 2-3 lines: verdict + concern + recommendation
+  - ADVISE = 1 line (single) or bulleted list (multiple): SCOPE/CHANGE/WHY fields
   - BLOCK = 3-4 lines: verdict + issue + resolution
 - **Phases section**: Narrative prose (1-2 paragraphs per phase), NOT tables.
   Include all phases that ran. For skipped phases: `Skipped ({reason}).`

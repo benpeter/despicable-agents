@@ -1110,13 +1110,54 @@ Task:
     ## Your Review Focus
     <domain-specific: security gaps / test coverage / observability gaps / etc.>
 
+    ## Original User Request
+    Read the original user request from: $SCRATCH_DIR/{slug}/prompt.md
+
     ## Instructions
     Return exactly one verdict:
+
     - APPROVE: No concerns from your domain.
-    - ADVISE: <list specific non-blocking warnings>
-    - BLOCK: <describe the blocking issue and what must change>
+
+    - ADVISE: Return warnings using this format for each concern:
+      - [your-domain]: <one-sentence description>
+        SCOPE: <file, component, or concept affected>
+        CHANGE: <what should change, in domain terms>
+        WHY: <risk or rationale, self-contained>
+        TASK: <task number affected>
+
+      Example (good -- self-contained):
+      - [security]: Open redirect risk in callback handler
+        SCOPE: OAuth callback endpoint in auth/callback.ts
+        CHANGE: Validate redirect_uri against allowlist before issuing redirect
+        WHY: Unvalidated redirect_uri allows attackers to redirect users to malicious sites after authentication
+        TASK: Task 3
+
+      Example (bad -- references invisible context):
+      - [security]: Issue with the approach
+        SCOPE: The callback handler
+        CHANGE: Add the validation we discussed
+        WHY: See the security analysis above
+        TASK: Task 3
+
+      Example (good -- BLOCK, self-contained):
+      - SCOPE: JWT token validation in middleware/auth.ts
+        ISSUE: Token signature verification uses HS256 with a hardcoded secret
+        RISK: Any attacker who discovers the secret can forge valid tokens for any user
+        SUGGESTION: Use RS256 with rotating key pairs from a secrets manager
+
+      Each advisory must be understandable by a reader who has not seen the plan
+      or this review session. SCOPE names the artifact, not a plan step number.
+      CHANGE and WHY use domain terms, not plan-internal references.
+
+    - BLOCK: Return using this format:
+      SCOPE: <file, component, or concept affected>
+      ISSUE: <description of the blocking concern>
+      RISK: <what happens if this is not addressed>
+      SUGGESTION: <how the plan could be revised>
 
     Be concise. Only flag issues within your domain expertise.
+
+    Write your verdict to: $SCRATCH_DIR/{slug}/phase3.5-{your-name}.md
 ```
 
 **ux-strategy-minion prompt** (replaces the generic reviewer prompt):
@@ -1144,11 +1185,50 @@ Task:
     4. User jobs-to-be-done: Does each user-facing task serve a real user need,
        or is it feature creep?
 
+    ## Original User Request
+    Read the original user request from: $SCRATCH_DIR/{slug}/prompt.md
+
     ## Instructions
     Return exactly one verdict:
+
     - APPROVE: No concerns from your domain.
-    - ADVISE: <list specific non-blocking warnings>
-    - BLOCK: <describe the blocking issue and what must change>
+
+    - ADVISE: Return warnings using this format for each concern:
+      - [your-domain]: <one-sentence description>
+        SCOPE: <file, component, or concept affected>
+        CHANGE: <what should change, in domain terms>
+        WHY: <risk or rationale, self-contained>
+        TASK: <task number affected>
+
+      Example (good -- self-contained):
+      - [security]: Open redirect risk in callback handler
+        SCOPE: OAuth callback endpoint in auth/callback.ts
+        CHANGE: Validate redirect_uri against allowlist before issuing redirect
+        WHY: Unvalidated redirect_uri allows attackers to redirect users to malicious sites after authentication
+        TASK: Task 3
+
+      Example (bad -- references invisible context):
+      - [security]: Issue with the approach
+        SCOPE: The callback handler
+        CHANGE: Add the validation we discussed
+        WHY: See the security analysis above
+        TASK: Task 3
+
+      Example (good -- BLOCK, self-contained):
+      - SCOPE: JWT token validation in middleware/auth.ts
+        ISSUE: Token signature verification uses HS256 with a hardcoded secret
+        RISK: Any attacker who discovers the secret can forge valid tokens for any user
+        SUGGESTION: Use RS256 with rotating key pairs from a secrets manager
+
+      Each advisory must be understandable by a reader who has not seen the plan
+      or this review session. SCOPE names the artifact, not a plan step number.
+      CHANGE and WHY use domain terms, not plan-internal references.
+
+    - BLOCK: Return using this format:
+      SCOPE: <file, component, or concept affected>
+      ISSUE: <description of the blocking concern>
+      RISK: <what happens if this is not addressed>
+      SUGGESTION: <how the plan could be revised>
 
     Write your verdict to: $SCRATCH_DIR/{slug}/phase3.5-ux-strategy-minion.md
 
@@ -1318,17 +1398,20 @@ the DOMAIN (testing, security, usability, etc.), not the agent name.
 Format:
 ```
 `ADVISORIES:`
-  [<domain>] Task N: <task title>
-    CHANGE: <one sentence describing the concrete change to the task>
-    WHY: <one sentence explaining the concern that motivated it>
+  [<domain>] <artifact or concept> (Task N)
+    CHANGE: <one sentence, in domain terms>
+    WHY: <one sentence, self-contained rationale>
 
-  [<domain>] Task M: <task title>
+  [<domain>] <artifact or concept> (Task M)
     CHANGE: ...
     WHY: ...
 ```
 
 Advisory principles:
-- Two-field format (CHANGE, WHY) makes each advisory self-contained
+- Self-containment test: a reader seeing only this advisory block can answer
+  "what part of the system does this affect, what is suggested, and why"
+- CHANGE and WHY must use domain terms -- no plan-internal references ("step 2",
+  "the approach", "as discussed in the review")
 - Maximum 3 lines per advisory. If more complex, add:
   ```
   `Details:` [verdict]($SCRATCH_DIR/{slug}/phase3.5-{reviewer}.md)
@@ -1704,6 +1787,10 @@ Task:
     - [BLOCK|ADVISE|NIT] <file>:<line-range> -- <description>
       AGENT: <producing-agent>
       FIX: <specific fix>
+
+    Each finding must be self-contained. Do not reference other findings by
+    number, plan steps, or context not present in this finding. The <description>
+    names the specific issue in domain terms.
 
     Write findings to: $SCRATCH_DIR/{slug}/phase5-{your-name}.md
 ```
