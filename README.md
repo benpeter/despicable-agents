@@ -5,8 +5,6 @@
 
 Structured orchestration, domain specialists, and governance gates for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Built on [Agent Teams](https://code.claude.com/docs/en/agent-teams). 27 agents, 2 skills, available in every session after a one-time install.
 
-[Web Resource Ledger](https://github.com/benpeter/web-resource-ledger) is a full project evolving under this framework.
-
 ## What You Get
 
 - **Phased orchestration** -- nine structured phases from meta-planning through parallel execution to post-execution verification (code review, test runs, docs updates). User approval gates at every phase transition so you stay in control.
