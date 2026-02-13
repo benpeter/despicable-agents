@@ -12,6 +12,8 @@ This document covers the architecture of the nine-phase orchestration process (S
 
 The orchestration system implements a nine-phase process that separates planning intelligence from execution capability, then verifies quality through automated post-execution phases. Nefario provides the planning; the main Claude Code session provides the spawning.
 
+When `--advisory` is passed, only phases 1-3 run. The synthesis produces a team recommendation instead of an execution plan. No branch is created, no code is changed, no PR is opened. The advisory report is committed to the current branch and follows the same report template with `mode: advisory` frontmatter. See `skills/nefario/SKILL.md` (Advisory Termination and Advisory Wrap-up sections) for the full specification.
+
 ### Phase 1: Meta-Plan
 
 The main session spawns nefario with `MODE: META-PLAN`. Nefario reads the codebase, analyzes the task against the delegation table, and returns a structured meta-plan identifying:

@@ -36,6 +36,10 @@ Single-domain work goes to the specialist. Multi-domain work goes to `/nefario`.
 /nefario #42
 # -> orchestrated plan, governance review, parallel execution, PR with "Resolves #42"
 
+# Need specialist analysis without code changes? Advisory mode.
+/nefario --advisory Should we use WebSockets or SSE for real-time updates?
+# -> specialist team evaluates, produces recommendation report, no code touched
+
 # Rough idea? Turn it into a structured brief first.
 /despicable-prompter Add rate limiting with monitoring
 /despicable-prompter #42
