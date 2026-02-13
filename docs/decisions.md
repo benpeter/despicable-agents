@@ -132,6 +132,8 @@ These decisions were implemented in the nefario v1.4 update.
 
 > **Update (2026-02-12)**: ALWAYS reviewer count reduced from 6 to 5. ux-strategy-minion moved to discretionary pool (Phase 3.5 reviewer composition rework, [report](history/nefario-reports/2026-02-12-135833-rework-phase-3-5-reviewer-composition.md)). Discretionary pool expanded from 4 to 6 members.
 
+> **Update (2026-02-13)**: software-docs-minion removed from ALWAYS reviewers, replaced by ux-strategy-minion. ALWAYS count stays at 5. Discretionary pool reduced from 6 to 5 members. Phase 8 now self-derives its documentation checklist from execution outcomes only (no Phase 3.5 checklist input).
+
 ### Decision 11: Approval Gate Classification
 
 | Field | Value |
@@ -155,6 +157,8 @@ These decisions were implemented in the nefario v1.4 update.
 | **Consequences** | 6 ALWAYS reviewers (expanded from 4 with lucy and margo in v1.5), increasing minimum review cost. Cleaner separation between UX strategy and UX design responsibilities. Every plan gets documentation review. |
 
 > **Update (2026-02-12)**: ALWAYS reviewer count subsequently reduced from 6 to 5 when ux-strategy-minion moved to discretionary pool ([report](history/nefario-reports/2026-02-12-135833-rework-phase-3-5-reviewer-composition.md)).
+
+> **Update (2026-02-13)**: ux-strategy-minion restored to ALWAYS (replacing software-docs-minion). ALWAYS count remains 5. software-docs-minion no longer produces Phase 3.5 documentation impact checklist; Phase 8 self-derives its checklist from execution outcomes.
 
 ### Decision 13: MODE: PLAN Restricted to User-Explicit-Only
 
@@ -192,7 +196,7 @@ These decisions were implemented in the nefario v1.4 update.
 | **Choice** | Phase 3.5 Architecture Review is never skipped by the orchestrator, regardless of task type (documentation-only, config-only, single-file) or perceived simplicity. ALWAYS reviewers are always invoked. Only the user can explicitly request skipping Phase 3.5. |
 | **Alternatives rejected** | **Orchestrator-judged skip** where nefario assesses whether review is warranted based on task type: rejected because the whole point of mandatory review is that the orchestrator should not be the sole judge. SKILL.md changes are "documentation" but drive all future orchestrations — skipping review for them is precisely the wrong call. |
 | **Rationale** | The orchestrator skipped Phase 3.5 twice for "documentation-only" tasks, which the user corrected. ALWAYS means ALWAYS — the authority to skip belongs to the user, not the system. The cost of unnecessary review (~$0.10) is trivial compared to the cost of a missed issue in a workflow-controlling file. |
-| **Consequences** | Every `/nefario` run incurs review cost (5 ALWAYS + 0-6 discretionary reviewers). No exceptions without explicit user opt-out. Constraint encoded in AGENT.md (overlay mechanism removed per Decision 27). |
+| **Consequences** | Every `/nefario` run incurs review cost (5 ALWAYS + 0-5 discretionary reviewers). No exceptions without explicit user opt-out. Constraint encoded in AGENT.md (overlay mechanism removed per Decision 27). |
 
 ---
 
@@ -266,6 +270,8 @@ These decisions were implemented in the nefario v1.4 update.
 | **Consequences** | Agent count increases by 42% (19→27). Build pipeline parallelism increases. Phase 3.5 minimum review cost increases (6 ALWAYS reviewers). Delegation table grows by 35 rows. Three existing agents receive boundary adjustments (minor version bumps). |
 
 > **Update (2026-02-12)**: ALWAYS reviewer count subsequently reduced from 6 to 5 when ux-strategy-minion moved to discretionary pool ([report](history/nefario-reports/2026-02-12-135833-rework-phase-3-5-reviewer-composition.md)).
+
+> **Update (2026-02-13)**: ux-strategy-minion restored to ALWAYS (replacing software-docs-minion). ALWAYS count remains 5. Discretionary pool reduced from 6 to 5 members.
 
 ---
 

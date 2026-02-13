@@ -838,7 +838,7 @@ reviewers.
     note: "User-requested; no direct domain signal in plan."
     Re-present the Reviewer Approval Gate with updated picks.
 
-3b. **Substantial path (3+ changes)**: Re-evaluate all 6 discretionary
+3b. **Substantial path (3+ changes)**: Re-evaluate all 5 discretionary
     pool members against the delegation plan, producing fresh rationales.
     This is a nefario-internal operation (no subagent spawn) -- the
     calling session re-runs the domain signal evaluation from the
