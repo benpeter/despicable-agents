@@ -125,6 +125,7 @@ Most tasks have secondary dimensions beyond the primary domain. Nefario's planni
 
 | Document | Covers |
 |----------|--------|
+| [Prerequisites](prerequisites.md) | Required CLI tools, per-platform installation, setup verification |
 | [Using Nefario](using-nefario.md) | Orchestration workflow, phases, when to use `/nefario` vs `@agent`, tips for success |
 | [Agent Catalog](agent-catalog.md) | Per-agent capabilities, model tiers, example invocations, boundaries |
 

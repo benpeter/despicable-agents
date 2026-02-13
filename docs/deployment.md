@@ -99,7 +99,8 @@ Report generation is enforced by the nefario SKILL.md wrap-up instructions, not 
 ### Prerequisites
 
 - Hook scripts must have execute permissions: `chmod +x .claude/hooks/*.sh`
-- `jq` must be installed for JSON parsing in hooks
+- Hook scripts require **bash 4+** and **jq** -- see [Prerequisites](prerequisites.md) for per-platform install commands
+- Symlink deployment requires macOS or Linux. See the project README [Platform Notes](../README.md#platform-notes) for Windows workarounds.
 
 See [commit-workflow.md](commit-workflow.md) Section 7 for hook composition design and [commit-workflow-security.md](commit-workflow-security.md) for security properties of hook scripts.
 

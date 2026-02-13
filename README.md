@@ -55,6 +55,12 @@ cd despicable-agents && ./install.sh
 
 Symlinks 27 agents and 2 skills (`/nefario`, `/despicable-prompter`) to `~/.claude/`. Available in every Claude Code session. To remove: `./install.sh uninstall`.
 
+### Prerequisites
+
+Tested on macOS and Linux. Windows is not currently supported -- see [Platform Notes](#platform-notes).
+
+The install script needs only `git`. The commit workflow hooks additionally need **bash 4+** and **jq** -- see [Prerequisites](docs/prerequisites.md) for per-platform install commands, or paste the [quick setup prompt](docs/prerequisites.md#quick-setup-via-claude-code) into Claude Code.
+
 ### Using on Other Projects
 
 After install, agents and skills are available in any Claude Code session regardless of working directory. Invoke `@agent-name` or `/nefario` from your project. Reports, branches, and commits target the current project -- no configuration required.
@@ -137,6 +143,18 @@ See [Agent Catalog](docs/agent-catalog.md) for per-agent details.
 ## Contributing
 
 All content in English. No PII, no proprietary data -- agents are published under Apache 2.0. `the-plan.md` is the canonical spec and source of truth. Propose changes there via pull request. Respect agent boundaries: each agent's "Does NOT do" section defines where its scope ends.
+
+## Platform Notes
+
+despicable-agents uses symlinks for deployment. `install.sh` creates symlinks from the repository to `~/.claude/agents/` and `~/.claude/skills/`, so edits to agent files are immediately live without re-installing. This works natively on macOS and Linux.
+
+**Windows users** have two options:
+1. **WSL (recommended):** Clone the repo inside WSL and run `./install.sh`. Claude Code supports WSL.
+2. **Git Bash:** Enable Developer Mode in Windows Settings, then run: `MSYS=winsymlinks:nativestrict ./install.sh`. Without Developer Mode, symlink creation requires an elevated (admin) terminal.
+
+The commit workflow hooks require **bash 4+** and **jq**:
+- macOS ships bash 3.2 -- install a newer version via `brew install bash`
+- jq is not pre-installed on any platform -- see [Prerequisites](docs/prerequisites.md)
 
 ## License
 
