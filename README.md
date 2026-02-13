@@ -1,6 +1,6 @@
 # Despicable Agents
 
-![Built Despicably](https://img.shields.io/badge/built-despicably-yellow?style=for-the-badge)
+![⚗️ despicable](https://img.shields.io/badge/%E2%9A%97%EF%B8%8F-despicable-FFC107?style=for-the-badge&labelColor=FFF8E1)
 [![98% Vibe_Coded](https://img.shields.io/badge/98%25-Vibe_Coded-ff69b4?style=for-the-badge&logo=claude&logoColor=white)](https://github.com/trieloff/vibe-coded-badge-action)
 
 Structured orchestration, domain specialists, and governance gates for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Built on [Agent Teams](https://code.claude.com/docs/en/agent-teams). 27 agents, 2 skills, available in every session after a one-time install.
