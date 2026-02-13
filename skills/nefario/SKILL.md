@@ -566,7 +566,7 @@ Rules:
 **"Reject" response handling**:
 Abandon the orchestration. Clean up scratch directory (`rm -rf "$SCRATCH_DIR"`).
 Remove session markers:
-`SID=$(cat /tmp/claude-session-id 2>/dev/null); rm -f /tmp/claude-commit-orchestrated-$SID /tmp/nefario-status-$SID`
+`SID=$(cat /tmp/claude-session-id 2>/dev/null); rm -f /tmp/nefario-status-$SID`
 Print: "Orchestration abandoned. Scratch files removed."
 
 **Second-round specialists exemption**: If Phase 2 specialists recommend
@@ -1213,10 +1213,6 @@ automatic branching and commits." Proceed directly to Setup.
    e. Create feature branch: `git checkout -b nefario/<slug>` (reuse the slug
       generated in Phase 1).
 
-After branch resolution (whether creating a new branch or using an existing one),
-create the orchestrated-session marker to suppress commit hook noise:
-`SID=$(cat /tmp/claude-session-id 2>/dev/null); touch /tmp/claude-commit-orchestrated-$SID`
-
 After branch resolution, detect existing PR on current branch:
 ```sh
 existing_pr=$(gh pr list --head "$(git branch --show-current)" --json number --jq '.[0].number' 2>/dev/null)
@@ -1756,9 +1752,8 @@ not part of the default flow.
 
 11. **Clean up session markers** — after PR creation (or if declined),
     if in a git repo:
-    Remove the orchestrated-session marker and status sentinel:
-    `SID=$(cat /tmp/claude-session-id 2>/dev/null); rm -f /tmp/claude-commit-orchestrated-$SID`
-    `rm -f /tmp/nefario-status-$SID`
+    Remove the nefario status file:
+    `SID=$(cat /tmp/claude-session-id 2>/dev/null); rm -f /tmp/nefario-status-$SID`
     The session stays on the feature branch.
     Include current branch name in final summary and a hint to return to
     the default branch when ready:
