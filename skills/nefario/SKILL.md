@@ -2045,8 +2045,8 @@ the report.
 The canonical report template is defined in
 `docs/history/nefario-reports/TEMPLATE.md`. Read and follow this template
 when generating execution reports. The template defines:
-- v3 YAML frontmatter schema (10-11 fields)
-- Canonical section order (12 top-level H2 sections)
+- v3 YAML frontmatter schema (10-12 fields)
+- Canonical section order (13 top-level H2 sections)
 - Conditional inclusion rules (INCLUDE WHEN / OMIT WHEN)
 - Collapsibility annotations
 - PR body generation: report body minus YAML frontmatter = PR body
