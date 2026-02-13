@@ -17,7 +17,7 @@ The orchestration system implements a nine-phase process that separates planning
 The main session spawns nefario with `MODE: META-PLAN`. Nefario reads the codebase, analyzes the task against the delegation table, and returns a structured meta-plan identifying:
 
 - Which specialists to consult for planning (with specific questions for each)
-- Cross-cutting checklist evaluation (all six dimensions assessed)
+- Cross-cutting checklist evaluation (all six dimensions assessed -- Testing, Security, Usability-Strategy, Usability-Design, Documentation, Observability)
 - Anticipated approval gates
 - Scope boundaries (in/out)
 
@@ -41,7 +41,7 @@ The main session spawns nefario with `MODE: SYNTHESIS`, passing all specialist c
 1. Resolves conflicts between specialists using project priorities
 2. Incorporates risk mitigations from specialist input
 3. Adds agents that specialists recommended but were not in the original meta-plan
-4. Fills gaps by checking the six cross-cutting dimensions against the plan
+4. Fills gaps by checking the six cross-cutting dimensions (see table below) against the plan
 5. Classifies approval gates using the reversibility/blast-radius matrix
 6. Produces the execution order (topological sort with batch boundaries and gate positions)
 7. Identifies which architecture reviewers the plan triggers
@@ -315,7 +315,7 @@ Four mechanisms enforce strict agent boundaries:
 
 **"Does NOT do" sections.** Every agent's system prompt explicitly lists what it does not handle, with named delegation targets. These create hard boundaries. For example, security-minion does not implement authentication flows -- it delegates to oauth-minion.
 
-**Delegation table.** Nefario's embedded routing table maps task types to primary and supporting agents deterministically. The table covers all six domain groups and eliminates ambiguity in task assignment.
+**Delegation table.** Nefario's embedded routing table maps task types to primary and supporting agents deterministically. The table covers all seven domain groups and eliminates ambiguity in task assignment.
 
 **Handoff triggers.** Specific phrases or request types trigger delegation to named specialists. When an agent encounters work outside its boundary, it names the target agent rather than attempting the work.
 

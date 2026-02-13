@@ -130,6 +130,8 @@ These decisions were implemented in the nefario v1.4 update.
 | **Rationale** | Catches architectural issues that are cheap to fix before execution and expensive to fix after. Security violations in a plan are invisible until exploited. Test strategy must align before code is written. The 2-iteration cap on BLOCK revisions prevents infinite loops while still allowing substantive disagreements to reach human judgment. |
 | **Consequences** | Adds $0.10-0.20 per plan (15-30% overhead). Extends planning by 2-5 reviewer spawns. All plans get security and test review regardless of scope. Reduces rework during execution. |
 
+> **Update (2026-02-12)**: ALWAYS reviewer count reduced from 6 to 5. ux-strategy-minion moved to discretionary pool (Phase 3.5 reviewer composition rework, [report](history/nefario-reports/2026-02-12-135833-rework-phase-3-5-reviewer-composition.md)). Discretionary pool expanded from 4 to 6 members.
+
 ### Decision 11: Approval Gate Classification
 
 | Field | Value |
@@ -151,6 +153,8 @@ These decisions were implemented in the nefario v1.4 update.
 | **Alternatives rejected** | Both UX agents as ALWAYS reviewers (proposed by ux-strategy-minion). Rejected for ux-design-minion because many plans have no UI component, and design review of non-UI plans adds cost without value. The strategy/design split gives clear non-overlapping boundaries: WHAT/WHY (strategy) vs. HOW (design). |
 | **Rationale** | The previous "Accessibility" dimension conflated strategic usability concerns (journey coherence, cognitive load) with tactical design concerns (visual hierarchy, interaction patterns). These require different expertise and different trigger conditions. Documentation promoted to ALWAYS because even non-architecture tasks benefit from documentation gap analysis. |
 | **Consequences** | 6 ALWAYS reviewers (expanded from 4 with lucy and margo in v1.5), increasing minimum review cost. Cleaner separation between UX strategy and UX design responsibilities. Every plan gets documentation review. |
+
+> **Update (2026-02-12)**: ALWAYS reviewer count subsequently reduced from 6 to 5 when ux-strategy-minion moved to discretionary pool ([report](history/nefario-reports/2026-02-12-135833-rework-phase-3-5-reviewer-composition.md)).
 
 ### Decision 13: MODE: PLAN Restricted to User-Explicit-Only
 
@@ -188,7 +192,7 @@ These decisions were implemented in the nefario v1.4 update.
 | **Choice** | Phase 3.5 Architecture Review is never skipped by the orchestrator, regardless of task type (documentation-only, config-only, single-file) or perceived simplicity. ALWAYS reviewers are always invoked. Only the user can explicitly request skipping Phase 3.5. |
 | **Alternatives rejected** | **Orchestrator-judged skip** where nefario assesses whether review is warranted based on task type: rejected because the whole point of mandatory review is that the orchestrator should not be the sole judge. SKILL.md changes are "documentation" but drive all future orchestrations — skipping review for them is precisely the wrong call. |
 | **Rationale** | The orchestrator skipped Phase 3.5 twice for "documentation-only" tasks, which the user corrected. ALWAYS means ALWAYS — the authority to skip belongs to the user, not the system. The cost of unnecessary review (~$0.10) is trivial compared to the cost of a missed issue in a workflow-controlling file. |
-| **Consequences** | Every `/nefario` run incurs review cost (6 ALWAYS + 0-4 conditional reviewers). No exceptions without explicit user opt-out. Constraint encoded in AGENT.overrides.md and AGENT.md. |
+| **Consequences** | Every `/nefario` run incurs review cost (5 ALWAYS + 0-6 discretionary reviewers). No exceptions without explicit user opt-out. Constraint encoded in AGENT.md (overlay mechanism removed per Decision 27). |
 
 ---
 
@@ -260,6 +264,8 @@ These decisions were implemented in the nefario v1.4 update.
 | **Alternatives rejected** | (1) **Fewer agents, broader remits**: Combine accessibility + sitespeed into ux-design-minion; combine api-spec into api-design-minion. Rejected because it violates the strict-boundary principle (Decision 2) and creates agents with too many concerns. (2) **All agents as minions**: Make lucy and margo minions rather than top-level. Rejected because governance agents serve a structurally different role -- they review every plan rather than executing domain work. Top-level directories signal this distinction. |
 | **Rationale** | Coverage gaps identified in web quality (no WCAG specialist, no SEO specialist, no performance measurement specialist), API lifecycle (no spec authoring specialist), code quality (no review specialist), product messaging (no marketing specialist), and governance (no intent alignment or simplicity enforcement). Each new agent fills a gap that existing agents explicitly disclaimed in their "Does NOT do" sections. |
 | **Consequences** | Agent count increases by 42% (19→27). Build pipeline parallelism increases. Phase 3.5 minimum review cost increases (6 ALWAYS reviewers). Delegation table grows by 35 rows. Three existing agents receive boundary adjustments (minor version bumps). |
+
+> **Update (2026-02-12)**: ALWAYS reviewer count subsequently reduced from 6 to 5 when ux-strategy-minion moved to discretionary pool ([report](history/nefario-reports/2026-02-12-135833-rework-phase-3-5-reviewer-composition.md)).
 
 ---
 
