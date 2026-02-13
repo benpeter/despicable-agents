@@ -1,0 +1,13 @@
+ADVISE
+
+The verification approach (diff review, structural checks) is adequate for the mechanical changes but insufficient for validating the actual behavior change. Specific concerns:
+
+1. **No integration validation**: The plan modifies a specification that governs LLM behavior across 12 different gate invocation contexts. The structural checks in "Verification Steps" confirm the text was inserted, but do not validate whether gates will actually render with the run identifier in practice. Recommendation: Add Phase 6 verification step to test at least one gate rendering (e.g., invoke P1 Team gate in a test orchestration and confirm the `Run: $summary` line appears in the terminal prompt).
+
+2. **No regression checks**: The plan assumes existing gate content remains functional after adding multiline suffixes. The P4 reject-confirmation gate already uses multiline formatting, but 4 other gates are changing from single-line to multi-line questions for the first time. Recommendation: Manual inspection during Phase 5 code review should explicitly verify that the `\n\n` rendering is correct and that the added line does not break terminal prompt formatting.
+
+3. **LLM drift mitigation is untested**: The plan adds `$summary` to compaction focus strings to prevent the LLM from forgetting the convention after context pruning. This is a hypothesis, not a verified mitigation. The actual test would be: run an orchestration with multiple phases and compaction events, then check if late-phase gates still include the run line. This is not practical to verify before merge. Recommendation: Document this as a known risk requiring post-deployment observation. If gates in Phase 4+ start omitting the run line after compaction, the focus string preservation may need strengthening.
+
+4. **No validation of literal-string gate selection**: The plan updates 5 gates explicitly because they use "full literal strings". The other 7 gates use "template-style specs" and rely on the centralized convention. This classification is based on human judgment during planning. Recommendation: During Phase 5 review, explicitly verify that the 7 non-updated gates have template-style question specs (contain placeholders like `<task summary>`, `<finding>`) that would prompt the LLM to apply the convention, rather than hidden literal strings that would be reproduced verbatim.
+
+Non-blocking. These are observation and inspection enhancements, not showstoppers. The specification change itself is reversible and the structural verification catches syntax errors. The behavior validation gap is acceptable given that this is a prompt engineering change rather than executable code.

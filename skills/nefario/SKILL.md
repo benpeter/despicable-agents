@@ -503,6 +503,12 @@ Format rules:
 > Note: AskUserQuestion `header` values must not exceed 12 characters.
 > The `P<N> <Label>` convention reserves 3-5 chars for the phase prefix.
 
+> Note: Every AskUserQuestion `question` field must end with
+> `\n\nRun: $summary` on a dedicated trailing line. This ensures the
+> user can identify which orchestration run a gate belongs to, even when
+> the status line is hidden by the AskUserQuestion prompt. The `$summary`
+> value is established in Phase 1 and capped at 40 characters.
+
 - `header`: "P1 Team"
 - `question`: "<1-sentence task summary>"
 - `options` (3, `multiSelect: false`):
@@ -808,7 +814,7 @@ After writing the synthesis to the scratch file, present a compaction prompt:
 
 > **COMPACT** -- Phase 3 complete. Specialist details are now in the synthesis.
 >
-> Run: `/compact focus="Preserve: current phase (3.5 review next), synthesized execution plan, inline agent summaries, task list, approval gates, team name, branch name, scratch directory path. Discard: individual specialist contributions from Phase 2."`
+> Run: `/compact focus="Preserve: current phase (3.5 review next), synthesized execution plan, inline agent summaries, task list, approval gates, team name, branch name, $summary, scratch directory path. Discard: individual specialist contributions from Phase 2."`
 >
 > After compaction, type `continue` to resume at Phase 3.5 (Architecture Review).
 > Skipping is fine if context is short. Risk: auto-compaction in later phases may lose orchestration state.
@@ -1191,7 +1197,7 @@ After processing all review verdicts, present a compaction prompt:
 
 > **COMPACT** -- Phase 3.5 complete. Review verdicts are folded into the plan.
 >
-> Run: `/compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, inline agent summaries, gate decision briefs, task list with dependencies, approval gates, team name, branch name, scratch directory path. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."`
+> Run: `/compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, inline agent summaries, gate decision briefs, task list with dependencies, approval gates, team name, branch name, $summary, scratch directory path. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."`
 >
 > After compaction, type `continue` to resume at Phase 4 (Execution).
 > Skipping is fine if context is short. Risk: auto-compaction during execution may lose task/agent tracking.
@@ -1474,7 +1480,7 @@ A batch contains all tasks that can run before the next gate.
    ```
    - **"Approve"**: Present a FOLLOW-UP AskUserQuestion for post-execution options:
      - `header`: "Post-exec"
-     - `question`: "Post-execution phases for this task?"
+     - `question`: "Post-execution phases for Task N: <task title>?\n\nRun: $summary"
      - `options` (4, `multiSelect: false`):
        1. label: "Run all", description: "Code review + tests + docs after execution completes." (recommended)
        2. label: "Skip docs", description: "Skip documentation updates (Phase 8)."
@@ -1507,6 +1513,8 @@ A batch contains all tasks that can run before the next gate.
          Task M: <title> -- <1-sentence deliverable description>
 
        Alternative: Select "Cancel" then choose "Request changes" for a less drastic revision.
+
+       Run: $summary
        ```
      - `options` (2, `multiSelect: false`):
        1. label: "Confirm reject", description: "Remove task and dependents."
@@ -1538,7 +1546,7 @@ A batch contains all tasks that can run before the next gate.
      reversibility (harder = lower), downstream dependents (more = lower).
    - Calibration check: After 5 consecutive approvals without changes, present using AskUserQuestion:
      - `header`: "P4 Calibrate"
-     - `question`: "5 consecutive approvals without changes. Gates well-calibrated?"
+     - `question`: "5 consecutive approvals without changes. Gates well-calibrated?\n\nRun: $summary"
      - `options` (2, `multiSelect: false`):
        1. label: "Gates are fine", description: "Continue with current gating level."
        2. label: "Fewer gates next time", description: "Note for future plans: consolidate more aggressively."
@@ -1866,7 +1874,7 @@ not part of the default flow.
     Then present using AskUserQuestion:
 
     - `header`: "PR"
-    - `question`: "Create PR for nefario/<slug>?"
+    - `question`: "Create PR for nefario/<slug>?\n\nRun: $summary"
     - `options` (2, `multiSelect: false`):
       1. label: "Create PR", description: "Push branch and open pull request on GitHub." (recommended)
       2. label: "Skip PR", description: "Keep branch local. Push later."
@@ -2058,7 +2066,7 @@ skip it, do not defer it, do not stop before it is written.
 
    Present using AskUserQuestion:
    - header: "Existing PR"
-   - question: "PR #<existing-pr> exists on this branch. Update its description with this run's changes?"
+   - question: "PR #<existing-pr> exists on this branch. Update its description with this run's changes?\n\nRun: $summary"
    - options (2, multiSelect: false):
      1. label: "Append updates", description: "Add Post-Nefario Updates section to PR #<N> body." (recommended)
      2. label: "Separate report only", description: "Write report file but do not touch the existing PR."
