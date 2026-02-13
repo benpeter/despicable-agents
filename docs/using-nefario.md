@@ -171,16 +171,16 @@ You can add a live status line to Claude Code that shows the current nefario tas
 
 Requires `jq` (`brew install jq` on macOS if not already installed).
 
-Add the following to `~/.claude/settings.json`. If you already have a `statusLine` entry, merge the nefario-specific part (the `f="/tmp/nefario-status-..."` line) into your existing command.
+Run `/despicable-statusline` from within the despicable-agents repository. This is a project-local skill available when Claude Code is running in this repo. The effect is global -- it modifies `~/.claude/settings.json` -- so you only need to run it once.
 
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "input=$(cat); dir=$(echo \"$input\" | jq -r '.workspace.current_dir // \"?\"'); model=$(echo \"$input\" | jq -r '.model.display_name // \"?\"'); used=$(echo \"$input\" | jq -r '.context_window.used_percentage // \"\"'); sid=$(echo \"$input\" | jq -r '.session_id // \"\"'); [ -n \"$sid\" ] && echo \"$sid\" > /tmp/claude-session-id; result=\"$dir | $model\"; if [ -n \"$used\" ]; then result=\"$result | Context: $(printf '%.0f' \"$used\")%\"; fi; f=\"/tmp/nefario-status-$sid\"; [ -n \"$sid\" ] && [ -f \"$f\" ] && ns=$(cat \"$f\" 2>/dev/null) && [ -n \"$ns\" ] && result=\"$result | $ns\"; echo \"$result\""
-  }
-}
-```
+The skill handles your existing configuration automatically:
+
+- **No status line configured** -- sets up a complete default showing directory, model, context usage, and nefario status.
+- **Standard status line without nefario** -- appends the nefario snippet to your existing command.
+- **Nefario status already present** -- does nothing. Safe to re-run.
+- **Non-standard setup** (e.g., a script file) -- prints manual instructions instead of modifying your config.
+
+The skill validates JSON before and after writing, creates a backup at `~/.claude/settings.json.backup-statusline`, and rolls back on failure. It is idempotent -- safe to run multiple times.
 
 Restart Claude Code or start a new conversation to activate.
 
@@ -195,6 +195,26 @@ When nefario is not running, the status bar shows just the directory, model, and
 ### How It Works
 
 The status line command extracts `session_id` from the JSON that Claude Code pipes to it, and writes it to `/tmp/claude-session-id` so the nefario skill can discover it. When nefario starts orchestrating, it reads the session ID from that file and writes a one-line task summary to `/tmp/nefario-status-<session-id>`. The status line command checks for this file and appends its contents. When orchestration finishes, nefario removes the file.
+
+<details>
+<summary>Manual configuration (alternative)</summary>
+
+If you prefer manual control or the skill cannot auto-modify your config, add the following to `~/.claude/settings.json`. If you already have a `statusLine` entry, merge the nefario-specific part (the `f="/tmp/nefario-status-..."` line) into your existing command.
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "input=$(cat); dir=$(echo \"$input\" | jq -r '.workspace.current_dir // \"?\"'); model=$(echo \"$input\" | jq -r '.model.display_name // \"?\"'); used=$(echo \"$input\" | jq -r '.context_window.used_percentage // \"\"'); sid=$(echo \"$input\" | jq -r '.session_id // \"\"'); [ -n \"$sid\" ] && echo \"$sid\" > /tmp/claude-session-id; result=\"$dir | $model\"; if [ -n \"$used\" ]; then result=\"$result | Context: $(printf '%.0f' \"$used\")%\"; fi; f=\"/tmp/nefario-status-$sid\"; [ -n \"$sid\" ] && [ -f \"$f\" ] && ns=$(cat \"$f\" 2>/dev/null) && [ -n \"$ns\" ] && result=\"$result | $ns\"; echo \"$result\""
+  }
+}
+```
+
+Restart Claude Code or start a new conversation to activate.
+
+If the skill's default command changes in the future, the SKILL.md at `.claude/skills/despicable-statusline/SKILL.md` is the authoritative source.
+
+</details>
 
 ---
 

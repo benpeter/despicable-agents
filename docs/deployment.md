@@ -107,4 +107,15 @@ See [commit-workflow.md](commit-workflow.md) Section 7 for hook composition desi
 
 The nefario orchestration skill and despicable-prompter briefing skill are deployed alongside agents by `install.sh`. They live at `~/.claude/skills/nefario/` and `~/.claude/skills/despicable-prompter/` respectively.
 
+### Project-Local Skills
+
+Two additional skills live in `.claude/skills/` within the repository. Unlike the globally-installed skills above, these are **not** deployed by `install.sh` -- they are available only when Claude Code is running inside the despicable-agents repository. Despite being project-local, their effects may be global (e.g., `/despicable-statusline` modifies `~/.claude/settings.json`).
+
+| Skill | Purpose | Location |
+|-------|---------|----------|
+| `/despicable-lab` | Check and rebuild agents when spec versions diverge | `.claude/skills/despicable-lab/` |
+| `/despicable-statusline` | Configure Claude Code status line for nefario orchestration status | `.claude/skills/despicable-statusline/` |
+
+For `/despicable-statusline`, see the [Status Line](using-nefario.md#status-line) section in Using Nefario for usage details.
+
 See [Orchestration and Delegation](orchestration.md) for details on the nefario skill's role and nine-phase orchestration process.
