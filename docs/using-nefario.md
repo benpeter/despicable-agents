@@ -188,7 +188,7 @@ Restart Claude Code or start a new conversation to activate.
 
 When nefario is orchestrating, the status bar appends the current phase and task summary after the standard info, updating at each phase transition:
 
-`~/my-project | Claude Opus 4 | Context: 12% | P2 Planning | Build MCP server with OAuth...`
+`~/my-project | Claude Opus 4 | Context: 12% | ⚗︎ P2 Planning | Build MCP server with OAuth...`
 
 When nefario is not running, the status bar shows just the directory, model, and context usage.
 
