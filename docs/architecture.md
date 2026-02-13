@@ -110,7 +110,7 @@ For per-agent details, see [Agent Catalog](agent-catalog.md).
 
 ## Cross-Cutting Concerns
 
-Most tasks have secondary dimensions beyond the primary domain. Nefario's planning process mandates considering six dimensions:
+Most tasks have secondary dimensions beyond the primary domain. Nefario's planning process mandates considering six cross-cutting dimensions:
 
 1. **Testing** (test-minion) -- code, config, or infrastructure changes need test strategy
 2. **Security** (security-minion) -- attack surface, auth, user input, secrets, dependencies
