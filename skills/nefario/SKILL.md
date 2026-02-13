@@ -206,7 +206,7 @@ Orchestration messages use three visual weights:
 
 | Weight | Pattern | Use |
 |--------|---------|-----|
-| **Decision** | `ALL-CAPS LABEL:` header + structured content | Approval gates, escalations -- requires user action |
+| **Decision** | `` `─── ···` `` border + `` `LABEL:` `` highlighted fields + structured content | Approval gates, escalations -- requires user action |
 | **Orientation** | `**--- ⚗️ Phase N: Name ---**` | Phase transitions -- glance and continue |
 | **Advisory** | `>` blockquote with bold label | Compaction checkpoints -- optional user action |
 | **Inline** | Plain text, no framing | CONDENSE lines, heartbeats, informational notes |
@@ -1284,23 +1284,25 @@ A batch contains all tasks that can run before the next gate.
    First, print the decision brief as normal conversation output:
 
    ```
-   ⚗️ APPROVAL GATE: <Task title>
-   Agent: <who produced this> | Blocked tasks: <what's waiting>
+   `────────────────────────────────────────────────────`
+   ⚗️ `APPROVAL GATE: <Task title>`
+   `Agent:` <who produced this> | `Blocked tasks:` <what's waiting>
 
-   DECISION: <one-sentence summary of the deliverable/decision>
+   `DECISION:` <one-sentence summary of the deliverable/decision>
 
-   DELIVERABLE:
+   `DELIVERABLE:`
      <file path 1> (<change scope>, +N/-M lines)
      <file path 2> (<change scope>, +N/-M lines)
-     Summary: <1-2 sentences describing what was produced>
+     `Summary:` <1-2 sentences describing what was produced>
 
-   RATIONALE:
+   `RATIONALE:`
    - <key point 1>
    - <key point 2>
    - Rejected: <alternative and why>
 
-   IMPACT: <what approving/rejecting means for the project>
-   Confidence: HIGH | MEDIUM | LOW
+   `IMPACT:` <what approving/rejecting means for the project>
+   `Confidence:` HIGH | MEDIUM | LOW
+   `────────────────────────────────────────────────────`
    ```
 
    Maximum 5 files listed in DELIVERABLE; if more, show top 4 + "and N more files".
