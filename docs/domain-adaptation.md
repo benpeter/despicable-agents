@@ -31,7 +31,7 @@ These capabilities are infrastructure. You get them for free with any adapter --
 
 ## What the Adapter Must Provide
 
-A domain adapter is a single file at `domains/<domain-name>/DOMAIN.md`. It uses YAML frontmatter for structured data and markdown body sections for prose content. The full format specification is in the adapter format spec (`adapter-format.md` in the project scratch area); this section covers what each piece does and how it varies across domains.
+A domain adapter is a single file at `domains/<domain-name>/DOMAIN.md`. It uses YAML frontmatter for structured data and markdown body sections for prose content. The reference adapter at `domains/software-dev/DOMAIN.md` serves as the canonical format example; this section covers what each piece does and how it varies across domains.
 
 ### 1. Agent Roster (section: `## Agent Roster`)
 
@@ -147,9 +147,9 @@ Optionally create RESEARCH.md files with domain research backing each agent's sy
 
 The nefario AGENT.md contains `<!-- @domain:section-name BEGIN -->` / `<!-- @domain:section-name END -->` assembly markers. The assembly process reads your DOMAIN.md and replaces marker content with the corresponding adapter sections.
 
-Run the assembly script (once available):
+Run the assembly script:
 ```bash
-./assemble.sh --domain <your-domain>
+./assemble.sh <your-domain>
 ```
 
 This produces a materialized `nefario/AGENT.md` where all markers contain your domain's content.
