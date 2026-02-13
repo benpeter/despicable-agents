@@ -1647,7 +1647,8 @@ Determine which post-execution phases to run based on the user's
 multi-select response and/or freeform text flags:
 - Phase 5 (Code Review): Skip if the user's selection includes
   "Skip review", or freeform contains --skip-review or --skip-post.
-  Also skip if Phase 4 produced no code files.
+  Also skip if Phase 4 produced only documentation-only files (see
+  Phase 5 file classification table).
 - Phase 6 (Test Execution): Skip if the user's selection includes
   "Skip tests", or freeform contains --skip-tests or --skip-post.
   Also skip if no tests exist.
@@ -1670,7 +1671,26 @@ dark kitchen silence. Note as future optimization if needed.
 
 #### Phase 5: Code Review
 
-Skip if Phase 4 produced no code files (only docs/config). Note the skip.
+**File classification for phase-skipping**: Logic-bearing markdown files
+are treated as code, not documentation. A file is logic-bearing if changing
+it alters the runtime behavior of an LLM agent or orchestration workflow.
+
+| File Pattern | Classification | Rationale |
+|-------------|---------------|-----------|
+| `AGENT.md` in agent/skill directories | Logic-bearing | System prompt -- controls agent behavior |
+| `SKILL.md` in skill directories | Logic-bearing | Orchestration workflow -- controls phase logic |
+| `RESEARCH.md` in agent directories | Logic-bearing | Domain knowledge backing system prompts |
+| `CLAUDE.md` (any location) | Logic-bearing | Project instructions -- controls all agent behavior |
+| `README.md`, `docs/*.md`, changelogs | Documentation-only | Informs humans; does not affect agent runtime |
+
+Skip Phase 5 only if ALL files produced by Phase 4 are documentation-only.
+If any file is logic-bearing or traditional code, run Phase 5. When
+ambiguous, default to running review (false positive cost is one subagent
+call; false negative cost is a deployed defect in agent behavior).
+
+Classification labels (logic-bearing, documentation-only) are internal
+vocabulary. User-facing output uses outcome language: "docs-only changes"
+or "changes requiring review."
 
 Spawn three reviewers **in parallel**:
 
@@ -1907,8 +1927,12 @@ not part of the default flow.
    - All ran, with fixes: "Verification: 2 code review findings auto-fixed, all tests pass, docs updated (3 files)."
    - Partial skip: "Verification: code review passed, tests passed. Skipped: docs."
    - All skipped: "Verification: skipped (--skip-post)."
+   - Mixed files (code + AGENT.md): "Verification: code review passed (3 files incl. AGENT.md), tests passed."
+   - Logic-bearing markdown only (CLAUDE.md): "Verification: code review passed (CLAUDE.md), no tests applicable."
    The "Skipped:" suffix tracks user-requested skips only. Phases skipped
-   by existing conditionals (e.g., "no code files") are not listed.
+   by existing conditionals are not listed in the suffix, but a parenthetical
+   explanation is appended: e.g., "Verification: tests passed. (Code review:
+   not applicable -- docs-only changes)."
 
 8. **Auto-commit remaining changes** — if in a git repo, silently commit
    (`git commit --quiet`) any uncommitted files from the change ledger before
@@ -2108,8 +2132,12 @@ skip it, do not defer it, do not stop before it is written.
    - All ran, with fixes: "Verification: N code review findings auto-fixed, all tests pass, docs updated (M files)."
    - Partial skip: "Verification: code review passed, tests passed. Skipped: docs."
    - All skipped: "Verification: skipped (--skip-post)."
+   - Mixed files (code + AGENT.md): "Verification: code review passed (3 files incl. AGENT.md), tests passed."
+   - Logic-bearing markdown only (CLAUDE.md): "Verification: code review passed (CLAUDE.md), no tests applicable."
    The "Skipped:" suffix tracks user-requested skips only. Phases skipped
-   by existing conditionals (e.g., "no code files") are not listed.
+   by existing conditionals are not listed in the suffix, but a parenthetical
+   explanation is appended: e.g., "Verification: tests passed. (Code review:
+   not applicable -- docs-only changes)."
 4. Auto-commit remaining changes (silent, informational line only)
 5. **Collect working files** — if `$SCRATCH_DIR/{slug}/` exists and
    contains files, copy them to a companion directory alongside the report:

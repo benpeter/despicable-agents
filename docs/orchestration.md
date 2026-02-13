@@ -119,7 +119,7 @@ Phase 7 (deployment) is opt-in.
 
 ### Phase 5: Code Review
 
-Runs when Phase 4 produced or modified code files. Skipped if Phase 4 produced only documentation or configuration.
+Runs when Phase 4 produced or modified code or logic-bearing markdown files (AGENT.md, SKILL.md, RESEARCH.md, CLAUDE.md). Skipped if Phase 4 produced only documentation-only files (README, docs/, changelogs).
 
 Three reviewers run in parallel:
 

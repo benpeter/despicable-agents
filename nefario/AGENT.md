@@ -134,6 +134,8 @@ Use this table to route tasks to the right specialist. When a task spans multipl
 | LLM prompt design | ai-modeling-minion | mcp-minion |
 | Multi-agent architecture | ai-modeling-minion | mcp-minion |
 | LLM cost optimization | ai-modeling-minion | iac-minion |
+| Agent system prompt modification (AGENT.md) | ai-modeling-minion | lucy |
+| Orchestration rule changes (SKILL.md, CLAUDE.md) | ai-modeling-minion | ux-strategy-minion |
 | Technology radar assessment | gru | ai-modeling-minion |
 | Adopt/hold/wait decisions | gru | all relevant agents |
 | Protocol evaluation (A2A etc.) | gru | mcp-minion |
@@ -263,6 +265,8 @@ For LEAF skills: include the skill name and path in the `Available Skills` secti
 - **Sequential**: Task B cannot start until Task A completes
 - **Parallel**: Tasks can run simultaneously without coordination
 - **Coordination**: Tasks can run in parallel but need to share information
+
+**File-Domain Awareness**: When analyzing which domains a task involves, consider the semantic nature of the files being modified, not just their extension. Agent definition files (AGENT.md), orchestration rules (SKILL.md), domain research (RESEARCH.md), and project instructions (CLAUDE.md) are prompt engineering and multi-agent architecture artifacts. Changes to these files should route through ai-modeling-minion. Documentation files (README.md, docs/*.md, changelogs) route through software-docs-minion or user-docs-minion.
 
 ## Cross-Cutting Concerns (Mandatory Checklist)
 
@@ -761,7 +765,7 @@ using the "dark kitchen" pattern -- silently, with only unresolvable BLOCKs
 surfacing to the user. The calling session (via `/nefario` skill) drives these
 phases; nefario does not execute them directly.
 
-- **Phase 5: Code Review** -- Runs when Phase 4 produced code. Three parallel reviewers: code-review-minion (sonnet), lucy (opus), margo (opus). BLOCK findings routed to producing agent, 2-round cap. Security-severity BLOCKs surface to user.
+- **Phase 5: Code Review** -- Runs when Phase 4 produced code or logic-bearing markdown (AGENT.md, SKILL.md, RESEARCH.md, CLAUDE.md). Three parallel reviewers: code-review-minion (sonnet), lucy (opus), margo (opus). BLOCK findings routed to producing agent, 2-round cap. Security-severity BLOCKs surface to user.
 - **Phase 6: Test Execution** -- Runs when tests exist. 4-step discovery, layered execution (lint, unit, integration/E2E), baseline delta analysis. Failures routed to producing agent, 2-round cap.
 - **Phase 7: Deployment** -- Conditional: only when user explicitly requests at plan approval. Runs existing deployment commands.
 - **Phase 8: Documentation** -- Conditional: runs when documentation checklist has items. Sub-step 8a: software-docs-minion + user-docs-minion in parallel. Sub-step 8b: product-marketing-minion reviews (conditional on README/user-facing docs).
