@@ -66,6 +66,12 @@ After install, agents and skills are available in any Claude Code session regard
 
 Nefario automatically discovers and delegates to project-local skills (`.skills/`, `.claude/skills/`). See [External Skill Integration](docs/external-skills.md) for details.
 
+### Prerequisites
+
+Tested on macOS and Linux. Windows has not been tested (see #103) -- if you're successful on Windows with WSL or otherwise, insights are appreciated.
+
+The install script needs only `git`. The commit workflow hooks additionally need **bash 4+** and **jq** -- see [Prerequisites](docs/prerequisites.md) for details, or paste the [quick setup prompt](docs/prerequisites.md#quick-setup) into Claude Code.
+
 ## How It Works
 
 You describe a task. Nefario (orchestrator) figures out which specialists to consult, gathers their domain input in parallel, and synthesizes an execution plan. Five mandatory reviewers -- security-minion, test-minion, ux-strategy-minion, Lucy (intent alignment), and Margo (simplicity) -- examine the plan before any code runs. You approve the plan. Specialists execute in parallel where possible, with approval gates at high-impact decisions. After execution, code review and test runs verify the output. You get a wrap-up summary and an execution report committed to the repo.
