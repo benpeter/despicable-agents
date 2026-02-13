@@ -136,9 +136,10 @@ main() {
         exit 0
     fi
 
-    # --- Orchestrated session? Exit silently ---
-    local orchestrated_marker="/tmp/claude-commit-orchestrated-${session_id}"
-    if [[ -f "$orchestrated_marker" ]]; then
+    # --- Nefario-orchestrated session? Exit silently ---
+    # When nefario's status file exists, commits are managed by the orchestrator.
+    local nefario_status="/tmp/nefario-status-${session_id}"
+    if [[ -f "$nefario_status" ]]; then
         exit 0
     fi
 

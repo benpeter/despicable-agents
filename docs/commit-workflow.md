@@ -256,7 +256,7 @@ exit 0
 
 The commit workflow uses a Stop hook for single-agent commit checkpoints. In orchestrated sessions, auto-commits are driven by SKILL.md instructions rather than hooks. SKILL.md instructions specify `--quiet` flags on `git commit`, `git push`, and `git pull` to suppress verbose output during orchestration. Report generation is handled by the SKILL.md wrap-up instructions, not by a hook.
 
-During nefario-orchestrated sessions, the Stop hook is suppressed via a session-scoped marker file (`/tmp/claude-commit-orchestrated-<session-id>`). The marker is created at the start of Phase 4 (execution) and removed at wrap-up. When the marker exists, the hook exits 0 immediately, producing no output. This prevents the hook's commit checkpoint from conflicting with the SKILL.md-driven auto-commit flow.
+During nefario-orchestrated sessions, the Stop hook is suppressed by checking for the nefario status file (`/tmp/nefario-status-<session-id>`). This file exists for the duration of any orchestrated session and is removed at wrap-up. When the status file exists, the hook exits 0 immediately, producing no output. This prevents the hook's commit checkpoint from conflicting with the SKILL.md-driven auto-commit flow.
 
 ### Execution Order
 
