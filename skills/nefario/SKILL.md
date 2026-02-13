@@ -286,7 +286,6 @@ $SCRATCH_DIR/{slug}/
   phase3-synthesis.md                 # output from synthesis
   phase3.5-{reviewer-name}-prompt.md  # input prompt for each reviewer
   phase3.5-{reviewer-name}.md         # output from reviewers (BLOCK/ADVISE only)
-  phase3.5-docs-checklist.md          # documentation impact checklist (Phase 8 input)
   phase4-{agent-name}-prompt.md       # input prompt for execution agents
   phase5-code-review-minion-prompt.md # input prompt for code reviewers
   phase5-code-review-minion.md        # BLOCK/ADVISE only
@@ -743,7 +742,7 @@ From the delegation plan, determine which reviewers to include:
 **Mandatory** (always spawned, not user-adjustable):
 - security-minion
 - test-minion
-- software-docs-minion (documentation impact checklist role -- see prompt below)
+- ux-strategy-minion (journey coherence review -- see prompt below)
 - lucy
 - margo
 
@@ -754,7 +753,6 @@ determine whether the plan produces artifacts in the reviewer's domain.
 
 | Reviewer | Domain Signal |
 |----------|--------------|
-| ux-strategy-minion | Plan includes user-facing workflow changes, journey modifications, or cognitive load implications |
 | ux-design-minion | Plan includes tasks producing UI components, visual layouts, or interaction patterns |
 | accessibility-minion | Plan includes tasks producing web-facing HTML/UI that end users interact with |
 | sitespeed-minion | Plan includes tasks producing web-facing runtime code (pages, APIs serving browsers, assets) |
@@ -783,7 +781,7 @@ skip the gate.
 
 ```
 ⚗️ REVIEWERS: <1-sentence plan summary>
-Mandatory: security, test, software-docs, lucy, margo (always review)
+Mandatory: security, test, ux-strategy, lucy, margo (always review)
 
   DISCRETIONARY (nefario recommends):
     <agent-name>       <rationale, max 60 chars, reference tasks>
@@ -797,13 +795,13 @@ Details: $SCRATCH_DIR/{slug}/phase3-synthesis.md  (task prompts, agent assignmen
 
 Format rules:
 - Mandatory line: flat comma-separated, one line, presented as fact not choice.
-  Use short names (security, test, software-docs, lucy, margo).
+  Use short names (security, test, ux-strategy, lucy, margo).
 - DISCRETIONARY block: one agent per line with plan-grounded rationale. Rationale
   must reference specific plan content (task numbers, deliverables), not the
   reviewer's general capability. Max 60 characters per rationale.
 - NOT SELECTED: flat comma-separated list of remaining discretionary pool members.
 - No "ALSO AVAILABLE" block listing the full agent roster. The decision space is
-  the 6-member discretionary pool only.
+  the 5-member discretionary pool only.
 
 **AskUserQuestion**:
 - `header`: "P3.5 Review"
@@ -823,7 +821,7 @@ Format rules:
 reviewers.
 
 **"Adjust reviewers"**:
-1. User provides freeform adjustment. Constrained to the 6-member
+1. User provides freeform adjustment. Constrained to the 5-member
    discretionary pool. If the user requests an agent outside the pool,
    note it is not a Phase 3.5 reviewer and offer the closest match.
    Validate agent references against the known discretionary pool
@@ -904,71 +902,40 @@ Task:
     Be concise. Only flag issues within your domain expertise.
 ```
 
-**software-docs-minion prompt** (replaces the generic reviewer prompt):
+**ux-strategy-minion prompt** (replaces the generic reviewer prompt):
 
 ```
 Task:
-  subagent_type: software-docs-minion
-  description: "Nefario: software-docs-minion review"
+  subagent_type: ux-strategy-minion
+  description: "Nefario: ux-strategy-minion review"
   model: sonnet
   prompt: |
     You are reviewing a delegation plan before execution begins.
-    Your role: produce a documentation impact checklist for Phase 8.
+    Your role: evaluate journey coherence, cognitive load, and simplification
+    opportunities across the plan.
 
     ## Delegation Plan
     Read the full plan from: $SCRATCH_DIR/{slug}/phase3-synthesis.md
 
     ## Your Review Focus
-    Identify all documentation that needs creating or updating as a result
-    of this plan. Do NOT write the documentation. Produce a checklist of
-    what needs to change.
+    1. Journey coherence: Do the planned deliverables form a coherent user
+       experience? Are there gaps or contradictions in the user-facing flow?
+    2. Cognitive load: Will the planned changes increase complexity for users?
+       Are there simpler alternatives that achieve the same goal?
+    3. Simplification: Can any planned deliverables be combined, removed, or
+       simplified without losing value?
+    4. User jobs-to-be-done: Does each user-facing task serve a real user need,
+       or is it feature creep?
 
-    ## Checklist Format
-    Write the checklist to: $SCRATCH_DIR/{slug}/phase3.5-docs-checklist.md
+    ## Instructions
+    Return exactly one verdict:
+    - APPROVE: No concerns from your domain.
+    - ADVISE: <list specific non-blocking warnings>
+    - BLOCK: <describe the blocking issue and what must change>
 
-    Use this format:
+    Write your verdict to: $SCRATCH_DIR/{slug}/phase3.5-ux-strategy-minion.md
 
-    ```markdown
-    # Documentation Impact Checklist
-
-    Source: Phase 3.5 architecture review
-    Plan: $SCRATCH_DIR/{slug}/phase3-synthesis.md
-
-    ## Items
-
-    - [ ] **[software-docs]** <what to update>
-      Scope: <what specifically changes, one line>
-      Files: <exact file path(s) affected>
-      Priority: MUST | SHOULD | COULD
-
-    - [ ] **[user-docs]** <what to update>
-      Scope: <what specifically changes, one line>
-      Files: <exact file path(s) affected>
-      Priority: MUST | SHOULD | COULD
-    ```
-
-    Rules:
-    - Owner tag: [software-docs] or [user-docs] to pre-route to Phase 8 agent
-    - One line per item for the description
-    - Scope: one line of intent, not a paragraph
-    - Priority: MUST (required for correctness), SHOULD (improves completeness),
-      COULD (nice to have)
-    - Max 10 items. If you identify more than 10, the plan has documentation-heavy
-      changes and the full analysis belongs in Phase 8.
-
-    ## Verdict
-    After writing the checklist, return your verdict:
-    - APPROVE: Plan has adequate documentation coverage in its task prompts
-    - ADVISE: Documentation gaps exist but are addressable in Phase 8
-      (include the gaps as checklist items)
-    - Do NOT use BLOCK for documentation concerns. Gaps are addressed through
-      the checklist in Phase 8. Only BLOCK if the plan fundamentally cannot be
-      documented (no clear deliverables, contradictory outputs, etc.) -- this
-      should be extremely rare.
-
-    Write your verdict to: $SCRATCH_DIR/{slug}/phase3.5-software-docs-minion.md
-
-    Be concise. Focus on identifying WHAT needs documenting, not writing docs.
+    Be concise. Only flag issues within your domain expertise.
 ```
 
 ### Process Verdicts
@@ -1580,16 +1547,11 @@ not part of the default flow.
 
 #### Phase 8: Documentation (Conditional)
 
-1. **Merge documentation checklist** from Phase 3.5 and execution outcomes:
+1. **Generate documentation checklist** from execution outcomes:
 
-   a. **Read Phase 3.5 checklist**: If `$SCRATCH_DIR/{slug}/phase3.5-docs-checklist.md`
-      exists, read it as the starting checklist. These items were identified
-      from the plan before execution and have owner tags ([software-docs] or
-      [user-docs]), scope, file paths, and priority already assigned.
-
-   b. **Supplement with execution outcomes**: Evaluate execution outcomes
-      against the outcome-action table below. For each outcome, check whether
-      the Phase 3.5 checklist already covers it. If not, add a new item.
+   Evaluate execution outcomes against the outcome-action table below. For
+   each matching outcome, add a checklist item with owner tag, action, and
+   priority.
 
       | Outcome | Action | Owner |
       |---------|--------|-------|
@@ -1603,12 +1565,14 @@ not part of the default flow.
       | New project (git init) | Full README (blocking) | software-docs + product-marketing |
       | Breaking change | Migration guide | user-docs-minion |
       | Config changed | Config reference | software-docs-minion |
+      | Spec/config files modified | Scan for derivative docs referencing changed sections | software-docs-minion |
 
-   c. **Flag divergence**: For items in the Phase 3.5 checklist that do not
-      correspond to any execution outcome, mark them as: "Planned but not
-      implemented -- verify if still needed."
+   Priority assignment:
+   - MUST: gate-approved decisions, new projects, breaking changes
+   - SHOULD: user-facing features, new APIs
+   - COULD: config refs, derivative docs
 
-   Write the merged checklist to: `$SCRATCH_DIR/{slug}/phase8-checklist.md`
+   Write the checklist to: `$SCRATCH_DIR/{slug}/phase8-checklist.md`
 
 2. If checklist is empty, skip entirely.
 
@@ -1618,9 +1582,8 @@ not part of the default flow.
    Each agent's prompt should reference:
    - Work order: `$SCRATCH_DIR/{slug}/phase8-checklist.md`
    - Items tagged with their owner ([software-docs] or [user-docs])
-   - Note: Items from Phase 3.5 are pre-analyzed with scope and file paths.
-     Execution-derived items may need the agent to inspect changed files for
-     full scope.
+   - Note: Checklist items are derived from execution outcomes. Agents should
+     inspect changed files for full scope when file paths are not specified.
 
    **Before spawning each documentation agent**: Write the constructed prompt to
    `$SCRATCH_DIR/{slug}/phase8-{agent-name}-prompt.md`. Apply secret sanitization

@@ -510,7 +510,7 @@ them into a final execution plan.
 <for each of the 6 mandatory dimensions, state which task covers it or why it's excluded>
 
 ### Architecture Review Agents
-- **Mandatory** (5): security-minion, test-minion, software-docs-minion, lucy, margo
+- **Mandatory** (5): security-minion, test-minion, ux-strategy-minion, lucy, margo
 - **Discretionary picks**: <for each discretionary reviewer selected, list: reviewer name + one-line rationale grounded in specific plan content; reference task numbers>
 - **Not selected**: <remaining discretionary pool members not selected, comma-separated>
 
@@ -565,7 +565,7 @@ reviewers are needed. Apply these rules when producing that field:
 |----------|---------|-----------|
 | **security-minion** | ALWAYS | Security violations in a plan are invisible until exploited. Mandatory review is the only reliable mitigation. |
 | **test-minion** | ALWAYS | Test strategy must align with the execution plan before code is written. Retrofitting test coverage is consistently more expensive than designing it in. |
-| **software-docs-minion** | ALWAYS | Produces documentation impact checklist consumed by Phase 8. Role is scoped to impact assessment, not full documentation review. |
+| **ux-strategy-minion** | ALWAYS | Every plan needs journey coherence review and simplification audit before execution. |
 | **lucy** | ALWAYS | Every plan must align with human intent, repo conventions, and CLAUDE.md compliance. Intent drift is the #1 failure mode in multi-phase orchestration. |
 | **margo** | ALWAYS | Every plan must pass YAGNI/KISS/simplicity enforcement. Can BLOCK on: unnecessary complexity, over-engineering, scope creep. |
 
@@ -573,7 +573,6 @@ reviewers are needed. Apply these rules when producing that field:
 
 | Reviewer | Domain Signal | Rationale |
 |----------|--------------|-----------|
-| **ux-strategy-minion** | Plan includes user-facing workflow changes, journey modifications, or cognitive load implications | Journey coherence and simplification review |
 | **ux-design-minion** | Plan includes tasks producing UI components, visual layouts, or interaction patterns | Accessibility patterns and visual hierarchy review |
 | **accessibility-minion** | Plan includes tasks producing web-facing HTML/UI that end users interact with | WCAG compliance must be reviewed before UI code is written |
 | **sitespeed-minion** | Plan includes tasks producing web-facing runtime code (pages, APIs serving browsers, assets) | Performance budgets must be established before implementation |
@@ -629,13 +628,6 @@ ISSUE: <description of the blocking concern>
 RISK: <what happens if this is not addressed>
 SUGGESTION: <how the plan could be revised to resolve this>
 ```
-
-**software-docs-minion exception**: In Phase 3.5, software-docs-minion
-produces a documentation impact checklist (written to scratch) instead of a
-standard domain review. Its verdict reflects whether the plan has adequate
-documentation coverage -- ADVISE for gaps, APPROVE when coverage is
-sufficient. software-docs-minion should not BLOCK for documentation concerns;
-gaps are addressed through the checklist in Phase 8.
 
 ### ARCHITECTURE.md (Optional)
 
