@@ -406,6 +406,21 @@ These decisions were made during the nefario v2.0 update, extending orchestratio
 
 ---
 
+## Logic-Bearing Markdown (Decision 30)
+
+### Decision 30: Logic-Bearing Markdown Classification
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-02-13 |
+| **Choice** | Classify markdown files as logic-bearing or documentation-only based on filename conventions. AGENT.md, SKILL.md, RESEARCH.md, and CLAUDE.md are logic-bearing. README.md, docs/*.md, and changelogs are documentation-only. Logic-bearing files are treated as code for Phase 5 review and team assembly purposes. |
+| **Alternatives rejected** | (1) Extension-based classification (.md = documentation). Rejected because system prompts and orchestration rules use .md extension but are functionally code. (2) Content-analysis heuristics (scan for YAML frontmatter, prompt patterns). Rejected because it is fragile, adds prompt complexity, and produces inconsistent results across sessions. |
+| **Rationale** | In an LLM agent system, system prompts ARE the code. AGENT.md files control agent behavior, SKILL.md files control orchestration workflow, RESEARCH.md informs prompt content. Extension-based classification caused Phase 5 code review to be skipped for these files and ai-modeling-minion to be excluded from team assembly. Filename-based classification is deterministic, compact, and matches the project's existing naming conventions. |
+| **Consequences** | Phase 5 code review now runs for changes to logic-bearing markdown. ai-modeling-minion is included in team assembly for agent/orchestration file modifications. Classification boundary is documented at the Phase 5 skip conditional in SKILL.md. The delegation table in nefario/AGENT.md diverges from the-plan.md (flagged for human owner reconciliation). |
+
+---
+
 ## Deferred
 
 - Nefario-gated complexity classification -- revisit after 20+ full-process runs.
