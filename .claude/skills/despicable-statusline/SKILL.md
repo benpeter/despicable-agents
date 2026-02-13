@@ -100,6 +100,21 @@ The nefario status appears during /nefario orchestration sessions.
 Outside orchestration, it is hidden.
 ```
 
+## Known Limitations
+
+**Parallel session status bleed**: The status line identifies the active
+nefario session via a shared `/tmp/claude-session-id` file. If two Claude
+Code sessions run simultaneously, the status line may briefly show the
+orchestration phase from the other session. This is rare in practice —
+it only occurs when both sessions are actively running `/nefario` at the
+same time — but it can be confusing when it happens.
+
+The root cause is tracked in [#74](https://github.com/benpeter/despicable-agents/issues/74).
+A proper fix (e.g., per-session env vars via `SessionStart` hooks) would
+be worthwhile, but all known approaches add meaningful complexity to the
+skill and its deployment. For now, the shared-file approach stays as the
+simplest thing that works for the common single-session case.
+
 ## Important Notes
 
 - Do NOT ask for confirmation before modifying. Invocation is consent.
