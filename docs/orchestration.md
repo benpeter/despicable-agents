@@ -110,10 +110,11 @@ At wrap-up, any skipped gates are re-presented. A final report summarizes delive
 
 Phases 5-8 run between execution completion and wrap-up using the **dark kitchen** pattern: they execute silently, writing all findings to scratch files. The user sees a single status line when verification starts and a consolidated summary in the wrap-up report. Only unresolvable BLOCKs (after 2 fix iterations) surface to the user.
 
-At each approval gate, after selecting "Approve", a follow-up prompt offers
-granular control: "Run all" (default), "Skip docs" (Phase 8), "Skip tests"
-(Phase 6), or "Skip review" (Phase 5). Freeform flags (--skip-docs,
---skip-tests, --skip-review, --skip-post) can skip multiple phases at once.
+At each approval gate, after selecting "Approve", a multi-select follow-up
+lets users check which phases to skip: "Skip docs" (Phase 8), "Skip tests"
+(Phase 6), or "Skip review" (Phase 5). Confirm with none selected to run
+all. Freeform flags (--skip-docs, --skip-tests, --skip-review, --skip-post)
+also accepted.
 Phase 7 (deployment) is opt-in.
 
 ### Phase 5: Code Review
@@ -470,8 +471,9 @@ Target 12-18 lines for mid-execution gates (soft ceiling; clarity wins over brev
 
 Mid-execution gates present four options via structured prompt:
 
-- **Approve** -- Gate clears. A follow-up prompt offers "Run all" (default),
-  "Skip docs", "Skip tests", or "Skip review". Freeform flags for multi-skip.
+- **Approve** -- Gate clears. A multi-select follow-up lets users check
+  phases to skip ("Skip docs", "Skip tests", "Skip review"; none selected
+  = run all). Freeform flags also accepted.
   Downstream tasks are unblocked.
 - **Request changes** -- A follow-up message asks what changes are needed. The producing agent revises. Capped at 2 revision iterations. If still unsatisfied, the current state is presented with a summary of what was requested, changed, and unresolved. The user then decides to approve as-is, reject, or take over manually.
 - **Reject** -- A confirmation prompt shows downstream impact with dependent task descriptions (not just titles): "Rejecting this will also drop Task N: title -- deliverable description." The prompt also reminds the user that "Request changes" is available as a less drastic alternative. After confirmation, the rejected task and all dependents are removed from the plan.
