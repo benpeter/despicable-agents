@@ -2,35 +2,43 @@
 
 [![98% Vibe_Coded](https://img.shields.io/badge/98%25-Vibe_Coded-ff69b4?style=for-the-badge&logo=claude&logoColor=white)](https://github.com/trieloff/vibe-coded-badge-action)
 
-A team of domain specialists, an orchestrator that coordinates them, and a governance layer that reviews every plan before execution -- for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
+Structured orchestration, domain specialists, and governance gates for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Built on [Agent Teams](https://code.claude.com/docs/en/agent-teams). 27 agents, 2 skills, available in every session after a one-time install.
 
-This project explores [Agent Teams](https://code.claude.com/docs/en/agent-teams), a research preview feature [released on February 5, 2026](https://www.anthropic.com/news/claude-opus-4-6), that enables multiple Claude Code sessions to coordinate autonomously on complex tasks.
+[Web Resource Ledger](https://github.com/benpeter/web-resource-ledger) is a full project evolving under this framework.
 
-[Web Resource Ledger](https://github.com/benpeter/web-resource-ledger) is an illustration of a full project evolving using this framework.
+## What You Get
+
+- **Phased orchestration** -- nine structured phases from meta-planning through parallel execution to post-execution verification (code review, test runs, docs updates). User approval gates at every phase transition so you stay in control.
+- **Research-backed domain experts** -- 27 agents built from domain research, each with strict boundaries so delegation is unambiguous. Security questions go to security-minion, not a generalist. OAuth goes to oauth-minion, not the API designer.
+- **Built-in governance and quality gates** -- five mandatory reviewers (security-minion, test-minion, software-docs-minion, lucy, margo) examine every plan before code runs. Post-execution code review and test execution verify the output.
+- **Goodies** -- execution reports committed to repo history. `/despicable-prompter` skill turns a rough idea or `#42` issue reference into a structured brief. Install once, available everywhere via symlinks. `/despicable-lab` for version-tracked agent maintenance.
 
 ## Examples
 
 Single-domain work goes to the specialist. Multi-domain work goes to `/nefario`.
 
-In any Claude Code session:
-
 ```
 # Need to validate your auth flow?
 @security-minion Review this auth flow for vulnerabilities
-# → threat model, specific findings, remediation steps
+# -> threat model, specific findings, remediation steps
 
 # Leaking memory under load?
 @debugger-minion This function leaks memory under load -- find the root cause
-# → root cause analysis, fix, verification approach
+# -> root cause analysis, fix, verification approach
 
 # Multi-domain task? Nefario plans across specialists and coordinates execution.
 /nefario Build an OAuth-secured API with tests and user docs
-# → orchestrated plan across api-design, oauth, test, and user-docs specialists
-#   reviewed by governance before execution
+# -> orchestrated plan across api-design, oauth, test, and user-docs specialists
+#    reviewed by governance before execution
 
 # Got a GitHub issue? Point nefario at it -- issue in, PR out.
 /nefario #42
-# → orchestrated plan, governance review, parallel execution, PR with "Resolves #42"
+# -> orchestrated plan, governance review, parallel execution, PR with "Resolves #42"
+
+# Rough idea? Turn it into a structured brief first.
+/despicable-prompter Add rate limiting with monitoring
+/despicable-prompter #42
+# -> structured brief with outcomes, success criteria, and scope
 ```
 
 ## Install
@@ -42,7 +50,7 @@ git clone https://github.com/benpeter/despicable-agents.git
 cd despicable-agents && ./install.sh
 ```
 
-Installs 27 agents and 2 skills (`/nefario`, `/despicable-prompter`) to `~/.claude/`. Available in every Claude Code session. To remove: `./install.sh uninstall`.
+Symlinks 27 agents and 2 skills (`/nefario`, `/despicable-prompter`) to `~/.claude/`. Available in every Claude Code session. To remove: `./install.sh uninstall`.
 
 ### Using on Other Projects
 
@@ -50,31 +58,20 @@ After install, agents and skills are available in any Claude Code session regard
 
 Nefario automatically discovers and delegates to project-local skills (`.skills/`, `.claude/skills/`). See [External Skill Integration](docs/external-skills.md) for details.
 
-## Try It
-
-Agents are invoked with `@name`. The `/nefario` skill coordinates multiple agents for complex tasks.
-
-Start with a single specialist:
-
-```
-@security-minion Check this endpoint for injection vulnerabilities
-```
-
-The security specialist returns a structured review: threat model, findings by severity, and remediation guidance.
-
-For work spanning multiple domains, use the orchestrator:
-
-```
-/nefario Add rate limiting to the API with monitoring and updated docs
-```
-
-Nefario consults the relevant specialists, synthesizes a plan, runs it through governance review (intent alignment, simplicity, security, testing), then executes across agents in parallel.
-
 ## How It Works
 
-**Gru** sets technology direction. **Nefario** orchestrates complex tasks through a nine-phase process -- from planning through execution to post-execution verification. **Lucy** and **Margo** are governance: every plan is reviewed for intent alignment and over-engineering before execution. **23 minions** are the domain specialists that do the work.
+You describe a task. Nefario (orchestrator) figures out which specialists to consult, gathers their domain input in parallel, and synthesizes an execution plan. Five mandatory reviewers -- security-minion, test-minion, software-docs-minion, Lucy (intent alignment), and Margo (simplicity) -- examine the plan before any code runs. You approve the plan. Specialists execute in parallel where possible, with approval gates at high-impact decisions. After execution, code review and test runs verify the output. You get a wrap-up summary and an execution report committed to the repo.
 
-Six mandatory reviewers check every plan. Plans that drift from what you asked for are caught. Over-engineering is flagged. See [Using Nefario](docs/using-nefario.md) for the full orchestration guide.
+The four named roles:
+
+- **Gru** (AI visionary) -- technology radar, strategic direction
+- **Nefario** (orchestrator) -- task decomposition, delegation, coordination
+- **Lucy** (governance) -- intent alignment, repo conventions, consistency
+- **Margo** (governance) -- simplicity enforcement, YAGNI/KISS
+
+Plus 23 minions across 7 domain groups doing the specialist work.
+
+See [Using Nefario](docs/using-nefario.md) for the full orchestration guide.
 
 ## Agents
 
@@ -132,7 +129,7 @@ See [Agent Catalog](docs/agent-catalog.md) for per-agent details.
 - **Claude Code dependency.** Agents are AGENT.md files consumed by Claude Code's agent loading. They are not standalone tools.
 - **No subagent nesting.** Claude Code does not allow subagents to spawn other subagents. Only the main session dispatches to agents.
 - **Context window pressure.** Complex orchestrations with many specialists can approach context limits. The project uses temporary scratch files and compaction checkpoints to manage context, but very large plans may require manual intervention.
-- **mostly vibe-coded.** The research is real and the architecture is deliberate, the prompt prose was generated with AI assistance and refined iteratively.
+- **AI-assisted prompt authoring.** The research is real and the architecture is deliberate, the prompt prose was generated with AI assistance and refined iteratively.
 
 ## Contributing
 
