@@ -178,15 +178,15 @@ single status line (e.g., "Waiting for 3 agents...") to confirm progress.
 At each phase boundary, print a single-line marker:
 
 ```
-**--- Phase N: Name ---**
+**--- ⚗️ Phase N: Name ---**
 ```
 
 Phase markers by phase:
-- Phase 1: `**--- Phase 1: Meta-Plan ---**`
-- Phase 2: `**--- Phase 2: Specialist Planning (N agents) ---**`
-- Phase 3: `**--- Phase 3: Synthesis ---**`
-- Phase 3.5: `**--- Phase 3.5: Architecture Review (N reviewers) ---**`
-- Phase 4: `**--- Phase 4: Execution (N tasks, N gates) ---**`
+- Phase 1: `**--- ⚗️ Phase 1: Meta-Plan ---**`
+- Phase 2: `**--- ⚗️ Phase 2: Specialist Planning (N agents) ---**`
+- Phase 3: `**--- ⚗️ Phase 3: Synthesis ---**`
+- Phase 3.5: `**--- ⚗️ Phase 3.5: Architecture Review (N reviewers) ---**`
+- Phase 4: `**--- ⚗️ Phase 4: Execution (N tasks, N gates) ---**`
 - Phase 5-8: No individual markers. The existing CONDENSE line
   (`Verifying: ...`) serves as the combined entry marker for post-execution
   phases. The dark kitchen pattern is preserved.
@@ -207,7 +207,7 @@ Orchestration messages use three visual weights:
 | Weight | Pattern | Use |
 |--------|---------|-----|
 | **Decision** | `ALL-CAPS LABEL:` header + structured content | Approval gates, escalations -- requires user action |
-| **Orientation** | `**--- Phase N: Name ---**` | Phase transitions -- glance and continue |
+| **Orientation** | `**--- ⚗️ Phase N: Name ---**` | Phase transitions -- glance and continue |
 | **Advisory** | `>` blockquote with bold label | Compaction checkpoints -- optional user action |
 | **Inline** | Plain text, no framing | CONDENSE lines, heartbeats, informational notes |
 
@@ -360,11 +360,12 @@ Detect the report directory (see Path Resolution above). Resolve both paths
 before proceeding. Both resolved paths must be included in CONDENSE checkpoints.
 
 Extract a status summary from the first line of the user's task description.
-Truncate to 40 characters; if truncated, append "..." (prefix ~16 chars +
-" | " 3 chars + 40 + 3 = ~62 chars max). Write the sentinel file:
+Truncate to 40 characters; if truncated, append "..." (prefix ~18 chars +
+" | " 3 chars + 40 + 3 = ~64 chars max). Write the sentinel file:
 ```sh
 SID=$(cat /tmp/claude-session-id 2>/dev/null)
-echo "P1 Meta-Plan | $summary" > /tmp/nefario-status-$SID
+# Status prefix: ⚗︎ = U+2697 U+FE0E (text variant for monospace alignment)
+echo "⚗︎ P1 Meta-Plan | $summary" > /tmp/nefario-status-$SID
 chmod 600 /tmp/nefario-status-$SID   # Status file: read from custom statusline scripts
 ```
 Use this summary text in Task `description` fields and TaskCreate `activeForm`
@@ -439,7 +440,7 @@ applies only in META-PLAN mode (the default).
 **Presentation format** (8-12 lines, compact):
 
 ```
-TEAM: <1-sentence task summary>
+⚗️ TEAM: <1-sentence task summary>
 Specialists: N selected | N considered, not selected
 
   SELECTED:
@@ -577,7 +578,7 @@ scope.
 Update the status file before entering Phase 2:
 ```sh
 SID=$(cat /tmp/claude-session-id 2>/dev/null)
-echo "P2 Planning | $summary" > /tmp/nefario-status-$SID
+echo "⚗︎ P2 Planning | $summary" > /tmp/nefario-status-$SID
 ```
 
 ## Phase 2: Specialist Planning
@@ -651,7 +652,7 @@ include their contributions in Phase 3.
 Update the status file before entering Phase 3:
 ```sh
 SID=$(cat /tmp/claude-session-id 2>/dev/null)
-echo "P3 Synthesis | $summary" > /tmp/nefario-status-$SID
+echo "⚗︎ P3 Synthesis | $summary" > /tmp/nefario-status-$SID
 ```
 
 ## Phase 3: Synthesis
@@ -727,7 +728,7 @@ Then proceed to Phase 3.5. Do NOT re-prompt at subsequent boundaries.
 Update the status file before entering Phase 3.5:
 ```sh
 SID=$(cat /tmp/claude-session-id 2>/dev/null)
-echo "P3.5 Review | $summary" > /tmp/nefario-status-$SID
+echo "⚗︎ P3.5 Review | $summary" > /tmp/nefario-status-$SID
 ```
 
 ## Phase 3.5: Architecture Review
@@ -781,7 +782,7 @@ skip the gate.
 **Presentation format** (target 6-10 lines):
 
 ```
-REVIEWERS: <1-sentence plan summary>
+⚗️ REVIEWERS: <1-sentence plan summary>
 Mandatory: security, test, software-docs, lucy, margo (always review)
 
   DISCRETIONARY (nefario recommends):
@@ -1020,7 +1021,7 @@ Follow these steps exactly. **Global cap: 2 revision rounds total.**
      for the next revision round.
    - Any BLOCK and revision rounds exhausted (2 used): Print the structured brief:
      ```
-     PLAN IMPASSE: <one-sentence description of the disagreement>
+     ⚗️ PLAN IMPASSE: <one-sentence description of the disagreement>
      Revision rounds: 2 of 2 exhausted
 
      POSITIONS:
@@ -1068,7 +1069,7 @@ what they asked for; they need to spot surprises and decide whether to proceed.
 
 **Instant orientation** (one line + stats):
 ```
-EXECUTION PLAN: <1-sentence goal summary>
+⚗️ EXECUTION PLAN: <1-sentence goal summary>
 REQUEST: "<truncated original prompt, max 80 chars>..."
 Tasks: N | Gates: N | Advisories incorporated: N
 Working dir: $SCRATCH_DIR/{slug}/
@@ -1181,7 +1182,7 @@ After "Approve", proceed to Phase 4 execution.
 Update the status file before entering Phase 4:
 ```sh
 SID=$(cat /tmp/claude-session-id 2>/dev/null)
-echo "P4 Execution | $summary" > /tmp/nefario-status-$SID
+echo "⚗︎ P4 Execution | $summary" > /tmp/nefario-status-$SID
 ```
 
 ## Phase 4: Execution
@@ -1283,7 +1284,7 @@ A batch contains all tasks that can run before the next gate.
    First, print the decision brief as normal conversation output:
 
    ```
-   APPROVAL GATE: <Task title>
+   ⚗️ APPROVAL GATE: <Task title>
    Agent: <who produced this> | Blocked tasks: <what's waiting>
 
    DECISION: <one-sentence summary of the deliverable/decision>
@@ -1311,7 +1312,7 @@ A batch contains all tasks that can run before the next gate.
    Before presenting the gate, update the status file to reflect the gate state:
    ```sh
    SID=$(cat /tmp/claude-session-id 2>/dev/null)
-   echo "P4 Gate | $task_title" > /tmp/nefario-status-$SID
+   echo "⚗︎ P4 Gate | $task_title" > /tmp/nefario-status-$SID
    ```
    (where `$task_title` is the task title, truncated to 40 characters.)
 
@@ -1328,7 +1329,7 @@ A batch contains all tasks that can run before the next gate.
    status file to execution state:
    ```sh
    SID=$(cat /tmp/claude-session-id 2>/dev/null)
-   echo "P4 Execution | $summary" > /tmp/nefario-status-$SID
+   echo "⚗︎ P4 Execution | $summary" > /tmp/nefario-status-$SID
    ```
    - **"Approve"**: Present a FOLLOW-UP AskUserQuestion for post-execution options:
      - `header`: "Post-exec"
@@ -1496,7 +1497,7 @@ Task:
 - Security-severity BLOCKs (injection, auth bypass, secret exposure, crypto):
   surface to user before auto-fix. Print the structured brief:
   ```
-  SECURITY FINDING: <title>
+  ⚗️ SECURITY FINDING: <title>
   Severity: CRITICAL | HIGH | MEDIUM | File: <path>:<line-range>
   Finding: <one-sentence description>
   Proposed fix: <one-sentence description of what auto-fix will do>
@@ -1513,7 +1514,7 @@ Task:
     4. label: "Accept risk", description: "Proceed without fixing. Document as known risk."
 - After 2 rounds unresolved: escalate to user. Print the structured brief:
   ```
-  VERIFICATION ISSUE: <title>
+  ⚗️ VERIFICATION ISSUE: <title>
   Phase: Code Review | Agent: <reviewer> | Severity: HIGH | MEDIUM | LOW
   Finding: <one-sentence description>
   Producing agent: <who wrote the code> | File: <path>:<line-range>
