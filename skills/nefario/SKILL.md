@@ -143,9 +143,9 @@ The orchestrator MUST minimize chat output. The user should only see:
 - Compaction checkpoints (at phase boundaries)
 - Unresolvable BLOCK escalation from post-execution phases (after 2-round cap)
 - Security-severity BLOCK escalation (before auto-fix, max 5 lines)
+- Phase transition announcements (one-line markers at phase boundaries)
 
 **NEVER SHOW** (suppress entirely):
-- Phase transition announcements ("Starting Phase 2...")
 - Echoing prompts being sent to subagents
 - Agent spawning narration ("Spawning security-minion...")
 - Task status polling output
@@ -173,10 +173,58 @@ The orchestrator MUST minimize chat output. The user should only see:
 Heartbeat: for phases lasting more than 60 seconds with no output, print a
 single status line (e.g., "Waiting for 3 agents...") to confirm progress.
 
+### Phase Announcements
+
+At each phase boundary, print a single-line marker:
+
+```
+**--- Phase N: Name ---**
+```
+
+Phase markers by phase:
+- Phase 1: `**--- Phase 1: Meta-Plan ---**`
+- Phase 2: `**--- Phase 2: Specialist Planning (N agents) ---**`
+- Phase 3: `**--- Phase 3: Synthesis ---**`
+- Phase 3.5: `**--- Phase 3.5: Architecture Review (N reviewers) ---**`
+- Phase 4: `**--- Phase 4: Execution (N tasks, N gates) ---**`
+- Phase 5-8: No individual markers. The existing CONDENSE line
+  (`Verifying: ...`) serves as the combined entry marker for post-execution
+  phases. The dark kitchen pattern is preserved.
+
+Rules:
+- One line maximum. No multi-line frames.
+- Parenthetical context is optional -- include agent/task/gate counts where
+  they set user expectations.
+- Phase markers appear at the START of each phase, before any other phase
+  output.
+- Do not use "Starting..." or "Entering..." verbs. The marker itself implies
+  transition.
+
+### Visual Hierarchy
+
+Orchestration messages use three visual weights:
+
+| Weight | Pattern | Use |
+|--------|---------|-----|
+| **Decision** | `ALL-CAPS LABEL:` header + structured content | Approval gates, escalations -- requires user action |
+| **Orientation** | `**--- Phase N: Name ---**` | Phase transitions -- glance and continue |
+| **Advisory** | `>` blockquote with bold label | Compaction checkpoints -- optional user action |
+| **Inline** | Plain text, no framing | CONDENSE lines, heartbeats, informational notes |
+
+Decision blocks are the heaviest: multi-line with structured fields. Orientation
+is a single bold line. Advisory uses blockquote indentation. Inline flows without
+interruption. This hierarchy maps to attention demands: the heavier the visual
+signal, the more attention needed.
+
 ## Path Resolution
 
 At Phase 1 start, resolve all session paths. These paths are used throughout
 the orchestration and must be included in every CONDENSE checkpoint.
+
+**Path display rule**: All file references shown to the user must use the
+resolved absolute path. Never abbreviate, elide, or use template variables
+in user-facing output. Users copy-paste these paths into `cat`, `less`, or
+their editor -- shortened or templated paths break that workflow.
 
 ### Scratch Directory (secure creation, mandatory)
 
@@ -402,7 +450,7 @@ Specialists: N selected | N considered, not selected
   ALSO AVAILABLE (not selected):
     ai-modeling-minion, margo, software-docs-minion, security-minion, ...
 
-Full meta-plan: $SCRATCH_DIR/{slug}/phase1-metaplan.md
+Details: $SCRATCH_DIR/{slug}/phase1-metaplan.md  (planning questions, cross-cutting checklist)
 ```
 
 Format rules:
@@ -648,17 +696,12 @@ count, execution order) in session context. **Proceed to Phase 3.5
 
 After writing the synthesis to the scratch file, present a compaction prompt:
 
-```
----
-COMPACT: Phase 3 complete. Specialist details are now in the synthesis.
-
-Run: /compact focus="Preserve: current phase (3.5 review next), synthesized execution plan, inline agent summaries, task list, approval gates, team name, branch name, scratch directory path. Discard: individual specialist contributions from Phase 2."
-
-After compaction, type `continue` to resume at Phase 3.5 (Architecture Review).
-
-Skipping is fine if context is short. Risk: auto-compaction in later phases may lose orchestration state.
----
-```
+> **COMPACT** -- Phase 3 complete. Specialist details are now in the synthesis.
+>
+> Run: `/compact focus="Preserve: current phase (3.5 review next), synthesized execution plan, inline agent summaries, task list, approval gates, team name, branch name, scratch directory path. Discard: individual specialist contributions from Phase 2."`
+>
+> After compaction, type `continue` to resume at Phase 3.5 (Architecture Review).
+> Skipping is fine if context is short. Risk: auto-compaction in later phases may lose orchestration state.
 
 If the user runs `/compact`, wait for them to say "continue" then proceed.
 If the user types anything else (or says "skip"/"continue"), print:
@@ -726,7 +769,7 @@ Mandatory: security, test, software-docs, lucy, margo (always review)
   NOT SELECTED from pool:
     <remaining pool members, comma-separated>
 
-Full plan: $SCRATCH_DIR/{slug}/phase3-synthesis.md
+Details: $SCRATCH_DIR/{slug}/phase3-synthesis.md  (task prompts, agent assignments, dependencies)
 ```
 
 Format rules:
@@ -967,7 +1010,7 @@ Follow these steps exactly. **Global cap: 2 revision rounds total.**
 
      CONFLICT ANALYSIS: <nefario's synthesis of why positions are incompatible>
 
-     Full context: $SCRATCH_DIR/{slug}/phase3.5-{reviewer}.md
+     Details: $SCRATCH_DIR/{slug}/phase3.5-{reviewer}.md  (reviewer positions, revision history)
      ```
 
      Then present using AskUserQuestion:
@@ -983,17 +1026,12 @@ Follow these steps exactly. **Global cap: 2 revision rounds total.**
 
 After processing all review verdicts, present a compaction prompt:
 
-```
----
-COMPACT: Phase 3.5 complete. Review verdicts are folded into the plan.
-
-Run: /compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, inline agent summaries, gate decision briefs, task list with dependencies, approval gates, team name, branch name, scratch directory path. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."
-
-After compaction, type `continue` to resume at Phase 4 (Execution).
-
-Skipping is fine if context is short. Risk: auto-compaction during execution may lose task/agent tracking.
----
-```
+> **COMPACT** -- Phase 3.5 complete. Review verdicts are folded into the plan.
+>
+> Run: `/compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, inline agent summaries, gate decision briefs, task list with dependencies, approval gates, team name, branch name, scratch directory path. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."`
+>
+> After compaction, type `continue` to resume at Phase 4 (Execution).
+> Skipping is fine if context is short. Risk: auto-compaction during execution may lose task/agent tracking.
 
 Same response handling: if user runs `/compact`, wait for "continue". If
 anything else, print the continuation message and proceed. Do NOT re-prompt.
@@ -1054,7 +1092,7 @@ Advisory principles:
 - Two-field format (CHANGE, WHY) makes each advisory self-contained
 - Maximum 3 lines per advisory. If more complex, add:
   ```
-  Details: $SCRATCH_DIR/{slug}/phase3.5-{reviewer}.md
+  Details: $SCRATCH_DIR/{slug}/phase3.5-{reviewer}.md  (reviewer analysis and recommendations)
   Prompt: $SCRATCH_DIR/{slug}/phase3.5-{reviewer}-prompt.md
   ```
   Include the `Prompt:` reference only when the advisory already includes a
@@ -1082,7 +1120,7 @@ REVIEW: N APPROVE, N ADVISE, N BLOCK
 
 **Full plan reference**:
 ```
-FULL PLAN: $SCRATCH_DIR/{slug}/phase3-synthesis.md (task prompts, agent assignments, dependencies)
+Details: $SCRATCH_DIR/{slug}/phase3-synthesis.md  (task prompts, agent assignments, dependencies)
 ```
 
 **Line budget guidance**: Target 25-40 lines for the complete gate output
