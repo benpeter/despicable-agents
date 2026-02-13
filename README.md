@@ -68,7 +68,7 @@ Nefario automatically discovers and delegates to project-local skills (`.skills/
 
 ### Prerequisites
 
-Tested on macOS and Linux. Windows has not been tested -- you may or may not get this to work using [WSL](https://github.com/benpeter/despicable-agents/issues/103).
+Tested on macOS and Linux. Windows has not been tested (see #103) -- if you're successful on Windows with WSL or otherwise, insights are appreciated.
 
 The install script needs only `git`. The commit workflow hooks additionally need **bash 4+** and **jq** -- see [Prerequisites](docs/prerequisites.md) for details, or paste the [quick setup prompt](docs/prerequisites.md#quick-setup) into Claude Code.
 
