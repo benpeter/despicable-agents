@@ -194,7 +194,7 @@ When nefario is not running, the status bar shows just the directory, model, and
 
 ### How It Works
 
-The status line command extracts `session_id` from the JSON that Claude Code pipes to it, and writes it to `/tmp/claude-session-id` so the nefario skill can discover it. When nefario starts orchestrating, it reads the session ID from that file and writes the current phase and task summary to `/tmp/nefario-status-<session-id>`. The file is updated at each phase transition so the status line always reflects the current phase. The status line command checks for this file and appends its contents. When orchestration finishes, nefario removes the file.
+The nefario skill registers a `SessionStart` hook that captures the session ID and makes it available as the `CLAUDE_SESSION_ID` environment variable. When nefario starts orchestrating, it writes the current phase and task summary to `/tmp/nefario-status-<session-id>`. The file is updated at each phase transition. The status line command extracts `session_id` from the JSON that Claude Code pipes to it, checks for the nefario status file, and appends its contents. When orchestration finishes, nefario removes the file. Each session has its own status file, so concurrent sessions do not interfere.
 
 <details>
 <summary>Manual configuration (alternative)</summary>
@@ -205,7 +205,7 @@ If you prefer manual control or the skill cannot auto-modify your config, add th
 {
   "statusLine": {
     "type": "command",
-    "command": "input=$(cat); dir=$(echo \"$input\" | jq -r '.workspace.current_dir // \"?\"'); model=$(echo \"$input\" | jq -r '.model.display_name // \"?\"'); used=$(echo \"$input\" | jq -r '.context_window.used_percentage // \"\"'); sid=$(echo \"$input\" | jq -r '.session_id // \"\"'); [ -n \"$sid\" ] && echo \"$sid\" > /tmp/claude-session-id; result=\"$dir | $model\"; if [ -n \"$used\" ]; then result=\"$result | Context: $(printf '%.0f' \"$used\")%\"; fi; f=\"/tmp/nefario-status-$sid\"; [ -n \"$sid\" ] && [ -f \"$f\" ] && ns=$(cat \"$f\" 2>/dev/null) && [ -n \"$ns\" ] && result=\"$result | $ns\"; echo \"$result\""
+    "command": "input=$(cat); dir=$(echo \"$input\" | jq -r '.workspace.current_dir // \"?\"'); model=$(echo \"$input\" | jq -r '.model.display_name // \"?\"'); used=$(echo \"$input\" | jq -r '.context_window.used_percentage // \"\"'); sid=$(echo \"$input\" | jq -r '.session_id // \"\"'); result=\"$dir | $model\"; if [ -n \"$used\" ]; then result=\"$result | Context: $(printf '%.0f' \"$used\")%\"; fi; f=\"/tmp/nefario-status-$sid\"; [ -n \"$sid\" ] && [ -f \"$f\" ] && ns=$(cat \"$f\" 2>/dev/null) && [ -n \"$ns\" ] && result=\"$result | $ns\"; echo \"$result\""
   }
 }
 ```

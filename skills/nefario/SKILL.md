@@ -7,6 +7,11 @@ description: >
   review the plan, you execute, then post-execution phases verify code
   quality, run tests, optionally deploy, and update documentation.
 argument-hint: "#<issue> | <task description>"
+hooks:
+  SessionStart:
+    - hooks:
+        - type: command
+          command: 'INPUT=$(cat); SID=$(echo "$INPUT" | jq -r ".session_id // empty" | tr -dc "[:alnum:]-_"); [ -n "$SID" ] && [ -n "$CLAUDE_ENV_FILE" ] && echo "CLAUDE_SESSION_ID=$SID" >> "$CLAUDE_ENV_FILE"'
 ---
 
 # Nefario Orchestrator
@@ -363,10 +368,9 @@ Extract a status summary from the first line of the user's task description.
 Truncate to 40 characters; if truncated, append "..." (prefix ~18 chars +
 " | " 3 chars + 40 + 3 = ~64 chars max). Write the sentinel file:
 ```sh
-SID=$(cat /tmp/claude-session-id 2>/dev/null)
 # Status prefix: ⚗︎ = U+2697 U+FE0E (text variant for monospace alignment)
-echo "⚗︎ P1 Meta-Plan | $summary" > /tmp/nefario-status-$SID
-chmod 600 /tmp/nefario-status-$SID   # Status file: read from custom statusline scripts
+echo "⚗︎ P1 Meta-Plan | $summary" > /tmp/nefario-status-$CLAUDE_SESSION_ID
+chmod 600 /tmp/nefario-status-$CLAUDE_SESSION_ID   # Status file: read from custom statusline scripts
 ```
 Use this summary text in Task `description` fields and TaskCreate `activeForm`
 fields throughout the orchestration (see per-phase instructions below).
@@ -566,7 +570,7 @@ Rules:
 **"Reject" response handling**:
 Abandon the orchestration. Clean up scratch directory (`rm -rf "$SCRATCH_DIR"`).
 Remove session markers:
-`SID=$(cat /tmp/claude-session-id 2>/dev/null); rm -f /tmp/nefario-status-$SID`
+`rm -f /tmp/nefario-status-$CLAUDE_SESSION_ID`
 Print: "Orchestration abandoned. Scratch files removed."
 
 **Second-round specialists exemption**: If Phase 2 specialists recommend
@@ -577,8 +581,7 @@ scope.
 
 Update the status file before entering Phase 2:
 ```sh
-SID=$(cat /tmp/claude-session-id 2>/dev/null)
-echo "⚗︎ P2 Planning | $summary" > /tmp/nefario-status-$SID
+echo "⚗︎ P2 Planning | $summary" > /tmp/nefario-status-$CLAUDE_SESSION_ID
 ```
 
 ## Phase 2: Specialist Planning
@@ -651,8 +654,7 @@ include their contributions in Phase 3.
 
 Update the status file before entering Phase 3:
 ```sh
-SID=$(cat /tmp/claude-session-id 2>/dev/null)
-echo "⚗︎ P3 Synthesis | $summary" > /tmp/nefario-status-$SID
+echo "⚗︎ P3 Synthesis | $summary" > /tmp/nefario-status-$CLAUDE_SESSION_ID
 ```
 
 ## Phase 3: Synthesis
@@ -727,8 +729,7 @@ Then proceed to Phase 3.5. Do NOT re-prompt at subsequent boundaries.
 
 Update the status file before entering Phase 3.5:
 ```sh
-SID=$(cat /tmp/claude-session-id 2>/dev/null)
-echo "⚗︎ P3.5 Review | $summary" > /tmp/nefario-status-$SID
+echo "⚗︎ P3.5 Review | $summary" > /tmp/nefario-status-$CLAUDE_SESSION_ID
 ```
 
 ## Phase 3.5: Architecture Review
@@ -1181,8 +1182,7 @@ After "Approve", proceed to Phase 4 execution.
 
 Update the status file before entering Phase 4:
 ```sh
-SID=$(cat /tmp/claude-session-id 2>/dev/null)
-echo "⚗︎ P4 Execution | $summary" > /tmp/nefario-status-$SID
+echo "⚗︎ P4 Execution | $summary" > /tmp/nefario-status-$CLAUDE_SESSION_ID
 ```
 
 ## Phase 4: Execution
@@ -1309,8 +1309,7 @@ A batch contains all tasks that can run before the next gate.
 
    Before presenting the gate, update the status file to reflect the gate state:
    ```sh
-   SID=$(cat /tmp/claude-session-id 2>/dev/null)
-   echo "⚗︎ P4 Gate | $task_title" > /tmp/nefario-status-$SID
+   echo "⚗︎ P4 Gate | $task_title" > /tmp/nefario-status-$CLAUDE_SESSION_ID
    ```
    (where `$task_title` is the task title, truncated to 40 characters.)
 
@@ -1326,8 +1325,7 @@ A batch contains all tasks that can run before the next gate.
    Response handling — after the gate is resolved (any option), revert the
    status file to execution state:
    ```sh
-   SID=$(cat /tmp/claude-session-id 2>/dev/null)
-   echo "⚗︎ P4 Execution | $summary" > /tmp/nefario-status-$SID
+   echo "⚗︎ P4 Execution | $summary" > /tmp/nefario-status-$CLAUDE_SESSION_ID
    ```
    - **"Approve"**: Present a FOLLOW-UP AskUserQuestion for post-execution options:
      - `header`: "Post-exec"
@@ -1755,7 +1753,7 @@ not part of the default flow.
 11. **Clean up session markers** — after PR creation (or if declined),
     if in a git repo:
     Remove the nefario status file:
-    `SID=$(cat /tmp/claude-session-id 2>/dev/null); rm -f /tmp/nefario-status-$SID`
+    `rm -f /tmp/nefario-status-$CLAUDE_SESSION_ID`
     The session stays on the feature branch.
     Include current branch name in final summary and a hint to return to
     the default branch when ready:

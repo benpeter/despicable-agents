@@ -42,7 +42,7 @@ Examine the current `statusLine` configuration and branch:
 Set `.statusLine.command` to the full default command via jq:
 
 ```sh
-input=$(cat); dir=$(echo "$input" | jq -r '.workspace.current_dir // "?"'); model=$(echo "$input" | jq -r '.model.display_name // "?"'); used=$(echo "$input" | jq -r '.context_window.used_percentage // ""'); sid=$(echo "$input" | jq -r '.session_id // ""'); [ -n "$sid" ] && echo "$sid" > /tmp/claude-session-id; result="$dir | $model"; if [ -n "$used" ]; then result="$result | Context: $(printf '%.0f' "$used")%"; fi; f="/tmp/nefario-status-$sid"; [ -n "$sid" ] && [ -f "$f" ] && ns=$(cat "$f" 2>/dev/null) && [ -n "$ns" ] && result="$result | $ns"; echo "$result"
+input=$(cat); dir=$(echo "$input" | jq -r '.workspace.current_dir // "?"'); model=$(echo "$input" | jq -r '.model.display_name // "?"'); used=$(echo "$input" | jq -r '.context_window.used_percentage // ""'); sid=$(echo "$input" | jq -r '.session_id // ""'); result="$dir | $model"; if [ -n "$used" ]; then result="$result | Context: $(printf '%.0f' "$used")%"; fi; f="/tmp/nefario-status-$sid"; [ -n "$sid" ] && [ -f "$f" ] && ns=$(cat "$f" 2>/dev/null) && [ -n "$ns" ] && result="$result | $ns"; echo "$result"
 ```
 
 Use jq via Bash to set `.statusLine.command` to this value. Write via atomic pattern: write to a temp file, then `mv` over the original.
