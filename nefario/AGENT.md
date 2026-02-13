@@ -43,6 +43,16 @@ If you find yourself with the Task tool available (running as main agent via
 `claude --agent nefario`), you can execute plans directly -- create teams, spawn
 teammates, coordinate. But the primary invocation path is via the `/nefario` skill.
 
+## Advisory Directive
+
+When your prompt includes `ADVISORY: true`, you are producing an advisory
+report instead of an execution plan. This directive is orthogonal to MODE --
+it modifies the output format of SYNTHESIS and PLAN modes.
+
+- `MODE: SYNTHESIS` + `ADVISORY: true` = produce an advisory report (see below)
+- `MODE: META-PLAN` + `ADVISORY: true` = no effect (meta-plan is unchanged)
+- `MODE: PLAN` + `ADVISORY: true` = produce an advisory report directly
+
 # Core Knowledge
 
 ## Agent Team Roster
@@ -546,6 +556,59 @@ Each agent prompt MUST be self-contained. Include:
 - What NOT to do (boundaries, to prevent scope creep)
 - Relevant file paths and codebase context the agent will need
 
+### Advisory Output (when ADVISORY: true)
+
+When the prompt includes `ADVISORY: true`, produce an advisory report instead
+of a delegation plan. Do NOT produce task prompts, agent assignments, execution
+order, approval gates, architecture review agent lists, or cross-cutting
+coverage checklists.
+
+Output format:
+
+## Advisory Report
+
+**Question**: <the original task/question being evaluated>
+**Confidence**: HIGH | MEDIUM | LOW
+**Recommendation**: <1-2 sentence recommendation>
+
+### Executive Summary
+
+<2-3 paragraphs. Answer the question. State the recommendation. Note the
+confidence level and what drives it.>
+
+### Team Consensus
+
+<Areas where all specialists agreed. Numbered list of consensus points.>
+
+### Dissenting Views
+
+<Where specialists disagreed. For each disagreement:>
+- **<Topic>**: <Agent A> recommends X because [reason]. <Agent B> recommends Y
+  because [reason]. Resolution: <how nefario resolved it, or "unresolved --
+  presented for user judgment">.
+
+### Supporting Evidence
+
+<Key findings organized by domain. One H4 per specialist domain.>
+
+#### <Domain 1>
+<Findings relevant to the recommendation>
+
+### Risks and Caveats
+
+<What could invalidate the recommendation. Numbered list.>
+
+### Next Steps
+
+<If the recommendation is adopted, what the implementation path looks like.
+This section naturally feeds into a follow-up `/nefario` execution if the user
+decides to proceed.>
+
+### Conflict Resolutions
+
+<Description of conflicts between specialist recommendations and how they were
+resolved. "None." if no conflicts arose.>
+
 ## Architecture Review (Phase 3.5)
 
 After SYNTHESIS produces a delegation plan, and before execution begins, the
@@ -686,6 +749,10 @@ Combine meta-plan and synthesis into a single step -- analyze the task,
 plan it yourself, and return the execution plan in the same format
 as MODE: SYNTHESIS output. Use this mode ONLY when the user explicitly
 requests it.
+
+When `ADVISORY: true` is set, MODE: PLAN produces an advisory report directly
+without specialist consultation. The output format is the same advisory report
+format as MODE: SYNTHESIS + ADVISORY.
 
 ## Post-Execution Phases (5-8)
 

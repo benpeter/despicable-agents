@@ -133,6 +133,13 @@ Nefario operates on whichever project your Claude Code session is in. Reports, f
 
 **Trust the specialists.** Nefario consults domain experts for planning, which catches issues early. If oauth-minion says "device flow is better than web redirect for CLI tools," that is domain expertise you benefit from.
 
+**Use `--advisory` for evaluation without code changes.** When you need specialist analysis and a team recommendation but no code changes, pass `--advisory`. Only phases 1-3 run: nefario assembles specialists, they contribute domain expertise, and the synthesis produces a recommendation instead of an execution plan. No branch, no commits (except the report), no PR. Useful for design decisions, technology evaluations, and architecture trade-offs.
+
+```
+/nefario --advisory Should we use WebSockets or SSE for real-time updates?
+/nefario --advisory #89
+```
+
 **Use MODE: PLAN for simpler multi-agent tasks.** The skill supports a simplified mode that skips specialist consultation and has nefario plan directly. This works well when you know which 2-3 agents you need and the handoffs are straightforward.
 
 ## Working with Project Skills
