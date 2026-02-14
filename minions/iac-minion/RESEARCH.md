@@ -490,30 +490,27 @@ Sources:
 
 ### Deployment Strategy Selection
 
-Choosing the right deployment topology requires evaluating workload characteristics against concrete criteria. The decision must be neutral -- no default to any topology.
+Choosing the right deployment topology requires evaluating workload characteristics against concrete criteria. The decision defaults to serverless. Deviation requires a documented blocking concern: persistent connections, long-running processes (>30s), compliance-mandated infrastructure control, measured cost optimization at scale, or execution environment constraints (native binaries, CPU/memory beyond platform limits). The burden of proof is on the deviation.
 
 **Evaluation Criteria**:
 
-| Criterion | Favors Serverless | Favors Containers | Favors Self-Managed |
-|-----------|-------------------|-------------------|---------------------|
-| Execution duration | < 15 min, typically < 30s | Minutes to hours | Unlimited |
-| Traffic pattern | Bursty, sporadic, long idle periods | Steady with some variation | Predictable, sustained |
-| State requirements | Stateless or externalized | Stateful acceptable | Full control |
-| Scale-to-zero needed | Yes | Partial (Cloud Run, Fargate) | No |
-| Cold start tolerance | Acceptable or mitigated | N/A (always warm) | N/A |
-| Latency P99 target | > 200ms or edge platform | < 50ms achievable | < 10ms achievable |
-| Cost at current scale | Low/sporadic usage | Moderate steady usage | High sustained usage |
-| Team ops expertise | Minimal ops team | Container/K8s knowledge | Full-stack ops team |
-| Vendor portability need | Low (lock-in acceptable) | Medium (OCI portable) | High (full control) |
-| Compliance/data residency | Platform-dependent | Flexible | Full control |
+| Dimension | Blocking Concern? |
+|-----------|-------------------|
+| Execution duration > 30s | Yes -- long-running process |
+| Persistent connections needed | Yes -- persistent connections |
+| Compliance requires infra ownership | Yes -- compliance-mandated control |
+| Measured cost 3x+ at sustained load | Yes -- cost optimization at scale |
+| Native binaries or CPU/memory beyond platform limits | Yes -- execution environment constraints |
+| Cold start tolerance low | No -- mitigate with provisioned concurrency or edge platform |
+| Team lacks serverless experience | No -- invest in learning, not in adding ops burden |
+| Vendor portability critical | No -- use portable serverless patterns (container-based Lambda, standard APIs) |
 
 **Decision Process**:
-1. Characterize the workload (duration, state, traffic pattern, latency requirements)
-2. Identify hard constraints (timeout limits, hardware needs, compliance)
-3. Evaluate cost at projected scale (not just current scale)
-4. Assess team capabilities and operational maturity
-5. Consider existing infrastructure (don't fragment needlessly)
-6. Recommend topology with rationale tied to criteria, not preferences
+1. Check blocking concerns (persistent connections, long-running >30s, compliance, measured cost, execution environment constraints)
+2. If no blocking concern triggered: serverless. Select platform based on workload profile.
+3. If blocking concern triggered: document it and escalate to container or self-managed.
+4. Validate with Tier 2 dimensions (latency, scale pattern, team expertise, existing infra, portability, data residency).
+5. For hybrid systems, evaluate each workload independently.
 
 **Hybrid Is Normal**: Most production architectures use multiple topologies. API endpoints may be serverless, core services containerized, and batch jobs on self-managed spot instances. Each workload should be evaluated independently.
 

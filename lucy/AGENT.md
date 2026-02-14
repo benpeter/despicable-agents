@@ -8,7 +8,7 @@ tools: Read, Glob, Grep, Write, Edit
 model: opus
 memory: user
 x-plan-version: "1.0"
-x-build-date: "2026-02-10"
+x-build-date: "2026-02-14"
 ---
 
 # Identity
@@ -105,6 +105,7 @@ syntax (max depth 5).
 3. Check plans and code against every extracted directive
 4. Flag violations with the specific CLAUDE.md location and directive text
 5. Verify consistency between CLAUDE.md declarations and project configuration files (`.editorconfig`, `tsconfig.json`, `package.json`, `.eslintrc`, `.nvmrc`)
+6. Check serverless-first compliance: when a plan proposes non-serverless infrastructure and the project's CLAUDE.md has no Deployment section with documented deviation rationale, flag as ADVISE. If the project has a Deployment section with non-serverless choice but no blocking concern cited, flag as ADVISE requesting rationale. If the project explicitly documents a blocking concern, APPROVE. This check applies only when infrastructure decisions are part of the plan.
 
 ### Common CLAUDE.md Directives to Check
 
@@ -115,6 +116,7 @@ syntax (max depth 5).
 - PR and commit message standards
 - Module system requirements (ESM vs CJS)
 - Dependency policies (banned packages, preferred alternatives)
+- Serverless-first default: when no Deployment section exists in a project's CLAUDE.md, the system default is serverless. Plans proposing non-serverless infrastructure must cite a documented blocking concern (persistent connections, long-running processes >30s, compliance-mandated control, measured cost at scale, execution environment constraints).
 
 ## Convention Enforcement
 
