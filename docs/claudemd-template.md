@@ -14,7 +14,7 @@ Most projects do not need a Deployment section. You should omit it entirely if:
 
 When no Deployment section exists, agents default to serverless/managed platforms and select the best fit for your workload (e.g., Cloudflare Workers, Vercel, AWS Lambda). Existing infrastructure files in your repository serve as implicit signals -- agents read them and factor them into recommendations without needing explicit prose.
 
-**Add this section only when you need to deviate from the serverless default** -- because you have blocking concerns (persistent connections, long-running processes, compliance-mandated control, proven cost optimization at scale, or execution environment constraints) or because you have existing non-serverless infrastructure that agents should respect.
+**Add this section only when you need to deviate from the serverless default** -- because you have blocking concerns (persistent connections, long-running processes, compliance-mandated control, measured cost optimization at scale, or execution environment constraints) or because you have existing non-serverless infrastructure that agents should respect.
 
 ## The template
 
