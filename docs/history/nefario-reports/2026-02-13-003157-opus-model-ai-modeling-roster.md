@@ -23,6 +23,20 @@ Addressed three structural gaps in the agent system identified in issue #91: iac
 
 > #91 use opus for all agents, make ai-modeling part of the roster
 
+### Issue #91: Fix structural serverless bias in agent system
+
+The agent system has a structural bias against serverless infrastructure. When starting greenfield projects, it recommends Docker + Terraform + reverse proxy stacks even when `vercel deploy` (1 command, zero config) would suffice. The bias is not an explicit rule -- it emerges from three compounding gaps.
+
+**Gap 1: iac-minion has zero serverless knowledge** — The word "serverless" appears zero times in iac-minion's AGENT.md. Its remit lists Terraform, Docker, GitHub Actions, reverse proxies, and server deployment. When nefario delegates a greenfield deployment task, iac-minion produces a Docker + Terraform + Caddy stack because that's the only thing it knows.
+
+**Gap 2: margo's complexity budget penalizes novelty, not operational burden** — The complexity budget scores "New service: 5 points" -- treating `vercel deploy` the same as Docker + Terraform + Caddy. A team already using Docker pays 0 points for maintaining that stack but 10 points ("New technology") for adopting Vercel, even though Vercel eliminates entire categories of operational work.
+
+**Gap 3: Delegation table has no serverless routing** — The delegation table routes "Infrastructure provisioning" to iac-minion. There is no row for "deployment strategy selection" or "serverless deployment." When a user asks to deploy a greenfield project, nefario routes it as "infrastructure provisioning" -- which presupposes that infrastructure needs provisioning.
+
+**Compounding effect**: Nefario routes deployment work to iac-minion (delegation table assumes infrastructure) → iac-minion proposes servers (only knowledge it has) → margo approves the plan (complexity budget doesn't penalize operational burden) → Result: server infrastructure for every project, regardless of need.
+
+**Solution**: Four coordinated changes, no new agent. (1) Expand iac-minion's spec with serverless knowledge and deployment strategy selection as "Step 0". (2) Recalibrate margo's complexity budget to measure operational burden, not just novelty. (3) Add delegation table rows for deployment strategy selection and platform deployment configuration. (4) Provide CLAUDE.md template for target projects with optional deployment section.
+
 ## Key Design Decisions
 
 #### Topology Neutrality Over "Serverless Default"
