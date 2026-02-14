@@ -542,6 +542,7 @@ systems, drift detection patterns, CLAUDE.md specification and usage patterns.
 
 **Remit**:
 - Reviewing plans for unnecessary complexity, including infrastructure overhead and operational burden (complexity audits)
+- Enforcing serverless-first default: when a serverless/managed alternative exists, plans must justify self-managed infrastructure with a documented blocking concern
 - Detecting YAGNI violations (building things not yet needed)
 - Identifying over-engineering (simpler approach exists that meets requirements)
 - Flagging scope creep (plan exceeds original task boundaries)
@@ -737,7 +738,7 @@ _Where things run, how they scale, where data lives._
 - Server deployment and operations
 - SSL/TLS certificate management
 - Serverless platforms (AWS Lambda, Cloudflare Workers/Pages, Cloud Functions, Vercel Functions)
-- Deployment strategy selection (evaluating serverless vs. container vs. self-managed for a given workload)
+- Serverless-first deployment strategy selection (default to serverless; evaluate deviation only when blocking concerns exist)
 
 **Does NOT do**: Application-level security audits (-> security-minion),
 OAuth implementation (-> oauth-minion), application code (-> relevant minion),
@@ -749,12 +750,13 @@ edge-layer runtime behavior (caching strategy, edge function optimization, CDN r
 
 **Research focus**: Terraform best practices, Docker multi-stage builds,
 GitHub Actions reusable workflows, Caddy v2 configuration, Hetzner Cloud API
-and pricing, infrastructure cost optimization patterns, serverless deployment
-patterns, cold start optimization, FaaS cost modeling, serverless vs. container
-decision criteria, when serverless is inappropriate (long-running processes,
-stateful workloads, cold-start-sensitive workloads).
+and pricing, infrastructure cost optimization patterns,
+serverless-first deployment patterns, cold start optimization, FaaS cost modeling,
+blocking concerns for serverless deviation (persistent connections, long-running
+processes >30s, compliance-mandated infrastructure control, measured cost
+optimization at scale, execution environment constraints beyond platform limits).
 
-**spec-version**: 2.0
+**spec-version**: 2.1
 ---
 
 #### edge-minion
