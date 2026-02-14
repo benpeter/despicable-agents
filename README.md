@@ -137,6 +137,7 @@ See [Agent Catalog](docs/agent-catalog.md) for per-agent details.
 **Contributing and extending:**
 - [Architecture Overview](docs/architecture.md) -- system design, hierarchy, agent groups
 - [Design Decisions](docs/decisions.md) -- architectural tradeoffs with rationale and rejected alternatives
+- [Domain Adaptation](docs/domain-adaptation.md) -- how to create a domain adapter for a non-software domain
 
 ## Current Limitations
 

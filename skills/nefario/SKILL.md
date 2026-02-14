@@ -1,5 +1,6 @@
 ---
 name: nefario
+<!-- DOMAIN-SPECIFIC: description text references nine phases, post-execution phase names -->
 description: >
   Orchestrate a team of specialist agents for complex, multi-domain tasks.
   Uses a nine-phase process: nefario creates a meta-plan, specialists
@@ -16,6 +17,7 @@ You are executing the Nefario orchestration workflow. This skill coordinates
 a multi-phase planning process that leverages specialist domain expertise
 before execution.
 
+<!-- INFRASTRUCTURE -->
 ## Core Rules
 
 You ALWAYS follow the full workflow described above. You NEVER skip any phase based on your own judgement, EVEN if it appears to be only a single-file or simple thing, EVEN if it violates YAGNI or KISS. There are NO exceptions to this, only the user can override this.
@@ -25,6 +27,8 @@ When `advisory-mode` is active, the workflow comprises Phases 1-3 and Advisory
 Wrap-up. Phases 3.5-8 are not applicable. This is the only defined exception
 to the "full workflow" rule.
 
+<!-- INFRASTRUCTURE: Flag extraction pattern, input mode detection -->
+<!-- DOMAIN-SPECIFIC: GitHub issue fetch (gh CLI), Resolves #N convention, PR integration -->
 ## Argument Parsing
 
 Arguments: `[--advisory] #<issue> | <task description>`
@@ -137,6 +141,7 @@ When input is resolved from an issue, use the issue metadata throughout:
 Do NOT write status updates or comments back to the issue from nefario. The
 PR (with "Resolves #N") is the output artifact that closes the loop.
 
+<!-- DOMAIN-SPECIFIC: Phase list names domain-specific activities (Code Review, Test Execution, Deployment, Documentation) -->
 ## Overview
 
 The workflow has nine phases:
@@ -155,6 +160,8 @@ When `--advisory` is passed, only phases 1-3 run. The synthesis produces a
 team recommendation instead of an execution plan. No code is changed, no
 branch is created, no PR is opened. See Advisory Termination below.
 
+<!-- INFRASTRUCTURE: Three-tier output taxonomy (SHOW, NEVER SHOW, CONDENSE), heartbeat mechanism -->
+<!-- DOMAIN-SPECIFIC: Specific CONDENSE examples (code review, tests, documentation), verbose git command reference -->
 ## Communication Protocol
 
 The orchestrator MUST minimize chat output. The user should only see:
@@ -199,6 +206,8 @@ The orchestrator MUST minimize chat output. The user should only see:
 Heartbeat: for phases lasting more than 60 seconds with no output, print a
 single status line (e.g., "Waiting for 3 agents...") to confirm progress.
 
+<!-- INFRASTRUCTURE: Announcement mechanism (format pattern, one-line rule) -->
+<!-- DOMAIN-SPECIFIC: Phase name table (Phase 5-8 names) -->
 ### Phase Announcements
 
 At each phase boundary, print a single-line marker:
@@ -226,6 +235,7 @@ Rules:
 - Do not use "Starting..." or "Entering..." verbs. The marker itself implies
   transition.
 
+<!-- INFRASTRUCTURE -->
 ### Visual Hierarchy
 
 Orchestration messages use three visual weights:
@@ -240,6 +250,7 @@ Decision blocks are the heaviest: multi-line with structured fields. Orientation
 is a single bold line. Inline flows without interruption. This hierarchy maps to
 attention demands: the heavier the visual signal, the more attention needed.
 
+<!-- INFRASTRUCTURE -->
 ## Path Resolution
 
 At Phase 1 start, resolve all session paths. These paths are used throughout
@@ -298,6 +309,8 @@ git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/ori
 ```
 Fall back to `main` if the command fails (e.g., no remote configured).
 
+<!-- INFRASTRUCTURE: Scratch directory naming pattern (phase{N}-{agent}-prompt.md) -->
+<!-- DOMAIN-SPECIFIC: Specific file listing (phase5-8 files naming domain-specific agents) -->
 ### Scratch Directory Structure
 
 ```
@@ -333,6 +346,7 @@ Files without the suffix are agent outputs. Every agent invocation writes a
 `-prompt.md` file; not every invocation produces an output file (e.g., Phase 3.5
 APPROVE verdicts, Phase 4 execution agents that write to the working tree).
 
+<!-- INFRASTRUCTURE -->
 ### Inline Summary Template
 
 After writing a specialist's full output to a scratch file, record a compact
@@ -364,6 +378,8 @@ Versus 500-2000+ for full contributions.
   sessions leave files in temp, cleaned on reboot.
 - **Git**: Not in the working tree. No gitignore entry needed.
 
+<!-- INFRASTRUCTURE: Slug generation, scratch dir creation, status file lifecycle, prompt file writing, spawning pattern -->
+<!-- DOMAIN-SPECIFIC: Secret sanitization regex patterns (sk-, AKIA, ghp_, etc.) -->
 ## Phase 1: Meta-Plan
 
 **Before spawning nefario**: Generate the session slug from the task description
@@ -461,6 +477,8 @@ Task:
 Nefario will return a meta-plan listing which specialists to consult
 and what to ask each one.
 
+<!-- INFRASTRUCTURE: Gate presentation pattern, AskUserQuestion structure, 3-option template, re-run flow -->
+<!-- DOMAIN-SPECIFIC: "27-agent roster" reference, domain enumeration list (dev tools, frontend, etc.) -->
 ### Team Approval Gate
 
 After Phase 1 returns and the CONDENSE line is printed, present the team
@@ -606,6 +624,7 @@ SID=$(cat /tmp/claude-session-id 2>/dev/null)
 echo "⚗︎ P2 Planning | $summary" > /tmp/nefario-status-$SID
 ```
 
+<!-- INFRASTRUCTURE -->
 ## Phase 2: Specialist Planning
 
 For each specialist in the meta-plan, spawn them as a subagent **in parallel**.
@@ -689,6 +708,7 @@ SID=$(cat /tmp/claude-session-id 2>/dev/null)
 echo "⚗︎ P3 Synthesis | $summary" > /tmp/nefario-status-$SID
 ```
 
+<!-- INFRASTRUCTURE -->
 ## Phase 3: Synthesis
 
 Spawn nefario again with ALL specialist contributions to create the
@@ -851,6 +871,8 @@ variables in user-facing output (per the Path display rule).
 Wait for the user to say "continue" (or synonyms: "go", "next", "ok", "resume",
 "proceed"). Then proceed to Phase 3.5. Do NOT re-prompt at subsequent boundaries.
 
+<!-- INFRASTRUCTURE: Termination mechanism, wrap-up sequence -->
+<!-- DOMAIN-SPECIFIC: Git commit message format, conventional commit type, "no PR" assumption -->
 ### Advisory Termination (when `advisory-mode` is active)
 
 When `advisory-mode` is active, after Phase 3 synthesis completes:
@@ -934,6 +956,9 @@ SID=$(cat /tmp/claude-session-id 2>/dev/null)
 echo "⚗︎ P3.5 Review | $summary" > /tmp/nefario-status-$SID
 ```
 
+<!-- INFRASTRUCTURE: Reviewer approval gate interaction, spawning pattern, verdict collection, revision loop -->
+<!-- DOMAIN-SPECIFIC: Mandatory reviewer list, discretionary reviewer pool with domain signals, -->
+<!-- ux-strategy-minion custom prompt, review focus descriptions, ADVISE/BLOCK examples -->
 ## Phase 3.5: Architecture Review
 
 After nefario returns the delegation plan from synthesis, run a cross-cutting
@@ -1354,6 +1379,7 @@ variables in user-facing output (per the Path display rule).
 Wait for the user to say "continue" (or synonyms: "go", "next", "ok", "resume",
 "proceed"). Then proceed to the Execution Plan Approval Gate.
 
+<!-- INFRASTRUCTURE: Progressive disclosure layout, task list format, advisory format, AskUserQuestion structure -->
 ## Execution Plan Approval Gate
 
 After Phase 3.5 completes, present the execution plan to the user for approval
@@ -1485,6 +1511,9 @@ SID=$(cat /tmp/claude-session-id 2>/dev/null)
 echo "⚗︎ P4 Execution | $summary" > /tmp/nefario-status-$SID
 ```
 
+<!-- INFRASTRUCTURE: Execution loop, batch spawning, monitoring, gate handling, auto-commit mechanism -->
+<!-- DOMAIN-SPECIFIC: Git branch naming (nefario/<slug>), conventional commit format, -->
+<!-- Co-Authored-By trailer, gh pr detection, post-execution skip option labels/flags -->
 ## Phase 4: Execution
 
 After user approval, execute the plan. If the plan contains **approval gates**,
@@ -1719,6 +1748,9 @@ session context (not as spawned subagents):
 Deferred tasks respect the skill's internal phasing. Do NOT decompose, reorder,
 or inject nefario phases into the external skill's workflow.
 
+<!-- DOMAIN-SPECIFIC: Entire post-execution pipeline definition (phases 5-8), -->
+<!-- file classification table, test discovery patterns, documentation outcome-action table, -->
+<!-- marketing tiers, reviewer prompts, security escalation patterns, skip option handling -->
 ### Post-Execution Phases (5-8)
 
 After all execution batches complete, run post-execution verification.
@@ -2004,6 +2036,9 @@ not part of the default flow.
 6. Write output to: `$SCRATCH_DIR/{slug}/phase8-software-docs.md`,
    `phase8-user-docs.md`, `phase8-marketing-review.md`
 
+<!-- INFRASTRUCTURE: Wrap-up sequence steps (1-14), companion directory, sanitization, report trigger, status cleanup -->
+<!-- DOMAIN-SPECIFIC: Verification summary format examples, PR creation mechanics (gh pr create), -->
+<!-- commit message templates, Post-Nefario Updates format, secret scanning patterns -->
 ### Wrap-up
 
 7. **Review all deliverables** and consolidate verification results.
@@ -2094,6 +2129,7 @@ not part of the default flow.
     `git checkout <default-branch> && git pull --rebase`.
     If not in a git repo, skip this step.
 
+<!-- INFRASTRUCTURE -->
 ### Troubleshooting: Orchestrator Not Progressing
 
 If the main session seems stuck after agents complete (not reacting to
@@ -2105,6 +2141,8 @@ issue, especially in TMUX mode. Workarounds:
 - The monitoring instructions above are designed to minimize this, but
   if it persists, it's a platform limitation, not a configuration issue.
 
+<!-- INFRASTRUCTURE: Data accumulation pattern, scratch file reference, session context tracking, report template reference -->
+<!-- DOMAIN-SPECIFIC: Post-execution data field definitions (code review findings, test results, deployment status, docs) -->
 ## Report Generation
 
 After completing the orchestration, generate an execution report to document
