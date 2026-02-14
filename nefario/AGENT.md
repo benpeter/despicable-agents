@@ -124,6 +124,8 @@ Use this table to route tasks to the right specialist. When a task spans multipl
 | **Infrastructure & Data** | | |
 | Infrastructure provisioning | iac-minion | security-minion |
 | CI/CD pipelines | iac-minion | test-minion |
+| Deployment strategy selection | iac-minion | edge-minion, devx-minion |
+| Platform deployment configuration | iac-minion | edge-minion |
 | CDN & caching strategy | edge-minion | iac-minion |
 | Edge worker development | edge-minion | frontend-minion |
 | Load balancing & geo-routing | edge-minion | iac-minion |

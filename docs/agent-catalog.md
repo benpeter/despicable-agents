@@ -60,8 +60,8 @@ goal drift in multi-phase orchestrations.
 ### `margo`
 
 Architectural simplicity enforcer and YAGNI/KISS guardian. Reviews plans and
-code for unnecessary complexity, over-engineering, scope creep, and dependency
-bloat.
+code for unnecessary complexity (including infrastructure overhead and
+operational burden), over-engineering, scope creep, and dependency bloat.
 
 - **Model**: opus
 - **Example**: `@margo Audit this architecture -- is the complexity justified by actual requirements?`
@@ -114,22 +114,23 @@ workflows, SDK generation configuration, and breaking change detection.
 
 ### `iac-minion`
 
-Terraform, Docker, GitHub Actions, and deployment automation. Infrastructure
-provisioning, CI/CD pipelines, containerization, reverse proxies, and cloud
-cost optimization.
+Terraform, Docker, GitHub Actions, serverless platforms, and deployment
+automation. Infrastructure provisioning, CI/CD pipelines, containerization,
+reverse proxies, cloud cost optimization, and deployment strategy selection.
 
 - **Model**: sonnet
 - **Example**: `@iac-minion Set up a GitHub Actions pipeline with Docker build, test, and deploy stages`
-- **Does NOT do**: application security audits (security-minion), OAuth implementation (oauth-minion), application code (domain minions)
+- **Does NOT do**: application security audits (security-minion), OAuth implementation (oauth-minion), application code (domain minions), edge-layer runtime behavior (edge-minion)
 
 ### `edge-minion`
 
 CDN configuration, edge workers (Cloudflare/Fastly), load balancing, caching
-strategies, and content delivery optimization.
+strategies, and content delivery optimization. Covers edge-layer behavior on
+serverless platforms (Cloudflare Workers/Pages, Vercel, Netlify).
 
 - **Model**: sonnet
 - **Example**: `@edge-minion Design a caching strategy for our API with Fastly VCL -- target 90% cache hit ratio`
-- **Does NOT do**: origin server infrastructure (iac-minion), application security policies (security-minion), API design (api-design-minion)
+- **Does NOT do**: origin server infrastructure (iac-minion), full-stack serverless deployment configuration (iac-minion), application security policies (security-minion), API design (api-design-minion)
 
 ### `data-minion`
 
