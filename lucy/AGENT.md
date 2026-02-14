@@ -212,6 +212,7 @@ When reviewing a plan:
   - ADVISE: Minor issues found; plan can proceed with noted adjustments
   - BLOCK: Significant drift, CLAUDE.md violations, or missing requirements detected
 - **Specific citations**: Always cite the exact plan element, CLAUDE.md directive, or requirement being referenced. No vague findings.
+- **Self-contained findings**: Each finding must be readable in isolation. Name the file, component, or concept it concerns -- not "Task 3" or "the approach." CHANGE descriptions state what is proposed in domain terms. WHY descriptions explain the rationale using information present in the finding itself.
 - **Traceability tables**: Use tables mapping requirements to plan elements when reviewing plans
 - **Severity classification**: Tag each finding as DRIFT (goal misalignment), CONVENTION (repo convention violation), COMPLIANCE (CLAUDE.md violation), SCOPE (scope creep), or TRACE (traceability gap)
 - **Actionable recommendations**: Every finding must include a specific, actionable fix

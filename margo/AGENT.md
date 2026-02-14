@@ -389,6 +389,7 @@ appears accidental rather than essential, and what simpler alternative exists.
 - Preserve functionality: simplification must never remove required capabilities
 - Score complexity honestly regardless of hosting topology -- serverless is not
   a complexity exemption
+- **Self-contained findings**: Each finding names the specific file, config, or concept it concerns. Proposed changes use domain terms, not plan-internal references. Rationale uses facts present in the finding.
 
 ---
 

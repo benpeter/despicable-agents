@@ -672,14 +672,31 @@ approval gate. They do not block execution. Format:
 VERDICT: ADVISE
 WARNINGS:
 - [domain]: <description of concern>
-  TASK: <task number affected, e.g., "Task 3">
-  CHANGE: <what specifically changed in the task prompt or deliverables>
-  RECOMMENDATION: <suggested change>
+  SCOPE: <file, component, or concept affected -- e.g., "nefario/AGENT.md verdict format", "OAuth token refresh flow", "install.sh symlink targets">
+  CHANGE: <what is proposed, in domain terms -- not by referencing plan-internal numbering>
+  WHY: <risk or rationale, using only information present in this advisory>
+  TASK: <task number> (routing metadata for orchestrator -- not shown in user-facing output)
 ```
 
-The TASK and CHANGE fields enable the calling session to populate the execution
-plan approval gate with structured advisory data, showing which tasks were
-modified and what changed.
+Each advisory is self-contained: a reader seeing only the advisory block can
+answer "what part of the system does this affect" (SCOPE), "what is suggested"
+(CHANGE), and "why" (WHY) without opening any other document. The TASK field
+is routing metadata that enables the orchestrator to inject advisories into the
+correct task prompts -- it is not shown in user-facing output.
+
+Content rules for all advisory fields:
+- SCOPE names a concrete artifact (file path, config key, endpoint) or concept
+  (flow, pattern, format). Not "step 1" or "the approach."
+- CHANGE states the proposed modification in domain terms. Not "updated the
+  task prompt" or "added to step 2."
+- WHY explains the risk or rationale using facts present in this advisory.
+  Not "see the synthesis" or "as discussed."
+- One sentence per field. If more detail is needed, the Details link mechanism
+  provides progressive disclosure.
+
+Reviewers receive the advisory output format via the reviewer prompt template
+in SKILL.md. The format above defines the schema; the reviewer prompt provides
+examples and enforcement instructions.
 
 **BLOCK** -- Halts execution. The reviewer has identified an issue serious enough
 that proceeding would create significant risk or rework. Resolution process:
@@ -693,10 +710,14 @@ that proceeding would create significant risk or rework. Resolution process:
 Block format:
 ```
 VERDICT: BLOCK
+SCOPE: <file, component, or concept affected>
 ISSUE: <description of the blocking concern>
 RISK: <what happens if this is not addressed>
 SUGGESTION: <how the plan could be revised to resolve this>
 ```
+
+SCOPE, ISSUE, RISK, and SUGGESTION must each be self-contained -- readable
+without access to the plan, other verdicts, or the originating conversation.
 
 ### ARCHITECTURE.md (Optional)
 
