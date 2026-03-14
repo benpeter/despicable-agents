@@ -1626,17 +1626,14 @@ A batch contains all tasks that can run before the next gate.
    ```
    - **"Approve"**: Present a FOLLOW-UP AskUserQuestion for post-execution options:
      - `header`: "Post-exec"
-     - `question`: "Skip any post-execution phases for Task N: <task title>? (confirm with none selected to run all)\n\nRun: $summary_full"
-     - `options` (3, `multiSelect: true`):
-       1. label: "Skip docs", description: "Skip documentation updates (Phase 8)."
-       2. label: "Skip tests", description: "Skip test execution (Phase 6)."
-       3. label: "Skip review", description: "Skip code review (Phase 5)."
-     Options are ordered by ascending risk (docs = lowest, review = highest).
-     If no options selected: run all post-execution phases (5-8).
-     If one or more options selected: skip those phases, run the rest.
+     - `question`: "Post-execution phases for Task N: <task title>\n\nRun: $summary_full"
+     - `options` (3, `multiSelect: false`):
+       1. label: "Run all", description: "Run code review, tests, and documentation." (recommended)
+       2. label: "Skip docs only", description: "Run code review and tests. Skip documentation updates."
+       3. label: "Skip all post-exec", description: "Skip code review, tests, and documentation."
      Then auto-commit changes (see below) and continue to next batch.
-     The user may also type freeform flags at the same prompt,
-     using flags to skip multiple phases (e.g., "--skip-docs --skip-tests",
+     The user may also type freeform flags instead of selecting an option,
+     using flags to skip specific phases (e.g., "--skip-docs --skip-tests",
      or "--skip-post" to skip all). Interpret natural language skip intent as
      equivalent to the corresponding flags. Flag reference:
      - `--skip-docs` = skip Phase 8
@@ -1721,19 +1718,20 @@ user sees one CONDENSE line at the start and one consolidated result in
 the wrap-up summary.
 
 Determine which post-execution phases to run based on the user's
-multi-select response and/or freeform text flags:
-- Phase 5 (Code Review): Skip if the user's selection includes
-  "Skip review", or freeform contains --skip-review or --skip-post.
-  Also skip if Phase 4 produced only documentation-only files (see
-  Phase 5 file classification table).
-- Phase 6 (Test Execution): Skip if the user's selection includes
-  "Skip tests", or freeform contains --skip-tests or --skip-post.
-  Also skip if no tests exist.
-- Phase 8 (Documentation): Skip if the user's selection includes
-  "Skip docs", or freeform contains --skip-docs or --skip-post.
-  Also skip if checklist has no items.
-- If no options were selected and no freeform skip flags were typed,
-  run all phases.
+single-select response and/or freeform text flags:
+- "Run all": Run Phases 5, 6, and 8 (subject to existing conditional
+  skips: docs-only files skip Phase 5, no tests skip Phase 6, empty
+  checklist skips Phase 8).
+- "Skip docs only": Skip Phase 8. Run Phases 5 and 6 (subject to
+  existing conditional skips).
+- "Skip all post-exec": Skip Phases 5, 6, and 8.
+- Freeform text: If the user types freeform flags instead of selecting
+  an option, interpret them as before:
+  - --skip-docs = skip Phase 8
+  - --skip-tests = skip Phase 6
+  - --skip-review = skip Phase 5
+  - --skip-post = skip Phases 5, 6, 8 (all post-execution)
+  Flags can be combined. Freeform overrides structured selection on conflict.
 
 Print a CONDENSE status line listing only the phases that will actually run:
 - No skips: `Verifying: code review, tests, documentation...`
