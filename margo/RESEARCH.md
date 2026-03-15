@@ -463,6 +463,158 @@ These incidents demonstrate that every dependency is a trust relationship. Fewer
 - Measure impact of optimizations
 - Accept upfront optimization only for algorithmic choices
 
+## Operational Complexity Metrics
+
+Operational complexity measures the ongoing burden of keeping a system running in production -- distinct from the one-time cost of building it. While build-time complexity is paid once, operational complexity compounds: it is paid on every deploy, every incident, every on-call rotation, and every new team member who must understand the system.
+
+### Measuring Operational Burden
+
+Operational burden encompasses several measurable dimensions:
+
+- **Infrastructure cost**: compute, network, storage, service mesh, observability platforms
+- **Personnel cost**: operations headcount, on-call compensation, training overhead
+- **Tooling cost**: CI/CD pipelines, monitoring, tracing, alerting licenses
+- **Opportunity cost**: features delayed because teams spend time managing operational complexity
+- **Cognitive load**: the mental overhead of understanding how the system runs, fails, and recovers
+
+A 2022 survey of 500 DevOps engineers found that 78% reported spending more time understanding their infrastructure than improving it. This is a signal that operational complexity has exceeded the value it provides.
+
+### DORA Metrics and Operational Performance
+
+Google's DevOps Research and Assessment (DORA) team identified five software delivery performance metrics that correlate with organizational performance:
+
+1. **Deployment frequency**: how often code reaches production
+2. **Lead time for changes**: time from commit to production
+3. **Change failure rate**: percentage of deployments causing failures
+4. **Time to restore service**: how long to recover from failures
+5. **Reliability**: operational performance against targets
+
+These metrics are relevant to operational complexity assessment because unnecessary infrastructure and process complexity degrades all five. Teams drowning in operational burden deploy less frequently, have longer lead times, and take longer to recover from failures.
+
+### SRE Toil as a Complexity Signal
+
+Google's Site Reliability Engineering defines "toil" as manual, repetitive, automatable, tactical work that scales linearly with service growth and has no enduring value. Toil is a direct measure of operational complexity:
+
+- If a deployment requires manual steps beyond `git push`, that is toil
+- If scaling requires human intervention, that is toil
+- If monitoring requires manual log inspection, that is toil
+
+High toil ratios indicate that operational complexity has not been properly addressed -- either through automation, simplification, or platform abstraction.
+
+## Build-Time vs. Run-Time Complexity Tradeoffs
+
+Tesler's Law (the Law of Conservation of Complexity) states that every system has an inherent amount of complexity that cannot be removed -- only moved. In software architecture, complexity shifts between build-time (development, configuration, deployment setup) and run-time (operation, monitoring, scaling, incident response).
+
+### The Complexity Waterbed Effect
+
+Pressing down complexity in one area causes it to rise in another:
+
+- **Managed services** reduce run-time operational complexity but introduce build-time complexity in the form of vendor configuration, IAM policies, deployment manifests, and platform-specific constraints.
+- **Self-managed infrastructure** gives full control at run-time but requires teams to build and maintain deployment pipelines, monitoring, patching, scaling, and disaster recovery.
+- **Serverless platforms** push run-time complexity furthest toward the provider but constrain build-time choices (cold starts, execution limits, vendor lock-in, testing complexity).
+
+### Shifted Complexity Is Still Complexity
+
+When a managed platform handles scaling, patching, and availability, the operational complexity does not vanish -- it shifts to the platform provider. What remains with the team is:
+
+- **Configuration complexity**: IAM roles, environment variables, resource limits, networking rules
+- **Vendor complexity**: API changes, deprecation cycles, pricing model shifts, regional availability
+- **Abstraction leakage**: when the platform's abstractions break, debugging requires understanding what the platform hides
+- **Cognitive complexity**: developers must understand what the platform does implicitly to debug when things go wrong
+
+The key insight: managed services score lower on operational burden, but they are not zero-complexity. Configuration, vendor coupling, and cognitive costs remain.
+
+## Infrastructure Proportionality
+
+Infrastructure proportionality is the principle that infrastructure complexity should be proportional to the problem being solved. When the infrastructure to deploy, monitor, and operate a system is more complex than the application logic itself, something has gone wrong.
+
+### Disproportion Signals
+
+These are illustrative signals of infrastructure disproportion -- investigation triggers, not automatic vetoes:
+
+- **Deploy pipeline exceeds application code**: when the CI/CD configuration, Dockerfiles, Kubernetes manifests, and IaC templates are larger and more complex than the application they deploy
+- **Scaling machinery without scale evidence**: auto-scaling groups, load balancers, and multi-region failover for an application serving hundreds of requests per day
+- **Monitoring complexity exceeds monitored complexity**: when the observability stack (dashboards, alerts, traces, log aggregation) requires more maintenance than the services it monitors
+- **Infrastructure team exceeds application team**: when more people manage the platform than build the product
+
+### The Proportionality Test
+
+For any infrastructure decision, ask:
+
+1. **What problem does this solve?** (Must be a current, measurable problem)
+2. **Is the infrastructure cost proportional to the problem size?** (A Kubernetes cluster for a single-container app is disproportionate)
+3. **What is the simplest infrastructure that meets actual requirements?** (Not projected requirements, not hypothetical scale)
+4. **Who maintains this?** (Every infrastructure component has an ongoing maintenance cost)
+
+Infrastructure proportionality does not mean "use the least infrastructure possible." It means "use infrastructure proportional to the problem." A high-traffic distributed system legitimately needs sophisticated infrastructure. A team's internal tool does not.
+
+## Boring Technology Assessment for Managed Platforms
+
+Dan McKinley's "Choose Boring Technology" principle originally focused on self-managed open-source technologies (Postgres, Redis, Nginx). As the industry shifts toward managed and serverless platforms, the boring technology criteria must be applied topology-neutrally -- the same criteria apply regardless of whether you manage the infrastructure yourself or a provider manages it for you.
+
+### Boring Technology Criteria (Topology-Neutral)
+
+A technology qualifies as "boring" when it meets ALL of:
+
+1. **Production-hardened (5+ years)**: sufficient time in production to surface and document failure modes
+2. **Well-understood failure modes**: the community knows how it breaks and how to recover
+3. **Staffable talent**: hiring people with experience is straightforward
+4. **Well-documented**: comprehensive official docs, community knowledge bases, Stack Overflow coverage
+
+These criteria apply identically to self-managed software, managed services, and serverless platforms.
+
+### Managed Platform Boring Assessment
+
+Applying the criteria to major managed/serverless platforms:
+
+| Platform | GA Year | Production Years | Boring? |
+|---|---|---|---|
+| AWS Lambda | 2014 | 11+ | Yes |
+| Vercel (Zeit) | 2015 | 10+ | Yes |
+| Google Cloud Functions | 2016 | 9+ | Yes |
+| Cloudflare Workers | 2018 | 7+ | Yes |
+| AWS Fargate | 2017 | 8+ | Yes |
+
+All of these meet the boring technology criteria. They have well-documented failure modes, established talent pools, and years of production hardening. Whether they are the right choice for a specific project is a separate question (that belongs to gru, not margo).
+
+### What Does NOT Make Technology "Boring"
+
+- Marketing claims of simplicity
+- Popularity in blog posts or conference talks
+- Vendor endorsements
+- Being managed/serverless (hosting model does not determine maturity)
+
+"Boring" is an empirical assessment: time in production, documented failure modes, available talent, quality documentation. The hosting topology is irrelevant to this assessment.
+
+## Two-Column Complexity Budget
+
+The original complexity budget (see "Complexity Budget" section above) assigns point costs to architectural decisions. When evaluating managed or serverless platforms alongside self-managed infrastructure, a two-column approach distinguishes what changes from what stays the same.
+
+### Self-Managed vs. Managed Scoring
+
+| Decision | Self-Managed | Managed/Serverless |
+|---|---|---|
+| New technology | 10 | 5 |
+| New service | 5 | 2 |
+| New abstraction layer | 3 | 3 |
+| New dependency | 1 | 1 |
+
+**What changes**: technologies and services score lower when managed because the provider absorbs operational burden (patching, scaling, availability monitoring). The team still pays for learning the technology and understanding its failure modes, but does not pay the ongoing ops tax.
+
+**What stays the same**: abstraction layers and dependencies are code-level costs that do not change with hosting topology. An unnecessary abstraction layer is equally costly whether deployed on EC2 or Lambda. A dependency is equally risky whether running in a container or a serverless function.
+
+### Key Insight
+
+Managed services reduce operational complexity costs but never eliminate complexity entirely. Configuration, vendor lock-in, abstraction leakage, and cognitive load remain. The managed column scores lower but never zero.
+
+### Shared Vocabulary
+
+To avoid ambiguity when discussing infrastructure topology:
+
+- **Self-managed**: team operates the infrastructure (bare metal, VMs, self-hosted Kubernetes)
+- **Managed**: provider handles infrastructure operations, team configures and deploys (RDS, ECS, managed Kubernetes)
+- **Serverless / fully managed**: provider handles nearly all operational concerns, team provides only code and configuration (Lambda, Cloud Functions, Vercel, Cloudflare Workers)
+
 ## Sources
 
-This research draws from established software engineering principles, complexity theory, and architectural philosophies including the Unix philosophy, operational simplicity principles from high-performance engineering teams, Dan McKinley's "Choose Boring Technology," Fred Brooks' "No Silver Bullet," and the SOLID principles. Complexity metrics reference SonarQube documentation and academic literature on cyclomatic and cognitive complexity. Supply chain security data references CISA advisories, npm ecosystem incident reports, and security research from 2016-2025.
+This research draws from established software engineering principles, complexity theory, and architectural philosophies including the Unix philosophy, operational simplicity principles from high-performance engineering teams, Dan McKinley's "Choose Boring Technology," Fred Brooks' "No Silver Bullet," and the SOLID principles. Complexity metrics reference SonarQube documentation and academic literature on cyclomatic and cognitive complexity. Supply chain security data references CISA advisories, npm ecosystem incident reports, and security research from 2016-2025. Operational complexity research draws from Google's DORA metrics program, Site Reliability Engineering practices (toil measurement), Tesler's Law of Conservation of Complexity, and industry surveys on DevOps engineer productivity. Infrastructure proportionality patterns reference DevOps infrastructure complexity studies and managed vs. self-managed service comparison analyses. Boring technology assessment for managed platforms applies McKinley's original criteria to platform maturity data from AWS, Vercel, Google Cloud, and Cloudflare.

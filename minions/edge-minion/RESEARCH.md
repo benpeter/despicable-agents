@@ -28,6 +28,26 @@ Cloudflare Workers provide JavaScript-based edge compute with multiple storage b
 
 **Multi-Storage Architecture**: Applications commonly use KV for session data, R2 for large files, and D1 or Durable Objects for transactional data—choosing the right storage for each access pattern.
 
+## Full-Stack Serverless Platform Boundaries
+
+Cloudflare Workers/Pages, Vercel, and Netlify have evolved into full-stack serverless platforms where edge compute, hosting, build pipelines, and deployment configuration coexist within a single provider.
+
+### Edge-Layer Behavior vs. Deployment Configuration
+
+On these platforms, a clear boundary exists between edge-layer runtime behavior and deployment/infrastructure configuration:
+
+**Edge-layer behavior (edge-minion scope)**: Caching rules, routing logic, edge functions and middleware, storage bindings (KV, R2, D1, Durable Objects), header manipulation, rewrite/redirect rules executed at runtime, edge-side rendering, and request/response transformation. These define *what happens when a request hits the edge*.
+
+**Deployment configuration (iac-minion scope)**: Build settings, environment variables, deployment targets, CI/CD pipeline integration, project settings (e.g., Vercel project configuration, Netlify build config, wrangler.toml deployment targets), domain bindings, and infrastructure provisioning. These define *how the application gets deployed to the edge*.
+
+### Platform-Specific Examples
+
+**Cloudflare**: `wrangler.toml` contains both deployment targets (iac-minion: account_id, zone_id, routes, compatibility_date) and runtime bindings (edge-minion: KV namespaces, R2 buckets, D1 databases, Durable Object bindings). The runtime behavior of Workers code, caching API usage, and storage access patterns are edge-minion's domain.
+
+**Vercel**: Edge Middleware (request routing, rewrites, geo-targeting) and Edge Functions are edge-minion scope. Project settings (`vercel.json` build config, environment variables, deployment protection) are iac-minion scope.
+
+**Netlify**: Edge Functions, redirect rules, and header rules executed at runtime are edge-minion scope. Build plugins, deploy contexts, and site configuration are iac-minion scope.
+
 ## HTTP Caching Standards
 
 ### RFC 9111: HTTP Caching (2022)

@@ -815,15 +815,13 @@ count, execution order) in session context. **Proceed to Phase 3.5
 
 ### Compaction Checkpoint
 
-After writing the synthesis to the scratch file, present a compaction gate
-using AskUserQuestion:
+After writing the synthesis to the scratch file, perform these steps in order:
 
 <!-- The <system_warning> token usage format ("Token usage: {used}/{total};
      {remaining} remaining") is empirically observed Claude Code behavior, not a
      stable API. If the format changes, the context line is silently omitted. -->
 
-Before presenting the AskUserQuestion, extract context usage from the most recent
-`<system_warning>` in the conversation:
+Extract context usage from the most recent `<system_warning>` in the conversation:
 
 1. Scan backward for the most recent text matching:
    `Token usage: {used}/{total}; {remaining} remaining`
@@ -835,31 +833,30 @@ Before presenting the AskUserQuestion, extract context usage from the most recen
    trailing `\n\n` from the question. The question then begins with the phase
    completion sentence.
 
-- `header`: "P3 Compact"
-- `question`: "[Context: {$context_pct}% used -- {$context_remaining_k}k remaining]\n\nPhase 3 complete. Specialist details are now in the synthesis. Compact context before continuing?\n\nRun: $summary_full"
-- `options` (2, `multiSelect: false`):
-  1. label: "Skip", description: "Continue without compaction. Auto-compaction may interrupt later phases." (recommended)
-  2. label: "Compact", description: "Pause to compact context before Phase 3.5."
-
-**"Skip" response handling**:
-Print: `Continuing without compaction.`
-Proceed to Phase 3.5.
-
-**"Compact" response handling**:
-Silently copy the `/compact` command to the clipboard before printing:
+1. Copy the compaction command to the clipboard (silently):
 
     echo '/compact focus="Preserve: current phase (3.5 review next), synthesized execution plan, inline agent summaries, task list, approval gates, team name, branch name, $summary, scratch directory path. Discard: individual specialist contributions from Phase 2."' | pbcopy 2>/dev/null
 
-The `$summary` and scratch directory path in the pbcopy command must be interpolated
-to their actual resolved values, matching the printed code block below.
+2. Print the compaction message:
 
-Print the `/compact` command for the user to copy and run:
+    ```
+    [Context: {$context_pct}% used -- {$context_remaining_k}k remaining]
 
-    Copied to clipboard. Paste and run:
+    Phase 3 complete. Compaction prompt copied to clipboard.
+
+    To compact: paste the command below, then type `continue` now -- it will run after compaction finishes.
+    To skip: type `continue`.
 
         /compact focus="Preserve: current phase (3.5 review next), synthesized execution plan, inline agent summaries, task list, approval gates, team name, branch name, $summary, scratch directory path. Discard: individual specialist contributions from Phase 2."
 
-    Type `continue` when ready to resume.
+    Run: $summary_full
+    ```
+
+    When context data is unavailable (extraction returned nothing), omit the
+    `[Context: ...]` line and its trailing blank line. The message then begins
+    with "Phase 3 complete."
+
+3. STOP. Wait for the user's next message before doing anything else.
 
 <!-- Focus strings are printed verbatim in terminal output.
      Avoid backticks, single quotes, and backslashes in focus string values. -->
@@ -868,8 +865,8 @@ The `$summary` and scratch directory path references in the focus string must be
 interpolated to their actual resolved values before display. Do not show template
 variables in user-facing output (per the Path display rule).
 
-Wait for the user to say "continue" (or synonyms: "go", "next", "ok", "resume",
-"proceed"). Then proceed to Phase 3.5. Do NOT re-prompt at subsequent boundaries.
+When the user responds with "continue" (or synonyms: "go", "next", "ok",
+"resume", "proceed"), proceed to Phase 3.5.
 
 <!-- INFRASTRUCTURE: Termination mechanism, wrap-up sequence -->
 <!-- DOMAIN-SPECIFIC: Git commit message format, conventional commit type, "no PR" assumption -->
@@ -1336,38 +1333,35 @@ Follow these steps exactly. **Global cap: 2 revision rounds total.**
 
 ### Compaction Checkpoint
 
-After processing all review verdicts, present a compaction gate using
-AskUserQuestion:
+After processing all review verdicts, perform these steps in order:
 
-Before presenting the AskUserQuestion, extract context usage from the most recent
-`<system_warning>` in the conversation (same extraction and fallback as the
-Phase 3 checkpoint above).
+Extract context usage from the most recent `<system_warning>` in the conversation
+(same extraction and fallback as the Phase 3 checkpoint above).
 
-- `header`: "P3.5 Compact"
-- `question`: "[Context: {$context_pct}% used -- {$context_remaining_k}k remaining]\n\nPhase 3.5 complete. Review verdicts are folded into the plan. Compact context before execution?\n\nRun: $summary_full"
-- `options` (2, `multiSelect: false`):
-  1. label: "Skip", description: "Continue without compaction. Auto-compaction may interrupt execution." (recommended)
-  2. label: "Compact", description: "Pause to compact context before Phase 4."
-
-**"Skip" response handling**:
-Print: `Continuing without compaction.`
-Proceed to the Execution Plan Approval Gate.
-
-**"Compact" response handling**:
-Silently copy the `/compact` command to the clipboard before printing:
+1. Copy the compaction command to the clipboard (silently):
 
     echo '/compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, inline agent summaries, gate decision briefs, task list with dependencies, approval gates, team name, branch name, $summary, scratch directory path, skills-invoked. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."' | pbcopy 2>/dev/null
 
-The `$summary` and scratch directory path in the pbcopy command must be interpolated
-to their actual resolved values, matching the printed code block below.
+2. Print the compaction message:
 
-Print the `/compact` command for the user to copy and run:
+    ```
+    [Context: {$context_pct}% used -- {$context_remaining_k}k remaining]
 
-    Copied to clipboard. Paste and run:
+    Phase 3.5 complete. Compaction prompt copied to clipboard.
+
+    To compact: paste the command below, then type `continue` now -- it will run after compaction finishes.
+    To skip: type `continue`.
 
         /compact focus="Preserve: current phase (4 execution next), final execution plan with ADVISE notes incorporated, inline agent summaries, gate decision briefs, task list with dependencies, approval gates, team name, branch name, $summary, scratch directory path, skills-invoked. Discard: individual review verdicts, Phase 2 specialist contributions, raw synthesis input."
 
-    Type `continue` when ready to resume.
+    Run: $summary_full
+    ```
+
+    When context data is unavailable (extraction returned nothing), omit the
+    `[Context: ...]` line and its trailing blank line. The message then begins
+    with "Phase 3.5 complete."
+
+3. STOP. Wait for the user's next message before doing anything else.
 
 <!-- Focus strings are printed verbatim in terminal output.
      Avoid backticks, single quotes, and backslashes in focus string values. -->
@@ -1376,8 +1370,8 @@ The `$summary` and scratch directory path references in the focus string must be
 interpolated to their actual resolved values before display. Do not show template
 variables in user-facing output (per the Path display rule).
 
-Wait for the user to say "continue" (or synonyms: "go", "next", "ok", "resume",
-"proceed"). Then proceed to the Execution Plan Approval Gate.
+When the user responds with "continue" (or synonyms: "go", "next", "ok",
+"resume", "proceed"), proceed to the Execution Plan Approval Gate.
 
 <!-- INFRASTRUCTURE: Progressive disclosure layout, task list format, advisory format, AskUserQuestion structure -->
 ## Execution Plan Approval Gate
@@ -1661,17 +1655,14 @@ A batch contains all tasks that can run before the next gate.
    ```
    - **"Approve"**: Present a FOLLOW-UP AskUserQuestion for post-execution options:
      - `header`: "Post-exec"
-     - `question`: "Skip any post-execution phases for Task N: <task title>? (confirm with none selected to run all)\n\nRun: $summary_full"
-     - `options` (3, `multiSelect: true`):
-       1. label: "Skip docs", description: "Skip documentation updates (Phase 8)."
-       2. label: "Skip tests", description: "Skip test execution (Phase 6)."
-       3. label: "Skip review", description: "Skip code review (Phase 5)."
-     Options are ordered by ascending risk (docs = lowest, review = highest).
-     If no options selected: run all post-execution phases (5-8).
-     If one or more options selected: skip those phases, run the rest.
+     - `question`: "Post-execution phases for Task N: <task title>\n\nRun: $summary_full"
+     - `options` (3, `multiSelect: false`):
+       1. label: "Run all", description: "Run code review, tests, and documentation." (recommended)
+       2. label: "Skip docs only", description: "Run code review and tests. Skip documentation updates."
+       3. label: "Skip all post-exec", description: "Skip code review, tests, and documentation."
      Then auto-commit changes (see below) and continue to next batch.
-     The user may also type freeform flags at the same prompt,
-     using flags to skip multiple phases (e.g., "--skip-docs --skip-tests",
+     The user may also type freeform flags instead of selecting an option,
+     using flags to skip specific phases (e.g., "--skip-docs --skip-tests",
      or "--skip-post" to skip all). Interpret natural language skip intent as
      equivalent to the corresponding flags. Flag reference:
      - `--skip-docs` = skip Phase 8
@@ -1759,19 +1750,20 @@ user sees one CONDENSE line at the start and one consolidated result in
 the wrap-up summary.
 
 Determine which post-execution phases to run based on the user's
-multi-select response and/or freeform text flags:
-- Phase 5 (Code Review): Skip if the user's selection includes
-  "Skip review", or freeform contains --skip-review or --skip-post.
-  Also skip if Phase 4 produced only documentation-only files (see
-  Phase 5 file classification table).
-- Phase 6 (Test Execution): Skip if the user's selection includes
-  "Skip tests", or freeform contains --skip-tests or --skip-post.
-  Also skip if no tests exist.
-- Phase 8 (Documentation): Skip if the user's selection includes
-  "Skip docs", or freeform contains --skip-docs or --skip-post.
-  Also skip if checklist has no items.
-- If no options were selected and no freeform skip flags were typed,
-  run all phases.
+single-select response and/or freeform text flags:
+- "Run all": Run Phases 5, 6, and 8 (subject to existing conditional
+  skips: docs-only files skip Phase 5, no tests skip Phase 6, empty
+  checklist skips Phase 8).
+- "Skip docs only": Skip Phase 8. Run Phases 5 and 6 (subject to
+  existing conditional skips).
+- "Skip all post-exec": Skip Phases 5, 6, and 8.
+- Freeform text: If the user types freeform flags instead of selecting
+  an option, interpret them as before:
+  - --skip-docs = skip Phase 8
+  - --skip-tests = skip Phase 6
+  - --skip-review = skip Phase 5
+  - --skip-post = skip Phases 5, 6, 8 (all post-execution)
+  Flags can be combined. Freeform overrides structured selection on conflict.
 
 Print a CONDENSE status line listing only the phases that will actually run:
 - No skips: `Verifying: code review, tests, documentation...`
