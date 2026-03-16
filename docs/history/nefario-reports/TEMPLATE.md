@@ -296,7 +296,7 @@ Companion directory: [{YYYY-MM-DD}-{HHMMSS}-{slug}/](./{YYYY-MM-DD}-{HHMMSS}-{sl
 | `task-count` | always | Number of execution tasks |
 | `gate-count` | always | Number of approval gates presented |
 | `outcome` | always | `completed`, `partial`, or `aborted` |
-| `docs-debt` | always | Documentation debt status: `none` (Phase 8a found 0 items or all items addressed in 8b), `deferred` (Phase 8a found items but Phase 8b was skipped) |
+| `docs-debt` | always | Documentation debt status: `none` (Phase 8a found 0 items or all items addressed in 8b), `deferred` (Phase 8a found items but Phase 8b was skipped). Advisory-mode reports use `none` (Phase 8 does not run). |
 
 ### Conditional Section Rules
 

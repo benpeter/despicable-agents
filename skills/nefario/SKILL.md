@@ -154,7 +154,7 @@ The workflow has nine phases:
 5. **Code Review** — Parallel review of agent-produced code (conditional: code produced)
 6. **Test Execution** — Run and validate tests (conditional: tests exist)
 7. **Deployment** — Run deployment commands (conditional: user-requested)
-8. **Documentation** — Generate/update project documentation (conditional: checklist has items)
+8. **Documentation** — Assess documentation impact (8a: always), generate/update docs (8b: conditional)
 
 When `--advisory` is passed, only phases 1-3 run. The synthesis produces a
 team recommendation instead of an execution plan. No code is changed, no

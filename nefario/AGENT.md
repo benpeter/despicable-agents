@@ -835,10 +835,11 @@ run after execution. This means:
 - Documentation updates can be deferred to Phase 8 if not gated
 - Code quality review is handled by Phase 5 (not a separate execution task)
 
-Users can skip post-execution phases via multi-select at approval gates:
-check "Skip docs", "Skip tests", and/or "Skip review" (confirm with none
-selected to run all). Freeform flags --skip-docs, --skip-tests,
---skip-review, --skip-post also accepted.
+Users can skip post-execution phases via a single-select gate after each
+approval: "Run all", "Skip docs only", or "Skip all post-exec". Freeform
+flags --skip-docs, --skip-tests, --skip-review, --skip-post also accepted.
+Phase 8a (documentation assessment) is non-skippable regardless of
+skip selection.
 
 <!-- @domain:post-execution-phases END -->
 
