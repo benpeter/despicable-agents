@@ -1970,11 +1970,22 @@ post-exec". It produces the documentation checklist and records any debt.
       | Breaking change | Migration guide | user-docs-minion |
       | Config changed | Config reference | software-docs-minion |
       | Spec/config files modified | Scan for derivative docs referencing changed sections | software-docs-minion |
+      | New secrets / environment variables | README secrets/env section, CONTRIBUTING .dev.vars template, deployment docs | software-docs-minion |
+      | New response headers | API reference, OpenAPI response headers | software-docs-minion |
+      | Error response shape changed | OpenAPI error response definitions | software-docs-minion |
+      | Existing behavior changed (not breaking) | Scan docs referencing changed behavior for stale content | software-docs-minion |
+      | New publicly accessible endpoint (incl. health, well-known) | README endpoint table, OpenAPI spec | software-docs-minion |
+      | Developer setup dependencies changed | CONTRIBUTING setup section, getting-started | software-docs-minion |
+      | CORS / security header changes | API reference, security docs | software-docs-minion |
+      | Any other file touched in Phase 4 referenced by existing docs | Verify documentation references still accurate | software-docs-minion |
 
    Priority assignment:
-   - MUST: gate-approved decisions, new projects, breaking changes
-   - SHOULD: user-facing features, new APIs
-   - COULD: config refs, derivative docs
+   - MUST: gate-approved decisions, new projects, breaking changes,
+     existing behavior contradicts docs (stale content)
+   - SHOULD: user-facing features, new APIs, new secrets/env vars,
+     new publicly accessible endpoints
+   - COULD: config refs, derivative docs, new response headers,
+     CORS/security headers, developer setup changes, error response changes
 
    For any item claimed as "already addressed in Phase 4": require citing
    the specific file path and section that addresses it. Items without
