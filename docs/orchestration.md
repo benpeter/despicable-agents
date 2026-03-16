@@ -4,7 +4,7 @@
 
 For the user-facing orchestration guide, see [Using Nefario](using-nefario.md).
 
-This document covers the architecture of the nine-phase orchestration process (Section 1), the delegation model that routes work to specialists (Section 2), the approval gate mechanism that keeps the user in control of high-impact decisions (Section 3), execution reports (Section 4), and commit points in the execution flow (Section 5).
+This document covers the architecture of the nine-phase orchestration process (Section 1), the delegation model that routes work to specialists (Section 2), the approval gate mechanism that keeps the user in control of high-impact decisions (Section 3), execution reports (Section 4), commit points in the execution flow (Section 5), and parallel orchestration via git worktrees (Section 6).
 
 ---
 
@@ -608,3 +608,62 @@ After the final commit checkpoint, the session offers to create a pull request v
 ### Full Design Reference
 
 The complete commit workflow specification -- including file change tracking, hook composition, safety rails, sensitive file detection, and edge cases -- is documented in [commit-workflow.md](commit-workflow.md). The security assessment covering input validation, fail-closed behavior, and git command safety is at [commit-workflow-security.md](commit-workflow-security.md).
+
+---
+
+## 6. Parallel Orchestration with Git Worktrees
+
+Multiple nefario orchestrations can run simultaneously in separate git worktrees. Each session operates independently with its own branch, scratch files, and reports. No framework-level coordination is needed -- the infrastructure layer (Claude Code + git) handles isolation transparently.
+
+### When to Use Worktree Isolation
+
+Use worktrees when you have independent workstreams that don't touch the same files:
+
+- Auth refactor + documentation overhaul
+- API v2 design + new monitoring stack
+- Frontend rework + backend performance tuning
+
+**Anti-pattern**: Two streams that both modify the same config file, schema, or shared module. File conflicts are only discovered at PR merge time, not during execution.
+
+### How It Works
+
+Open a Claude Code session in a named worktree, then invoke nefario normally:
+
+```
+# Terminal 1
+claude --worktree auth-refactor
+/nefario Refactor OAuth flow to use device code grant
+
+# Terminal 2
+claude -w docs-overhaul
+/nefario Restructure user-facing documentation
+```
+
+Each session gets its own:
+
+- Git working directory (separate checkout of the same repo)
+- Feature branch (`nefario/<slug>`, created independently per session)
+- Scratch files, execution reports, and status markers
+- Context window -- no shared state between sessions
+
+Sessions share the same git object database but have separate working trees. Commits in one worktree are visible to others only after they are pushed and fetched.
+
+> **Note**: This section covers worktree-based parallelism for running independent orchestrations. Mid-session worktree switching (`EnterWorktree`/`ExitWorktree` tools) is a separate capability used by the Agent tool's `isolation: "worktree"` parameter for spawning subagents in isolated copies. The two mechanisms are unrelated.
+
+### Merge-Back Workflow
+
+Each worktree produces a standard feature branch with a PR:
+
+1. Nefario creates `nefario/<slug>` in each worktree (Section 5)
+2. Each session opens its own PR via `gh pr create`
+3. PRs are reviewed and merged independently
+4. After merge, clean up worktrees: `git worktree remove <name>`
+
+No special merge tooling is required. If worktrees drifted into shared files, merge conflicts are resolved using standard git workflows.
+
+### Limitations
+
+- **No cross-session coordination.** Each nefario session plans, executes, and reports independently. There is no shared planning phase, no synchronized gates, and no awareness of what other sessions are doing.
+- **No automatic merge.** Each session produces its own PR. Merging is sequential and manual.
+- **Conflict detection at merge time only.** If two sessions modify the same file, the conflict surfaces when the second PR is merged, not during execution.
+- **Independent context windows.** Sessions cannot share agent contributions, review verdicts, or execution state. Each session starts from scratch.

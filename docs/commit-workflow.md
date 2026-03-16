@@ -32,6 +32,8 @@ The slug is derived from the task description: lowercase, kebab-case, max 40 cha
 1. If already on a non-main branch (e.g., the user manually created a branch), use it. Do not create a nested branch.
 2. If on `main` or `master`, run pre-flight checks and create the feature branch.
 
+When using git worktrees for parallel orchestration, each worktree independently creates its own `nefario/<slug>` branch following the same naming convention. See [Parallel Orchestration with Git Worktrees](orchestration.md#6-parallel-orchestration-with-git-worktrees).
+
 ### PR Creation at Wrap-Up
 
 At session wrap-up (after the final auto-commit), offer to create a pull request:
