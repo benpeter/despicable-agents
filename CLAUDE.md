@@ -75,6 +75,13 @@ has `x-plan-version` in its frontmatter. When they diverge, use `/despicable-lab
 ./install.sh  # Symlinks 27 agents and 2 skills (/nefario, /despicable-prompter) to ~/.claude/
 ```
 
+For non-default domains:
+```bash
+./install.sh --domain <domain-name>  # Assembles AGENT.md from domain adapter and installs
+```
+
+See [Domain Adaptation](docs/domain-adaptation.md) for the full guide.
+
 ## Orchestration Reports
 
 After completing nefario orchestration (conversations involving META-PLAN or SYNTHESIS phases),

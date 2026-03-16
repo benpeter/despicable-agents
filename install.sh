@@ -3,9 +3,11 @@
 # install.sh — Deploy despicable-agents to ~/.claude/agents/
 #
 # Usage:
-#   ./install.sh         # install (create symlinks)
-#   ./install.sh install # install (create symlinks)
-#   ./install.sh uninstall # remove symlinks created by this project
+#   ./install.sh                        # install with default domain (software-dev)
+#   ./install.sh install                # install with default domain
+#   ./install.sh --domain <name>        # install with named domain
+#   ./install.sh install --domain <name> # install with named domain
+#   ./install.sh uninstall              # remove symlinks created by this project
 
 set -euo pipefail
 
@@ -31,6 +33,10 @@ print_msg() {
 
 # Install agents and skills by creating symlinks
 install_agents() {
+  # Assemble nefario AGENT.md with domain adapter before symlinking
+  print_msg "$COLOR_GREEN" "Assembling domain adapter: ${DOMAIN}"
+  "${SCRIPT_DIR}/assemble.sh" "$DOMAIN"
+
   print_msg "$COLOR_GREEN" "Installing despicable-agents to ${AGENTS_DIR}/"
 
   # Create agents directory if it doesn't exist
@@ -102,6 +108,7 @@ install_agents() {
   fi
 
   print_msg "$COLOR_GREEN" "\nInstalled ${installed_count} agents and skills successfully."
+  print_msg "$COLOR_GREEN" "Active domain: ${DOMAIN}"
 }
 
 # Uninstall agents and skills by removing symlinks
@@ -206,23 +213,25 @@ uninstall_agents() {
 
 # Main script logic
 main() {
-  local action="${1:-install}"
+  local action="install"
+  DOMAIN="software-dev"
+
+  # Parse arguments: action and --domain flag
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --domain) DOMAIN="${2:?--domain requires a value}"; shift 2 ;;
+      install|uninstall) action="$1"; shift ;;
+      *) print_msg "$COLOR_RED" "Unknown argument: $1"
+         echo ""
+         echo "Usage:"
+         echo "  $0 [install|uninstall] [--domain <name>]"
+         exit 1 ;;
+    esac
+  done
 
   case "$action" in
-    install)
-      install_agents
-      ;;
-    uninstall)
-      uninstall_agents
-      ;;
-    *)
-      print_msg "$COLOR_RED" "Unknown command: $action"
-      echo ""
-      echo "Usage:"
-      echo "  $0 install   — create symlinks to ~/.claude/agents/ and ~/.claude/skills/ (default)"
-      echo "  $0 uninstall — remove symlinks from ~/.claude/agents/ and ~/.claude/skills/"
-      exit 1
-      ;;
+    install)   install_agents ;;
+    uninstall) uninstall_agents ;;
   esac
 }
 
