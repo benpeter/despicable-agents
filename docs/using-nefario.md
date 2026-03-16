@@ -140,6 +140,8 @@ Nefario operates on whichever project your Claude Code session is in. Reports, f
 /nefario --advisory #89
 ```
 
+**Run parallel orchestrations in separate git worktrees.** You can run multiple `/nefario` sessions simultaneously, each in its own worktree (`claude -w auth-refactor` in one terminal, `claude -w docs-overhaul` in another). Each session operates independently with its own branch, scratch files, and reports. This is useful when you have independent workstreams that don't touch the same files. See [Parallel Orchestration with Git Worktrees](orchestration.md#6-parallel-orchestration-with-git-worktrees) for setup and limitations.
+
 **Use MODE: PLAN for simpler multi-agent tasks.** The skill supports a simplified mode that skips specialist consultation and has nefario plan directly. This works well when you know which 2-3 agents you need and the handoffs are straightforward.
 
 ## Working with Project Skills
