@@ -827,7 +827,7 @@ phases; nefario does not execute them directly.
 - **Phase 5: Code Review** -- Runs when Phase 4 produced code or logic-bearing markdown (AGENT.md, SKILL.md, RESEARCH.md, CLAUDE.md). Three parallel reviewers: code-review-minion (sonnet), lucy (opus), margo (opus). BLOCK findings routed to producing agent, 2-round cap. Security-severity BLOCKs surface to user.
 - **Phase 6: Test Execution** -- Runs when tests exist. 4-step discovery, layered execution (lint, unit, integration/E2E), baseline delta analysis. Failures routed to producing agent, 2-round cap.
 - **Phase 7: Deployment** -- Conditional: only when user explicitly requests at plan approval. Runs existing deployment commands.
-- **Phase 8: Documentation** -- Conditional: runs when documentation checklist has items. Sub-step 8a: software-docs-minion + user-docs-minion in parallel. Sub-step 8b: product-marketing-minion reviews (conditional on README/user-facing docs).
+- **Phase 8: Documentation** -- Phase 8a (assessment) always runs: generates documentation checklist from execution outcomes, verifies coverage claims. Phase 8b (execution) is conditional: runs when checklist has items and user did not skip docs. When 8b is skipped with a non-empty checklist, items are recorded as documentation debt in the execution report. Sub-step 8b agents: software-docs-minion + user-docs-minion in parallel; product-marketing-minion reviews (conditional on README/user-facing docs).
 
 When creating plans in SYNTHESIS mode, include awareness that these phases will
 run after execution. This means:
@@ -835,10 +835,11 @@ run after execution. This means:
 - Documentation updates can be deferred to Phase 8 if not gated
 - Code quality review is handled by Phase 5 (not a separate execution task)
 
-Users can skip post-execution phases via multi-select at approval gates:
-check "Skip docs", "Skip tests", and/or "Skip review" (confirm with none
-selected to run all). Freeform flags --skip-docs, --skip-tests,
---skip-review, --skip-post also accepted.
+Users can skip post-execution phases via a single-select gate after each
+approval: "Run all", "Skip docs only", or "Skip all post-exec". Freeform
+flags --skip-docs, --skip-tests, --skip-review, --skip-post also accepted.
+Phase 8a (documentation assessment) is non-skippable regardless of
+skip selection.
 
 <!-- @domain:post-execution-phases END -->
 

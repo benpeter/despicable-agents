@@ -19,6 +19,7 @@ skills-used: [{skill1}, {skill2}]
 task-count: {N}
 gate-count: {N}
 outcome: {completed | partial | aborted}
+docs-debt: {none | deferred}
 ---
 
 # {task}
@@ -207,6 +208,14 @@ should be re-evaluated.}
 | Deployment | {outcome or "Skipped ({reason})"} |
 | Documentation | {outcome or "Skipped ({reason})"} |
 
+## Documentation Debt
+
+{INCLUDE WHEN `docs-debt` = `deferred`. OMIT WHEN `docs-debt` = `none`.}
+
+| Item | Priority | Target Files | Status |
+|------|----------|-------------|--------|
+| {checklist item description} | {MUST/SHOULD/COULD} | {file paths} | deferred |
+
 ## Session Resources
 
 <details>
@@ -287,6 +296,7 @@ Companion directory: [{YYYY-MM-DD}-{HHMMSS}-{slug}/](./{YYYY-MM-DD}-{HHMMSS}-{sl
 | `task-count` | always | Number of execution tasks |
 | `gate-count` | always | Number of approval gates presented |
 | `outcome` | always | `completed`, `partial`, or `aborted` |
+| `docs-debt` | always | Documentation debt status: `none` (Phase 8a found 0 items or all items addressed in 8b), `deferred` (Phase 8a found items but Phase 8b was skipped). Advisory-mode reports use `none` (Phase 8 does not run). |
 
 ### Conditional Section Rules
 
@@ -303,6 +313,7 @@ Companion directory: [{YYYY-MM-DD}-{HHMMSS}-{slug}/](./{YYYY-MM-DD}-{HHMMSS}-{sl
 | Post-Nefario Updates | NEVER in initial report. Appending updates to an existing report after subsequent commits land on the same branch. | Always omit in initial report generation. |
 | Agent Contributions: Architecture Review subsection | Phase 3.5 ran | `mode` = `advisory` or Phase 3.5 skipped |
 | Agent Contributions: Code Review subsection | Phase 5 ran | `mode` = `advisory` or Phase 5 skipped |
+| Documentation Debt | `docs-debt` = `deferred` | `docs-debt` = `none` |
 
 ### Collapsibility Rules
 
@@ -424,6 +435,8 @@ When generating a report:
 11. Write Execution (Tasks table + Files Changed table + Approval Gates table with per-gate H4 briefs)
 12. Write Decisions (if gate-count > 0; gate briefs with full rationale)
 13. Write Verification table
+13a. Write Documentation Debt section (if docs-debt = deferred; include
+   Phase 8a checklist items with priority and target files)
 14. Write Session Resources (collapsed; External Skills subsection if any discovered;
     Skills Invoked list always; compaction signal line always)
 15. Write Working Files (collapsible, relative links to companion directory; or "None")

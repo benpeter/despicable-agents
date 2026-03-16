@@ -115,7 +115,7 @@ Nefario follows a structured process: plan with specialists, review the plan, ex
 
 **Phase 7 -- Deployment (conditional).** Only runs when you explicitly requested deployment at plan approval time. Runs existing deployment commands (e.g., `./install.sh`). You do not see this unless a problem surfaces.
 
-**Phase 8 -- Documentation (conditional).** Runs when execution outcomes trigger documentation needs (new APIs, architecture changes, user-facing features). Technical and user-facing documentation are updated in parallel. You do not see this unless a problem surfaces.
+**Phase 8 -- Documentation (8a: always, 8b: conditional).** Phase 8a always assesses documentation impact from execution outcomes, even when you skip docs. Phase 8b runs the actual documentation updates when the checklist has items and you did not skip. If you skip with pending items, they are recorded as documentation debt in the report. You do not see this unless a problem surfaces.
 
 After all applicable phases complete, you receive a wrap-up summary with the results. Git commit output is suppressed via `--quiet` flags -- only errors appear inline.
 

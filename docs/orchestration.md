@@ -110,11 +110,11 @@ At wrap-up, any skipped gates are re-presented. A final report summarizes delive
 
 Phases 5-8 run between execution completion and wrap-up using the **dark kitchen** pattern: they execute silently, writing all findings to scratch files. The user sees a single status line when verification starts and a consolidated summary in the wrap-up report. Only unresolvable BLOCKs (after 2 fix iterations) surface to the user.
 
-At each approval gate, after selecting "Approve", a multi-select follow-up
-lets users check which phases to skip: "Skip docs" (Phase 8), "Skip tests"
-(Phase 6), or "Skip review" (Phase 5). Confirm with none selected to run
-all. Freeform flags (--skip-docs, --skip-tests, --skip-review, --skip-post)
-also accepted.
+At each approval gate, after selecting "Approve", a single-select follow-up
+offers: "Run all", "Skip docs only" (skip Phase 8b execution), or "Skip all
+post-exec" (skip Phases 5, 6, 8b). Phase 8a (documentation assessment) always
+runs regardless of skip selection. Freeform flags (--skip-docs, --skip-tests,
+--skip-review, --skip-post) also accepted.
 Phase 7 (deployment) is opt-in.
 
 ### Phase 5: Code Review
