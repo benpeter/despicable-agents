@@ -635,7 +635,7 @@ claude --worktree auth-refactor
 /nefario Refactor OAuth flow to use device code grant
 
 # Terminal 2
-claude -w docs-overhaul
+claude --worktree docs-overhaul    # -w is shorthand for --worktree
 /nefario Restructure user-facing documentation
 ```
 
@@ -648,13 +648,13 @@ Each session gets its own:
 
 Sessions share the same git object database but have separate working trees. Commits in one worktree are visible to others only after they are pushed and fetched.
 
-> **Note**: This section covers worktree-based parallelism for running independent orchestrations. Mid-session worktree switching (`EnterWorktree`/`ExitWorktree` tools) is a separate capability used by the Agent tool's `isolation: "worktree"` parameter for spawning subagents in isolated copies. The two mechanisms are unrelated.
+> **Note**: This section covers worktree-based parallelism for running independent orchestrations. Mid-session worktree switching (`EnterWorktree`/`ExitWorktree`) is a separate capability used when agents are defined with `isolation: "worktree"` for running subagents in isolated copies. The two mechanisms serve different purposes and operate independently.
 
 ### Merge-Back Workflow
 
 Each worktree produces a standard feature branch with a PR:
 
-1. Nefario creates `nefario/<slug>` in each worktree (Section 5)
+1. Nefario creates `nefario/<slug>` in each worktree (see [Commit Points](#5-commit-points-in-execution-flow))
 2. Each session opens its own PR via `gh pr create`
 3. PRs are reviewed and merged independently
 4. After merge, clean up worktrees: `git worktree remove <name>`
