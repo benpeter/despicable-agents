@@ -36,14 +36,17 @@ ARG_OUTPUT=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --agent-md)
+      [ $# -lt 2 ] && { echo "Error: --agent-md requires a value" >&2; exit 2; }
       ARG_AGENT_MD="$2"
       shift 2
       ;;
     --format)
+      [ $# -lt 2 ] && { echo "Error: --format requires a value" >&2; exit 2; }
       ARG_FORMAT="$2"
       shift 2
       ;;
     --output)
+      [ $# -lt 2 ] && { echo "Error: --output requires a value" >&2; exit 2; }
       ARG_OUTPUT="$2"
       shift 2
       ;;
@@ -173,7 +176,8 @@ if [ ! -r "$ARG_AGENT_MD" ]; then
 fi
 
 # Reject binary content (null bytes only -- UTF-8 multi-byte chars are valid)
-if LC_ALL=C grep -qP '\x00' "$ARG_AGENT_MD" 2>/dev/null; then
+# Use tr/cmp for portability (grep -P is GNU-only, not available on macOS)
+if ! LC_ALL=C tr -d '\0' < "$ARG_AGENT_MD" | cmp -s - "$ARG_AGENT_MD"; then
   echo "Error: Source file contains null bytes" >&2
   echo "" >&2
   echo "  path: $ARG_AGENT_MD" >&2
@@ -519,7 +523,16 @@ validate_output() {
   fi
 
   # Check no null bytes (UTF-8 multi-byte chars are valid)
-  if printf '%s' "$content" | LC_ALL=C grep -qP '\x00' 2>/dev/null; then
+  # Use tr/cmp for portability (grep -P is GNU-only)
+  local content_file
+  content_file="$(mktemp "${TMPDIR:-/tmp}/translate-validate-XXXXXX")"
+  printf '%s' "$content" > "$content_file"
+  local has_null=false
+  if ! LC_ALL=C tr -d '\0' < "$content_file" | cmp -s - "$content_file"; then
+    has_null=true
+  fi
+  rm -f "$content_file"
+  if $has_null; then
     echo "Error: Translated output contains null bytes" >&2
     echo "" >&2
     echo "  source: $source_path" >&2
