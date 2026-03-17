@@ -6,7 +6,7 @@
 
 ## How to Use This Document
 
-Each milestone maps to a GitHub milestone; each issue maps to a GitHub issue. Copy the heading as the issue title and the body as the issue description. Once issues are created in a tracker, this document becomes the historical record of the original scope and rationale. Do not update issue content here after filing -- track changes in the issue tracker.
+Each milestone maps to a GitHub milestone; each issue maps to a GitHub issue (linked by `#number`). This document is the historical record of the original scope and rationale. Do not update issue content here after filing -- track changes in the issue tracker.
 
 ## Scope and Boundaries
 
@@ -35,7 +35,7 @@ Each milestone maps to a GitHub milestone; each issue maps to a GitHub issue. Co
 
 Shared types, configuration schema, and instruction translation. No tool invocation yet. All subsequent milestones depend on this one.
 
-### Issue 1.1: Adapter Interface Definition
+### #138: Adapter Interface Definition
 
 **Goal**: Define the `DelegationRequest` and `DelegationResult` types that all adapters implement.
 
@@ -54,7 +54,7 @@ Shared types, configuration schema, and instruction translation. No tool invocat
 
 **Specification**: [Adapter Interface](adapter-interface.md)
 
-### Issue 1.2: Routing Configuration Schema
+### #139: Routing Configuration Schema
 
 **Goal**: Define the YAML schema for `.nefario/routing.yml` and implement config loading with validation.
 
@@ -65,7 +65,7 @@ Shared types, configuration schema, and instruction translation. No tool invocat
 - Zero-config path: no file present means everything routes to `claude-code`
 - Config loading reads from project-level `.nefario/routing.yml` and optional user-level override
 
-**Depends on**: 1.1
+**Depends on**: #138
 
 **Acceptance criteria**:
 - Config loads and validates without error for the minimal (`default: claude-code`) and power-user examples from the feasibility study
@@ -74,7 +74,7 @@ Shared types, configuration schema, and instruction translation. No tool invocat
 
 **Notes**: No "did you mean?" suggestions, no JSON Schema output, no CI/CD env var overrides -- these are premature for a first implementation.
 
-### Issue 1.3: AGENT.md Instruction Translator
+### #140: AGENT.md Instruction Translator
 
 **Goal**: Translate an AGENT.md file to a tool-native instruction file (AGENTS.md or CONVENTIONS.md), stripping frontmatter and Claude Code-specific content.
 
@@ -84,7 +84,7 @@ Shared types, configuration schema, and instruction translation. No tool invocat
 - Write tool-native file: AGENTS.md format for Codex CLI; CONVENTIONS.md format for Aider
 - Translator is invoked per delegation call; output is a temporary file cleaned up after the harness exits
 
-**Depends on**: 1.1
+**Depends on**: #138
 
 **Acceptance criteria**:
 - Output file contains no YAML frontmatter
@@ -97,7 +97,7 @@ Shared types, configuration schema, and instruction translation. No tool invocat
 
 First concrete adapter. Uses the foundation from Milestone 1. Codex is prioritized because it has the best-designed automation interface and structured output.
 
-### Issue 2.1: Codex CLI Invocation Wrapper
+### #141: Codex CLI Invocation Wrapper
 
 **Goal**: Implement a subprocess wrapper that invokes Codex CLI headlessly from a `DelegationRequest`.
 
@@ -108,7 +108,7 @@ First concrete adapter. Uses the foundation from Milestone 1. Codex is prioritiz
 - Configurable timeout; fail with non-zero exit on timeout
 - Version-pin: record the Codex CLI version used during validation; document minimum version requirement
 
-**Depends on**: 1.1, 1.2, 1.3
+**Depends on**: #138, #139, #140
 
 **Acceptance criteria**:
 - Wrapper invokes Codex and returns a `DelegationResult`
@@ -118,7 +118,7 @@ First concrete adapter. Uses the foundation from Milestone 1. Codex is prioritiz
 
 **Notes**: Use the CLI (`codex exec`), not the TypeScript SDK. The CLI is the stable, version-pinned interface. SDK adds a dependency with its own versioning concerns.
 
-### Issue 2.2: Codex Result Collector
+### #144: Codex Result Collector
 
 **Goal**: Parse Codex JSONL output and git diff into a structured `DelegationResult`.
 
@@ -128,14 +128,14 @@ First concrete adapter. Uses the foundation from Milestone 1. Codex is prioritiz
 - Use `--output-schema` when a schema is available to enforce structured final output
 - Populate `DelegationResult` fields from parsed output
 
-**Depends on**: 2.1
+**Depends on**: #141
 
 **Acceptance criteria**:
 - Changed files list is accurate (matches `git diff --name-only`)
 - Exit code is correctly propagated
 - Non-zero exit code results in a `DelegationResult` that the orchestrator can distinguish from success
 
-### Issue 2.3: Codex Adapter Validation
+### #146: Codex Adapter Validation
 
 **Goal**: Validate the Codex adapter with representative tasks before declaring it production-ready.
 
@@ -145,7 +145,7 @@ First concrete adapter. Uses the foundation from Milestone 1. Codex is prioritiz
 - Note quality observations (not for automated tracking -- for the validation report)
 - Identify any interface gaps between `DelegationRequest`/`DelegationResult` and Codex behavior
 
-**Depends on**: 2.2
+**Depends on**: #144
 
 **Acceptance criteria**:
 - All five task types complete without adapter errors
@@ -157,7 +157,7 @@ First concrete adapter. Uses the foundation from Milestone 1. Codex is prioritiz
 
 Second concrete adapter. Validates that the abstraction holds for a tool without structured JSON output. Introduces shared LLM-based diff summarization.
 
-### Issue 3.1: Result Summarization Service
+### #142: Result Summarization Service
 
 **Goal**: Implement a reusable service that generates a structured summary from a git diff and the original task prompt.
 
@@ -167,14 +167,14 @@ Second concrete adapter. Validates that the abstraction holds for a tool without
 - Use a small fast model; target <$0.01 per call, <5 second latency
 - Reusable by any adapter that lacks native structured output (Aider today; others potentially later)
 
-**Depends on**: 1.1
+**Depends on**: #138
 
 **Acceptance criteria**:
 - Service returns a structured summary for a representative set of diffs
 - Cost per call is under $0.01 on a 500-line diff
 - Latency is under 5 seconds on a 500-line diff
 
-### Issue 3.2: Aider Invocation Wrapper
+### #143: Aider Invocation Wrapper
 
 **Goal**: Implement a subprocess wrapper that invokes Aider headlessly from a `DelegationRequest`.
 
@@ -185,40 +185,40 @@ Second concrete adapter. Validates that the abstraction holds for a tool without
 - Enable `--auto-commits` so git commits serve as the output signal
 - Capability gating: reject tasks requiring Bash or WebSearch (Aider does not support these)
 
-**Depends on**: 1.1, 1.2, 1.3
+**Depends on**: #138, #139, #140
 
 **Acceptance criteria**:
 - Wrapper invokes Aider and returns a `DelegationResult`
 - Capability gating rejects incompatible tasks before invocation
 - Temporary instruction files are cleaned up on both success and failure
 
-### Issue 3.3: Aider Result Collector
+### #145: Aider Result Collector
 
 **Goal**: Collect results from an Aider invocation using git diff and LLM summarization.
 
 **Scope**:
 - Collect git diff of commits made since invocation start
-- Pass diff + original task prompt to the Result Summarization Service (Issue 3.1)
+- Pass diff + original task prompt to the Result Summarization Service (#142)
 - Populate `DelegationResult` from exit code, diff, and summary
 
-**Depends on**: 3.1, 3.2
+**Depends on**: #142, #143
 
 **Acceptance criteria**:
 - Changed files list matches git commits made during the Aider invocation
 - Summary is populated for all successful invocations
 - Non-zero exit code is correctly propagated
 
-### Issue 3.4: Aider Adapter Validation + Abstraction Check
+### #147: Aider Adapter Validation + Abstraction Check
 
 **Goal**: Validate the Aider adapter with the same five representative tasks used for Codex, and assess whether the shared interface held.
 
 **Scope**:
-- Run the same five task types as Issue 2.3
+- Run the same five task types as #146
 - Record results and quality observations
 - Assess interface health: did `DelegationRequest`/`DelegationResult` cover Aider without Codex-specific leakage?
 - Document interface adjustments needed (if any) and whether they would require Codex adapter changes
 
-**Depends on**: 3.3
+**Depends on**: #145
 
 **Acceptance criteria**:
 - All five task types complete without adapter errors (tasks requiring Bash/WebSearch are correctly rejected)
@@ -230,7 +230,7 @@ Second concrete adapter. Validates that the abstraction holds for a tool without
 
 Wire the adapter layer into nefario's Phase 4 execution. Nefario remains unaware of which tool executes each task.
 
-### Issue 4.1: Phase 4 Routing Dispatch
+### #148: Phase 4 Routing Dispatch
 
 **Goal**: Replace the unconditional Task tool invocation in Phase 4 with a routing dispatch that consults `.nefario/routing.yml`.
 
@@ -240,14 +240,14 @@ Wire the adapter layer into nefario's Phase 4 execution. Nefario remains unaware
 - Route to Codex or Aider adapter if configured; fall through to existing Task tool invocation for `claude-code`
 - No change to how nefario plans or constructs task prompts
 
-**Depends on**: 2.2, 3.3
+**Depends on**: #144, #145
 
 **Acceptance criteria**:
 - Tasks with no routing config route to `claude-code` via existing Task tool (zero regression)
 - Tasks routed to Codex or Aider invoke the respective adapter
 - Nefario prompt construction is unchanged
 
-### Issue 4.2: Progress Monitoring Integration
+### #149: Progress Monitoring Integration
 
 **Goal**: Surface progress signals from Codex and Aider adapters into nefario's Phase 4 monitoring loop.
 
@@ -256,7 +256,7 @@ Wire the adapter layer into nefario's Phase 4 execution. Nefario remains unaware
 - Aider: no progress stream available; treat as opaque until completion (consistent with current behavior for non-streaming subagents)
 - No progress contract defined for future tools -- monitor only what Codex and Aider provide today
 
-**Depends on**: 4.1
+**Depends on**: #148
 
 **Acceptance criteria**:
 - Codex JSONL events are surfaced during task execution (format TBD at implementation)
@@ -283,17 +283,17 @@ These are headline-level only. Scope and sequencing depend on Milestone 1-4 outc
 
 | Issue | Depends on | Reason |
 |-------|-----------|--------|
-| 1.2 | 1.1 | Config references types from interface definition |
-| 1.3 | 1.1 | Translator produces instruction files consumed by adapters |
-| 2.1 | 1.1, 1.2, 1.3 | Wrapper needs types, config loading, and instruction translation |
-| 2.2 | 2.1 | Result collector operates on wrapper output |
-| 2.3 | 2.2 | Validation requires a working adapter |
-| 3.1 | 1.1 | Summarization service references result types |
-| 3.2 | 1.1, 1.2, 1.3 | Same as Codex wrapper |
-| 3.3 | 3.1, 3.2 | Collector combines diff (from wrapper) and summarization |
-| 3.4 | 3.3 | Validation requires a working adapter |
-| 4.1 | 2.2, 3.3 | Dispatch needs at least Codex and Aider adapters |
-| 4.2 | 4.1 | Monitoring hooks into the dispatch loop |
+| #139 | #138 | Config references types from interface definition |
+| #140 | #138 | Translator produces instruction files consumed by adapters |
+| #141 | #138, #139, #140 | Wrapper needs types, config loading, and instruction translation |
+| #144 | #141 | Result collector operates on wrapper output |
+| #146 | #144 | Validation requires a working adapter |
+| #142 | #138 | Summarization service references result types |
+| #143 | #138, #139, #140 | Same as Codex wrapper |
+| #145 | #142, #143 | Collector combines diff (from wrapper) and summarization |
+| #147 | #145 | Validation requires a working adapter |
+| #148 | #144, #145 | Dispatch needs at least Codex and Aider adapters |
+| #149 | #148 | Monitoring hooks into the dispatch loop |
 
 ---
 
@@ -301,11 +301,11 @@ These are headline-level only. Scope and sequencing depend on Milestone 1-4 outc
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|-----------|
-| Codex CLI interface changes between versions | Medium | Medium | Version-pin at validation (Issue 2.3); document minimum version |
-| Aider result collection is unreliable for large diffs | Low | Medium | Test with large diffs in Issue 3.4; fall back to diff-only result if summarization fails |
-| AGENTS.md spec evolves post-Linux Foundation transfer | Medium | Low-Medium | Translator (Issue 1.3) is isolated; updates require only one file change |
-| Instruction isolation: external tools read conflicting project config | Medium | Medium | Document as known limitation (open question in feasibility study); investigate per-tool config override in Issue 3.4 |
-| Interface abstraction does not hold after two implementations | Low | High | Issue 3.4 explicitly checks interface health; adjust before M4 if needed |
+| Codex CLI interface changes between versions | Medium | Medium | Version-pin at validation (#146); document minimum version |
+| Aider result collection is unreliable for large diffs | Low | Medium | Test with large diffs in #147; fall back to diff-only result if summarization fails |
+| AGENTS.md spec evolves post-Linux Foundation transfer | Medium | Low-Medium | Translator (#140) is isolated; updates require only one file change |
+| Instruction isolation: external tools read conflicting project config | Medium | Medium | Document as known limitation (open question in feasibility study); investigate per-tool config override in #147 |
+| Interface abstraction does not hold after two implementations | Low | High | #147 explicitly checks interface health; adjust before M4 if needed |
 
 ---
 
