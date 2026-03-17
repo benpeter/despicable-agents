@@ -144,4 +144,5 @@ Most tasks have secondary dimensions beyond the primary domain. Nefario's planni
 | [External Skill Integration](external-skills.md) | Discovery, precedence, deferral mechanism for project-local skills |
 | [External Harness Integration](external-harness-integration.md) | Feasibility study: delegating tasks to external LLM coding tools (Codex CLI, Aider, Gemini CLI, etc.) |
 | [External Harness Roadmap](external-harness-roadmap.md) | Implementation roadmap: Codex CLI adapter, cross-tool abstractions, future tool milestones |
+| [Adapter Interface](adapter-interface.md) | DelegationRequest/DelegationResult type definitions, adapter behavioral contract |
 | [CLAUDE.md Template](claudemd-template.md) | Reference template for deploying CLAUDE.md in projects using despicable-agents |

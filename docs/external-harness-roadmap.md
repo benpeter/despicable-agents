@@ -52,6 +52,8 @@ Shared types, configuration schema, and instruction translation. No tool invocat
 - Interface is minimal -- covers Codex and Aider use cases, nothing more
 - No harness-specific fields in the shared types
 
+**Specification**: [docs/adapter-interface.md](adapter-interface.md)
+
 ### Issue 1.2: Routing Configuration Schema
 
 **Goal**: Define the YAML schema for `.nefario/routing.yml` and implement config loading with validation.
