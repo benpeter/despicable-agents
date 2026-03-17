@@ -1,0 +1,4 @@
+default: claude-code
+
+agents:
+  lucy: bad-harness
