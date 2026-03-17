@@ -74,6 +74,8 @@ Shared types, configuration schema, and instruction translation. No tool invocat
 
 **Notes**: No "did you mean?" suggestions, no JSON Schema output, no CI/CD env var overrides -- these are premature for a first implementation.
 
+**Specification**: [Routing Configuration](routing-config.md)
+
 ### #140: AGENT.md Instruction Translator
 
 **Goal**: Translate an AGENT.md file to a tool-native instruction file (AGENTS.md or CONVENTIONS.md), stripping frontmatter and Claude Code-specific content.
