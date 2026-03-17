@@ -367,6 +367,11 @@ dependency: "Builds on <prior decision description> approved in Task N."
 
 Target 12-18 lines for mid-execution gates (soft ceiling; clarity wins over brevity).
 
+All four gate types (Team, Reviewer, Execution Plan, Mid-execution) follow this
+progressive-disclosure pattern, at density proportional to each gate's decision
+scope. SKILL.md defines per-gate formats. The principle is consistent: every gate
+surfaces what was decided, what was rejected, and why.
+
 Field definitions:
 - **Title**: Short, descriptive name for the decision point
 - **Agent**: Which specialist produced this deliverable
@@ -480,6 +485,15 @@ their domain expertise to the planning process.
 - **Observability**: <include observability-minion / sitespeed-minion for planning? why / why not>
 <!-- @domain:meta-plan-checklist END -->
 
+### Notable Exclusions
+<2-3 agents whose exclusion from planning is most likely to surprise the user,
+with a one-line reason each. Choose agents whose domain is adjacent to the task
+but who were excluded for a specific reason. Skip agents with no plausible
+connection to the task. Maximum 3 entries.>
+
+- <agent-name>: <one-line exclusion reason>
+- <agent-name>: <one-line exclusion reason>
+
 ### Anticipated Approval Gates
 <which deliverables will likely need user review before downstream work proceeds>
 
@@ -535,6 +549,10 @@ them into a final execution plan.
 - **Blocked by**: none | Task N, Task M
 - **Approval gate**: yes | no
 - **Gate reason**: <why this deliverable needs user review before proceeding>
+- **Gate rationale** (gated tasks only): |
+    Chosen: <the approach this task will implement>
+    Over: <1-2 alternatives considered during synthesis>
+    Why: <why this approach was selected>
 - **Prompt**: |
     <complete, self-contained prompt for the agent>
 
@@ -556,12 +574,26 @@ them into a final execution plan.
 ### Architecture Review Agents
 <!-- @domain:synthesis-review-agents BEGIN -->
 - **Mandatory** (5): security-minion, test-minion, ux-strategy-minion, lucy, margo
-- **Discretionary picks**: <for each discretionary reviewer selected, list: reviewer name + one-line rationale grounded in specific plan content; reference task numbers>
-- **Not selected**: <remaining discretionary pool members not selected, comma-separated>
+- **Discretionary picks**:
+  - <reviewer-name>: <selection rationale referencing task numbers>
+    Review focus: <what specifically this reviewer will examine>
+  - ...
+- **Not selected**:
+  - <reviewer-name>: <exclusion rationale referencing specific plan content>
+  - ...
 <!-- @domain:synthesis-review-agents END -->
 
-### Conflict Resolutions
-<any disagreements between specialists and how you resolved them>
+### Decisions
+<non-trivial choices made during synthesis: conflicts between specialists,
+trade-offs between approaches, scope decisions. Use Chosen/Over/Why format.
+Include only decisions where a real alternative was considered and rejected.
+Do not fabricate alternatives -- if a decision was uncontested, it does not
+belong here. Maximum 5 entries.>
+
+- **<topic>**
+  Chosen: <the approach selected>
+  Over: <the rejected alternative(s), with attribution when clear>
+  Why: <rationale for this choice over the alternative>
 
 ### Risks and Mitigations
 <consolidated from specialist input>
@@ -640,10 +672,15 @@ confidence level and what drives it.>
 This section naturally feeds into a follow-up `/nefario` execution if the user
 decides to proceed.>
 
-### Conflict Resolutions
+### Decisions
 
-<Description of conflicts between specialist recommendations and how they were
-resolved. "None." if no conflicts arose.>
+<Non-trivial choices made during synthesis. Use Chosen/Over/Why format.
+"None." if no contested decisions arose.>
+
+- **<topic>**
+  Chosen: <the approach selected>
+  Over: <the rejected alternative(s), with attribution when clear>
+  Why: <rationale for this choice over the alternative>
 
 ## Architecture Review (Phase 3.5)
 
