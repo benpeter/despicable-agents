@@ -106,6 +106,8 @@ After user approval, the main session executes the plan using batch-gated execut
 
 At wrap-up, any skipped gates are re-presented. A final report summarizes deliverables, verification results, known issues, and next steps.
 
+> **See also**: [External Harness Integration](external-harness-integration.md) explores whether Phase 4 execution could delegate tasks to external LLM coding tools (Codex CLI, Aider, Gemini CLI) in addition to Claude Code subagents.
+
 ### Post-Execution Phases (5-8)
 
 Phases 5-8 run between execution completion and wrap-up using the **dark kitchen** pattern: they execute silently, writing all findings to scratch files. The user sees a single status line when verification starts and a consolidated summary in the wrap-up report. Only unresolvable BLOCKs (after 2 fix iterations) surface to the user.

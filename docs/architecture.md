@@ -142,4 +142,6 @@ Most tasks have secondary dimensions beyond the primary domain. Nefario's planni
 | [Commit Workflow](commit-workflow.md) | Branching strategy, commit checkpoint format, trigger points, anti-fatigue rules, file change tracking, hook composition, safety rails |
 | [Commit Workflow Security](commit-workflow-security.md) | Input validation, safe filename parsing, commit message safety, git command safety for hooks, fail-closed behavior |
 | [External Skill Integration](external-skills.md) | Discovery, precedence, deferral mechanism for project-local skills |
+| [External Harness Integration](external-harness-integration.md) | Feasibility study: delegating tasks to external LLM coding tools (Codex CLI, Aider, Gemini CLI, etc.) |
+| [External Harness Roadmap](external-harness-roadmap.md) | Implementation roadmap: Codex CLI adapter, cross-tool abstractions, future tool milestones |
 | [CLAUDE.md Template](claudemd-template.md) | Reference template for deploying CLAUDE.md in projects using despicable-agents |
