@@ -1,0 +1,91 @@
+# .nefario/routing.yml -- Nefario external harness routing configuration
+#
+# This file controls which LLM coding tool executes each specialist agent's
+# work. Zero-config: if this file does not exist, everything routes to
+# claude-code (existing behavior, no change required).
+#
+# Valid harnesses: claude-code, codex, aider
+# Resolution order: agent > group > default > implicit claude-code
+#
+# Copy this file to .nefario/routing.yml and edit as needed.
+# A user-level override can also be placed at ~/.claude/nefario/routing.yml --
+# user entries override matching project entries; project-only entries are preserved.
+#
+# -----------------------------------------------------------------------
+# LEVEL 1: Minimal config (just a default)
+# Everything routes to claude-code. Identical to zero-config behavior.
+# -----------------------------------------------------------------------
+
+default: claude-code
+
+# -----------------------------------------------------------------------
+# LEVEL 2: Group-level routing
+# Route entire agent groups to a different harness.
+# Valid group IDs:
+#   boss, governance, protocol-integration, infrastructure-data,
+#   intelligence, development-quality, security-observability,
+#   design-documentation, web-quality
+#
+# Uncomment to enable:
+# -----------------------------------------------------------------------
+
+# groups:
+#   # Route all code-focused agents to Codex (OpenAI models)
+#   development-quality: codex
+#   # Route all pure-edit agents to Aider (narrower tool set, great for edits)
+#   design-documentation: aider
+
+# -----------------------------------------------------------------------
+# LEVEL 3: Per-agent overrides
+# Override a specific agent regardless of its group routing.
+# Agent names must match the `name:` field in their AGENT.md frontmatter.
+#
+# Uncomment to enable:
+# -----------------------------------------------------------------------
+
+# agents:
+#   # Keep security work on claude-code even if development-quality routes to codex
+#   security-minion: claude-code
+#   # Route frontend work specifically to codex
+#   frontend-minion: codex
+
+# -----------------------------------------------------------------------
+# LEVEL 4: Model mapping
+# Maps quality-tier signals (opus, sonnet) to provider-specific model IDs.
+# If omitted, sensible defaults are used per harness:
+#   claude-code: opus=claude-opus-4-6, sonnet=claude-sonnet-4-5
+#   codex:       opus=o3,              sonnet=o4-mini
+#   aider:       opus=claude-opus-4-6, sonnet=claude-sonnet-4-5
+#
+# Each harness block is replaced entirely by user-level overrides
+# (not merged tier-by-tier).
+#
+# Uncomment to enable:
+# -----------------------------------------------------------------------
+
+# model-mapping:
+#   claude-code:
+#     opus: claude-opus-4-6
+#     sonnet: claude-sonnet-4-6
+#   codex:
+#     opus: o3
+#     sonnet: o4-mini
+#   aider:
+#     opus: claude-opus-4-6
+#     sonnet: claude-sonnet-4-6
+
+# -----------------------------------------------------------------------
+# CAPABILITY GATING NOTE
+#
+# The config loader validates that agents routed to non-claude-code
+# harnesses only require tools that harness supports. A hard error is
+# raised at load time (not mid-task) if a required tool is missing.
+#
+# Tool support per harness:
+#   claude-code: Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
+#   codex:       Read, Write, Edit, Bash, Glob, Grep
+#   aider:       Read, Write, Edit
+#
+# Agents requiring Bash or web access cannot be routed to aider.
+# Agents requiring WebSearch/WebFetch cannot be routed to codex or aider.
+# -----------------------------------------------------------------------

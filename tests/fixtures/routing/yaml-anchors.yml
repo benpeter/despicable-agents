@@ -1,0 +1,4 @@
+default: &default_harness claude-code
+
+groups:
+  development-quality: *default_harness

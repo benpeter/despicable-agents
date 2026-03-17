@@ -1,0 +1,5 @@
+default: claude-code
+
+agents:
+  lucy: aider
+  margo: aider

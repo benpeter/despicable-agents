@@ -1,0 +1,4 @@
+default: claude-code
+
+groups:
+  governance: aider

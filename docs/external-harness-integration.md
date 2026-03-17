@@ -258,7 +258,7 @@ Quality parity across harnesses is the user's responsibility. The routing config
 
 The routing layer sits between the orchestrator and the invocation layer. It translates agent identities and task types to harness selection and model specification without touching planning logic.
 
-**Configuration surface**: A single YAML file at project level (proposed location: `.nefario/routing.yml`) with an optional user-level override. Zero-config means everything routes to Claude Code -- existing behavior is fully preserved.
+**Configuration surface**: A single YAML file at `.nefario/routing.yml` with an optional user-level override at `~/.claude/nefario/routing.yml`. Zero-config means everything routes to Claude Code -- existing behavior is fully preserved.
 
 **Three granularity levels**: default harness, per-agent-group, per-agent. Resolution order: agent > group > default > implicit claude-code.
 
@@ -280,24 +280,24 @@ default: claude-code
 model-mapping:
   claude-code:
     opus: claude-opus-4-6
-    sonnet: claude-sonnet-4-6
+    sonnet: claude-sonnet-4-5
   codex:
     opus: o3
     sonnet: o4-mini
   aider:
     opus: claude-opus-4-6
-    sonnet: claude-sonnet-4-6
+    sonnet: claude-sonnet-4-5
 
 groups:
-  code-writers: codex
-  data-analysts: aider
+  development-quality: codex
+  design-documentation: aider
 
 agents:
   security-minion: claude-code
   frontend-minion: codex
 ```
 
-The `.nefario/routing.yml` path is a proposed convention, not a commitment. The configuration surface will be defined as part of adapter implementation.
+Note: this example predates the implementation. The group names `development-quality` and `design-documentation` are canonical group IDs. The routing spec is now defined -- see [Routing Configuration](routing-config.md) for the authoritative schema, canonical group ID list, resolution order, and validation rules.
 
 For implementation sequencing, see [External Harness Roadmap](external-harness-roadmap.md).
 

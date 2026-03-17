@@ -16,6 +16,9 @@ Nefario (orchestrator), Lucy and Margo (governance), and 23 domain-specialist mi
 - `lucy/` -- governance (consistency, intent alignment)
 - `margo/` -- governance (simplicity, YAGNI/KISS)
 - `minions/*/` -- domain specialists (23 agents across 7 groups)
+- `lib/` -- shared shell libraries (external harness config loader)
+- `tests/` -- integration test suites
+- `.nefario/` -- project-level nefario configuration (routing config)
 
 Each agent directory contains:
 - `AGENT.md` -- deployable agent file (YAML frontmatter + system prompt)

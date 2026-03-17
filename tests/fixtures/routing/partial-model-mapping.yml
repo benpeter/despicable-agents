@@ -1,0 +1,6 @@
+default: claude-code
+
+model-mapping:
+  codex:
+    opus: o3
+    sonnet: o4-mini
