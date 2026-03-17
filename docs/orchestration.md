@@ -358,7 +358,9 @@ The checklist applies in all modes (META-PLAN, SYNTHESIS, PLAN). The default is 
 
 Approval gates pause execution to get user input before downstream work proceeds. The mechanism is designed to gate high-impact decisions without creating approval fatigue.
 
-Three types of gates exist with distinct semantics:
+**Decision transparency principle**: Every gate surfaces what was decided, what was rejected, and why -- at density proportional to the gate's decision scope. Gates use a consistent Chosen/Over/Why micro-format for synthesis decisions and mid-execution approaches, and one-liner rationales for team and reviewer composition. The goal is self-containment: a user who reads only the gate output can make a well-informed approve/adjust/reject decision without opening scratch files.
+
+Four types of gates exist with distinct semantics:
 
 **Team approval gate** -- Occurs once, after Phase 1 (Meta-Plan) and before Phase 2 (Specialist Planning). The user reviews the selected specialist team and decides whether to approve the team, adjust the composition, or reject the orchestration.
 
@@ -372,13 +374,14 @@ The team approval gate occurs after the meta-plan identifies which specialists t
 
 **When it occurs**: After Phase 1 (Meta-Plan), before Phase 2 (Specialist Planning).
 
-**Format**: Compact presentation targeting 8-12 lines:
+**Format**: Compact presentation targeting 10-16 lines:
 
 - **SELECTED block** -- Each selected agent on its own line with a one-line rationale explaining why it was chosen (not the planning question). Left-aligned for scannability.
-- **ALSO AVAILABLE list** -- Flat comma-separated list of all roster agents not selected. Users scan for surprises, not read each entry.
-- **Meta-plan link** -- Path to the full meta-plan scratch file for deep-dive into planning questions, cross-cutting checklist, and exclusion rationale.
+- **NOT SELECTED (notable) block** -- Up to 3 agents whose exclusion might surprise the user, with one-line exclusion rationale. Sourced from the meta-plan's Notable Exclusions subsection. Omitted when no exclusions are notable.
+- **Also available remainder** -- Flat comma-separated list of all remaining roster agents not in SELECTED or NOT SELECTED (notable).
+- **Meta-plan link** -- Path to the full meta-plan scratch file for deep-dive into planning questions, cross-cutting checklist, and full exclusion rationale.
 
-The total output must be visibly lighter than the Execution Plan Approval Gate (which targets 25-40 lines).
+The total output must be visibly lighter than the Execution Plan Approval Gate (which targets 35-55 lines).
 
 **Response options**: Three choices presented via `AskUserQuestion`:
 
@@ -389,6 +392,27 @@ The total output must be visibly lighter than the Execution Plan Approval Gate (
 **MODE: PLAN exemption**: This gate does not apply in MODE: PLAN. MODE: PLAN bypasses specialist consultation entirely, so there is no team to approve. The gate applies only in META-PLAN mode (the default).
 
 **Second-round specialists**: If Phase 2 specialists recommend additional agents, those agents are spawned without re-gating. The user already approved the task scope and initial team; specialist-recommended additions are refinements within that scope.
+
+### Reviewer Approval Gate
+
+The reviewer approval gate occurs after nefario identifies architecture reviewers and before those reviewers are spawned. It gives the user visibility into which discretionary reviewers were selected (and why others were not).
+
+**When it occurs**: After Phase 3 (Synthesis) / start of Phase 3.5 (Architecture Review), before reviewers are spawned.
+
+**Format**: Compact presentation targeting 10-16 lines:
+
+- **Mandatory line** -- Flat comma-separated list of the 5 mandatory reviewers, presented as fact not choice.
+- **DISCRETIONARY block** -- Each selected discretionary reviewer with plan-grounded rationale and a "Review focus" sub-line stating what specifically they will examine.
+- **NOT SELECTED block** -- Per-member exclusion rationale for each unselected discretionary pool member. The pool is only 5 agents, so showing all with rationale is feasible.
+- **Plan link** -- Path to the synthesis scratch file.
+
+**Response options**: Three choices:
+
+1. **Approve reviewers** (recommended) -- Spawn mandatory + approved discretionary reviewers.
+2. **Adjust reviewers** -- Add or remove discretionary reviewers. Constrained to the 5-member pool. Capped at 2 adjustment rounds.
+3. **Skip review** -- Skip architecture review entirely. The Execution Plan Approval Gate still applies.
+
+Auto-approved (gate skipped) when no discretionary reviewers are selected.
 
 ### Execution Plan Approval Gate
 
@@ -403,11 +427,12 @@ The plan approval gate occurs after all architecture review verdicts are resolve
 - **Working directory** -- Path to scratch directory for browsing all planning artifacts
 - **Task list** -- Compact numbered list showing title, deliverable, dependencies, agent, and gate markers (2-4 lines per task)
 - **Advisories** -- Structured deltas (CHANGE, WHY) grouped by affected task, domain-attributed not agent-attributed, maximum 3 lines per advisory
-- **Risks and conflict resolutions** -- Identified risks with mitigations, contested decisions with rationales (omitted if none)
+- **Decisions** -- Non-trivial synthesis choices using Chosen/Over/Why format (what was selected, what was rejected with attribution, why). Maximum 5 inline; overflow linked to scratch file. Omitted if no contested decisions.
+- **Risks** -- Identified risks with mitigations (omitted if none)
 - **Review summary** -- One-line approval/advise/block count
 - **Full plan reference** -- Path to complete synthesis output (task prompts, agent assignments, dependencies) in scratch files
 
-**Line budget**: Target 25-40 lines for the complete gate output. Soft guidance -- clarity wins over brevity.
+**Line budget**: Target 35-55 lines for the complete gate output. Soft guidance -- clarity wins over brevity.
 
 **Advisory presentation**: Advisories use a delta model (what changed in the task, why the change was needed), not a reviewer opinion model. They are attributed to the domain (testing, security, usability, etc.), not the agent. This keeps the gate focused on plan changes rather than review process details.
 
@@ -438,7 +463,7 @@ Mid-execution gates present individual deliverables using decision briefs with f
 
 **Layer 1 (5-second scan)**: One-sentence description of the decision.
 **Layer 1.5 (10-second scan)**: Deliverable summary with files changed, scope, and line deltas.
-**Layer 2 (30-second read)**: Rationale with rejected alternatives explicitly prefixed.
+**Layer 2 (30-second read)**: Rationale with rejected alternatives explicitly prefixed. Populated from agent-reported execution-time reasoning when available, falling back to the synthesis Gate rationale field when not.
 **Layer 3 (deep dive)**: The full deliverable at its file path.
 
 CLI format:
