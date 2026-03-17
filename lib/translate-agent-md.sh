@@ -172,18 +172,14 @@ if [ ! -r "$ARG_AGENT_MD" ]; then
   exit 1
 fi
 
-# Reject binary content (null bytes)
-if LC_ALL=C grep -qP '\x00' "$ARG_AGENT_MD" 2>/dev/null || \
-   LC_ALL=C awk 'BEGIN{RS="\0"} NR>1{exit 1}' "$ARG_AGENT_MD" 2>/dev/null; then
-  # Check null bytes without Perl extension (portable)
-  if LC_ALL=C tr -d '[:print:][:space:]' < "$ARG_AGENT_MD" | LC_ALL=C grep -q '.'; then
-    echo "Error: Source file contains non-text content" >&2
-    echo "" >&2
-    echo "  path: $ARG_AGENT_MD" >&2
-    echo "" >&2
-    echo "AGENT.md must be a plain text file." >&2
-    exit 1
-  fi
+# Reject binary content (null bytes only -- UTF-8 multi-byte chars are valid)
+if LC_ALL=C grep -qP '\x00' "$ARG_AGENT_MD" 2>/dev/null; then
+  echo "Error: Source file contains null bytes" >&2
+  echo "" >&2
+  echo "  path: $ARG_AGENT_MD" >&2
+  echo "" >&2
+  echo "AGENT.md must be a plain text file." >&2
+  exit 1
 fi
 
 # ---------------------------------------------------------------------------
@@ -522,9 +518,9 @@ validate_output() {
     exit 1
   fi
 
-  # Check no null bytes
-  if printf '%s' "$content" | LC_ALL=C tr -d '[:print:][:space:]' | LC_ALL=C grep -q '.'; then
-    echo "Error: Translated output contains non-text content (null bytes or binary)" >&2
+  # Check no null bytes (UTF-8 multi-byte chars are valid)
+  if printf '%s' "$content" | LC_ALL=C grep -qP '\x00' 2>/dev/null; then
+    echo "Error: Translated output contains null bytes" >&2
     echo "" >&2
     echo "  source: $source_path" >&2
     echo "" >&2
