@@ -50,6 +50,22 @@ does with `pwd -P`) to prevent path traversal attacks like
 and indicate injection attempts. Reject any path containing null bytes before
 processing.
 
+### Input Validation for Agent Metadata
+
+The PostToolUse hook extracts `agent_type` and `agent_id` from the hook
+event JSON (added in Claude Code 2.1.69). These values are validated with
+regex: `^[a-zA-Z0-9_-]{1,64}$`. Values failing validation are silently
+discarded (the file path is still recorded).
+
+**`agent_type` is informational metadata, not a security control.** It must
+never be used for authorization decisions (e.g., "only security-minion can
+edit sensitive files"). The value is self-reported by the Claude Code runtime
+and is not cryptographically authenticated.
+
+The `agent_type` flows into commit message scopes and git trailers. The regex
+validation ensures it contains only safe characters (alphanumeric, hyphens,
+underscores), preventing shell injection and git trailer injection.
+
 ---
 
 ## 2. Safe Filename Parsing with Null Separators

@@ -385,8 +385,12 @@ Check:
 
 ### Commit Conventions
 
+See [commit-workflow.md](../../docs/commit-workflow.md) for the canonical format.
+Summary:
+
 - Format: `<type>(<scope>): <summary>`
-- Trailer: `Co-Authored-By: Claude <noreply@anthropic.com>`
+- Trailers: `Agent: <agent-name>` (when available), `Co-Authored-By: Claude <noreply@anthropic.com>`
+- Scope derived from agent_type by stripping `-minion` suffix
 - Advisory report commit: `docs: add nefario advisory report for <slug>`
 - Execution report commit: `docs: add nefario execution report for <slug>`
 
