@@ -51,9 +51,16 @@ docs-debt: {none | deferred}
 **Alternatives Rejected**:
 - {Alternative}: {why rejected}
 
-### Conflict Resolutions
+### Decisions
 
-{Description of conflicts between specialist recommendations and how they were resolved. "None." if no conflicts arose.}
+{Non-trivial choices made during synthesis. Use Chosen/Over/Why format for
+each entry. Include only decisions where a real alternative was considered
+and rejected. "None." if no contested decisions arose.}
+
+- **{topic}**
+  Chosen: {the approach selected}
+  Over: {the rejected alternative(s), with attribution when clear}
+  Why: {rationale for this choice over the alternative}
 
 ## Phases
 
@@ -177,15 +184,21 @@ should be re-evaluated.}
 
 ### Approval Gates
 
-| Gate Title | Agent | Confidence | Outcome | Rounds |
-|------------|-------|------------|---------|--------|
-| {gate title} | {agent} | {HIGH/MEDIUM/LOW} | {approved/rejected} | {N} |
+| Gate | Type | Outcome | Notes |
+|------|------|---------|-------|
+| {gate title} | {Team/Reviewer/Plan/Mid-execution} | {approved/adjusted/skipped} | {one-line summary or "routine"} |
+
+For adjusted or contested gates, add an H4 brief:
 
 #### {Gate Title}
 
 **Decision**: {What was decided.}
 **Rationale**: {Why this decision was made.}
 **Rejected**: {Alternatives considered and why rejected.}
+
+Routine approvals (approve as-is, no changes) get a table row only -- no H4
+brief. Only gates where the user adjusted, requested changes, or rejected
+warrant the full brief.
 
 ## Decisions
 
@@ -345,8 +358,8 @@ rendering compatibility.
   `({N} planning, {N} review)` when no review phases ran.
 - **Key Design Decisions**: Each decision as H4. Non-gate design decisions.
   For gate decisions, use the Decisions section instead.
-- **Conflict Resolutions**: Always present as H3 under Key Design Decisions.
-  Write "None." if no conflicts arose.
+- **Decisions**: Always present as H3 under Key Design Decisions. Use
+  Chosen/Over/Why format. Write "None." if no contested decisions arose.
 - **Files Changed**: Must list ALL files in the PR, not a subset. File paths
   in the table must be relative markdown links. Compute the correct `../`
   depth from the actual report directory (which varies — see Report Directory
@@ -427,12 +440,12 @@ When generating a report:
 5. Write YAML frontmatter with all fields (version: 3; include `source-issue` only if applicable)
 6. Write Summary (2-3 sentences)
 7. Write Original Prompt (inline blockquote if <20 lines, collapsible if >=20 lines)
-8. Write Key Design Decisions (H4 per decision, with Conflict Resolutions H3 subsection)
+8. Write Key Design Decisions (H4 per decision, with Decisions H3 subsection using Chosen/Over/Why format)
 9. Write Phases (narrative, 1-2 paragraphs per phase)
 10. Write Agent Contributions (collapsible, groups: Planning + Architecture Review + Code Review)
 10a. If `mode` = `advisory`: Write Team Recommendation (bold one-line recommendation, Consensus table, optional subsections: When to Revisit, Escalation Path, Strongest Arguments)
 10b. If `mode` = `advisory`: Skip steps 11-13, 16 (Execution, Decisions, Verification, Test Plan)
-11. Write Execution (Tasks table + Files Changed table + Approval Gates table with per-gate H4 briefs)
+11. Write Execution (Tasks table + Files Changed table + Approval Gates table; H4 briefs only for adjusted/contested gates)
 12. Write Decisions (if gate-count > 0; gate briefs with full rationale)
 13. Write Verification table
 13a. Write Documentation Debt section (if docs-debt = deferred; include
