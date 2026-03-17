@@ -479,6 +479,29 @@ and what to ask each one.
 
 <!-- INFRASTRUCTURE: Gate presentation pattern, AskUserQuestion structure, 3-option template, re-run flow -->
 <!-- DOMAIN-SPECIFIC: "27-agent roster" reference, domain enumeration list (dev tools, frontend, etc.) -->
+### Decision Transparency at Gates
+
+Every gate must pass the self-containment test: a user who reads ONLY the gate
+output -- never clicks Details -- can make a well-informed approve/adjust/reject
+decision.
+
+To achieve this, gates surface decision rationale using a consistent
+micro-format. For synthesis decisions and mid-execution approaches:
+
+    <Decision title>
+      Chosen: <what was selected>
+      Over: <what was rejected>
+      Why: <rationale>
+
+For team and reviewer exclusions, a one-liner suffices:
+
+    <agent-name>         <exclusion rationale>
+
+Density scales with decision scope: the Team gate is lighter than the Execution
+Plan gate. Each gate section below defines its own format and line budget.
+Attribution in "Over" lines is best-effort -- include when the synthesis clearly
+records the source; omit when uncertain; never fabricate.
+
 ### Team Approval Gate
 
 After Phase 1 returns and the CONDENSE line is printed, present the team
@@ -500,8 +523,12 @@ applies only in META-PLAN mode (the default).
     ux-strategy-minion   Approval gate interaction design
     lucy                 Governance alignment for new gate
 
-  `ALSO AVAILABLE (not selected):`
-    ai-modeling-minion, margo, software-docs-minion, security-minion, ...
+  `NOT SELECTED (notable):`
+    margo                Will review in Phase 3.5 (mandatory reviewer)
+    security-minion      No new attack surface; gate changes are prompt-only
+    test-minion          No executable output; will review in Phase 3.5
+
+  Also available: ai-modeling-minion, software-docs-minion, ...
 
 `Details:` [meta-plan]($SCRATCH_DIR/{slug}/phase1-metaplan.md)
 `────────────────────────────────────────────────────`
@@ -510,12 +537,19 @@ applies only in META-PLAN mode (the default).
 Format rules:
 - SELECTED block: agent name + one-line rationale (why they were chosen,
   NOT the planning question). One line per agent, left-aligned.
-- ALSO AVAILABLE: flat comma-separated list. Users scan it for surprises,
-  not read each entry. Include all 27-roster agents not in SELECTED.
+- NOT SELECTED (notable): up to 3 agents whose exclusion might surprise the
+  user (governance agents for governance-adjacent tasks, security-minion for
+  security-adjacent tasks, etc.). One line per agent with exclusion rationale,
+  same alignment as SELECTED entries. Sourced from the meta-plan's Notable
+  Exclusions subsection.
+- "Also available" remainder: flat comma list of all remaining roster agents.
+  Lowercase "Also" distinguishes it from labeled blocks.
+- If no exclusions are notable (task is clearly single-domain), omit the
+  NOT SELECTED (notable) block entirely. Keep only "Also available."
 - Full meta-plan link for deep-dive (planning questions, cross-cutting
   checklist, exclusion rationale).
-- Total output: 8-12 lines. Must be visibly lighter than the Execution
-  Plan Approval Gate (which targets 25-40 lines).
+- Total output: 10-16 lines. Must be visibly lighter than the Execution
+  Plan Approval Gate (which targets 35-55 lines).
 
 **Decision options** via AskUserQuestion:
 
@@ -1003,7 +1037,7 @@ reviewers. If no discretionary reviewers were selected, auto-approve with a
 CONDENSE note ("Reviewers: 5 mandatory, no additional reviewers needed") and
 skip the gate.
 
-**Presentation format** (target 6-10 lines):
+**Presentation format** (target 10-16 lines):
 
 ```
 `────────────────────────────────────────────────────`
@@ -1012,10 +1046,14 @@ skip the gate.
 
   `DISCRETIONARY (nefario recommends):`
     <agent-name>       <rationale, max 60 chars, reference tasks>
+      Review focus: <what specifically this reviewer will examine>
     <agent-name>       <rationale, max 60 chars, reference tasks>
+      Review focus: <what specifically this reviewer will examine>
 
-  `NOT SELECTED from pool:`
-    <remaining pool members, comma-separated>
+  `NOT SELECTED:`
+    <reviewer-name>      <exclusion rationale, max 60 chars>
+    <reviewer-name>      <exclusion rationale, max 60 chars>
+    <reviewer-name>      <exclusion rationale, max 60 chars>
 
 `Details:` [plan]($SCRATCH_DIR/{slug}/phase3-synthesis.md)
 `────────────────────────────────────────────────────`
@@ -1027,7 +1065,13 @@ Format rules:
 - DISCRETIONARY block: one agent per line with plan-grounded rationale. Rationale
   must reference specific plan content (task numbers, deliverables), not the
   reviewer's general capability. Max 60 characters per rationale.
-- NOT SELECTED: flat comma-separated list of remaining discretionary pool members.
+- NOT SELECTED: per-member exclusion rationale for each unselected pool member.
+  One line per agent with rationale, same alignment as DISCRETIONARY entries.
+  The discretionary pool is only 5 agents, so showing all with rationale is
+  feasible and eliminates "why wasn't X included?" questions.
+- DISCRETIONARY entries include a "Review focus:" sub-line stating what
+  specifically the reviewer will examine (derived from plan content, not the
+  reviewer's generic capability).
 - No "ALSO AVAILABLE" block listing the full agent roster. The decision space is
   the 5-member discretionary pool only.
 
@@ -1450,10 +1494,32 @@ Advisory principles:
 `RISKS:`
   - <risk description> — Mitigation: <what the plan does about it>
 
-`CONFLICTS RESOLVED:`
-  - <what was contested>: Resolved in favor of <approach> because <rationale>
+`DECISIONS:`
+  <Decision title>
+    Chosen: <what was selected>
+    Over: <what was rejected> (<agent attribution, best-effort>)
+    Why: <one sentence of rationale>
+
+  <Decision title>
+    Chosen: ...
+    Over: ...
+    Why: ...
+
+  ... and N more in [plan]($SCRATCH_DIR/{slug}/phase3-synthesis.md)
 ```
-Omit if no conflicts. If no risks, note: "No risks identified by specialists."
+DECISIONS format rules:
+- Maximum 5 decisions shown inline. If more than 5 synthesis decisions exist,
+  show the 5 with highest user impact (scope changes, security trade-offs,
+  architecture choices over implementation details).
+- Beyond 5: add overflow line "... and N more in [plan](link)".
+  Do not summarize overflowed decisions -- the link is the escape hatch.
+- If 0 decisions exist (no conflicts, no trade-offs), omit the DECISIONS block
+  entirely. Do not show an empty block or "No decisions."
+- Attribution in "Over" lines is best-effort. Include when the synthesis clearly
+  records which agent proposed the rejected alternative. Omit when uncertain.
+  Never fabricate attribution.
+- One blank line between decision entries for scannability.
+Omit DECISIONS block if no decisions. If no risks, note: "No risks identified by specialists."
 
 **Review summary** (one line):
 ```
@@ -1466,7 +1532,7 @@ Omit if no conflicts. If no risks, note: "No risks identified by specialists."
 `────────────────────────────────────────────────────`
 ```
 
-**Line budget guidance**: Target 25-40 lines for the complete gate output
+**Line budget guidance**: Target 35-55 lines for the complete gate output
 (orientation + task list + advisories + risks + review summary + plan reference).
 This is soft guidance, not a hard ceiling — clarity wins over brevity.
 
@@ -1580,7 +1646,10 @@ A batch contains all tasks that can run before the next gate.
    > send a message to the team lead with:
    > - File paths with change scope and line counts (e.g., "src/auth.ts (new OAuth flow, +142 lines)")
    > - 1-2 sentence summary of what was produced
-   > This information populates the gate's DELIVERABLE section.
+   > - If this task has an approval gate: the approach you chose, what
+   >   alternative(s) you considered but rejected, and a brief reason
+   >   for each rejection
+   > This information populates the gate's DELIVERABLE and RATIONALE sections.
 
 4. **Actively monitor completion.** After spawning agents, DO NOT just
    wait passively. You are the orchestrator — you must drive progress:
@@ -1630,6 +1699,28 @@ A batch contains all tasks that can run before the next gate.
    dependency: "Builds on <prior decision description> approved in Task N."
 
    Target 12-18 lines for mid-execution gates (soft ceiling; clarity wins over brevity).
+
+   Good RATIONALE (exposes reasoning and rejected alternatives):
+   - PKCE chosen for public client security (no client secret storage needed)
+   - Token refresh uses sliding window -- minimizes re-auth without unbounded sessions
+   - Rejected: Implicit grant flow -- deprecated in OAuth 2.1, no refresh token support
+   - Rejected: Client credentials grant -- requires secret storage, unsuitable for CLI
+
+   Bad RATIONALE -- restates the decision (no new information):
+   - Implemented the OAuth flow
+   - Used best practices for token management
+   - Followed the task requirements
+
+   Bad RATIONALE -- appeals to convention (no task-specific reasoning):
+   - Used the standard approach for this type of problem
+   - Followed the pattern from the existing codebase
+   - Applied the recommended security configuration
+
+   When populating the RATIONALE section at a mid-execution gate: if the agent
+   reported execution-time rationale (approach chosen and alternatives rejected),
+   use that as the primary RATIONALE. If the agent did NOT report rationale, fall
+   back to the Gate rationale field from the synthesis (pre-execution reasoning).
+   The gate should show substantive reasoning, never be empty.
 
    Before presenting the gate, update the status file to reflect the gate state:
    ```sh
