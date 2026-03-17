@@ -93,6 +93,8 @@ Shared types, configuration schema, and instruction translation. No tool invocat
 - Output file contains no TaskUpdate, SendMessage, or scratch file references
 - Output is valid Markdown readable by the target tool
 
+**Specification**: [Translator Rules](adapter-interface.md#translator-rules)
+
 ---
 
 ## Milestone 2: Codex CLI Adapter

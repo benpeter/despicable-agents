@@ -202,6 +202,25 @@ Normalizing a non-zero exit code to `success: true` is permitted only for exit c
 
 ---
 
+## Translator Rules
+
+The AGENT.md translator (`lib/translate-agent-md.sh`, Issue #140) converts agent instruction files to tool-native formats. The adapter receives the translated file path in `translated_instruction_path` and does not perform translation itself.
+
+**Frontmatter stripping**: The `---`-delimited YAML frontmatter block is removed entirely. Frontmatter fields (`name`, `model`, `tools`, `description`) are extracted and emitted as JSON to stdout for adapter runtime use.
+
+**Claude Code instruction stripping**: The following patterns are removed from the Markdown body:
+- Claude Code tool primitives: `TaskUpdate`, `TaskList`, `TaskCreate`, `SendMessage`, `TeamCreate`, `TeamUpdate`, `AskUserQuestion`
+- Claude Code invocation phrases: `via the Task tool`, `via the /nefario skill`, `claude --agent` references
+- Scratch directory references: `nefario-scratch-*` paths, `scratch directory conventions`
+- Build system markers: `<!-- @domain:... -->` HTML comments
+- Claude Code-specific sections: `## Main Agent Mode` (removed entirely)
+
+**Output format**: AGENTS.md for Codex (`--format agents-md`), CONVENTIONS.md for Aider (`--format conventions-md`). Both produce clean Markdown. The body content passes through unchanged beyond the stripping rules above.
+
+**Cross-model notes**: AGENT.md instructions use model-agnostic Markdown. No per-model rewriting is performed. This stripping rule set may grow during Codex (#141) and Aider (#143) validation.
+
+---
+
 ## Fields Considered and Excluded
 
 These fields were proposed during synthesis and excluded from the interface. The rationale is recorded here so future contributors understand the decision without re-litigating it.
