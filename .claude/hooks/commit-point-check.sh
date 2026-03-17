@@ -117,6 +117,10 @@ main() {
     # --- Session ID and ledger path ---
     local session_id
     session_id=$(get_session_id "$input")
+    # Validate session_id to prevent path traversal (mirrors track-file-changes.sh)
+    if ! [[ "$session_id" =~ ^[a-zA-Z0-9_-]{1,128}$ ]]; then
+        session_id="default"
+    fi
     local ledger="/tmp/claude-change-ledger-${session_id}.txt"
     local defer_marker="/tmp/claude-commit-defer-${session_id}.txt"
     local declined_marker="/tmp/claude-commit-declined-${session_id}"
@@ -171,10 +175,13 @@ EOF
     local -A agent_counts
     while IFS=$'\t' read -r filepath agent_type agent_id || [[ -n "$filepath" ]]; do
         [[ -z "$filepath" ]] && continue
-        [[ -n "${seen_paths[$filepath]+x}" ]] && continue
-        seen_paths[$filepath]=1
-        ledger_files+=("$filepath")
-        # Collect agent_type for scope/trailer derivation (tracked before filtering)
+        # Deduplicate file paths for staging (one entry per file)
+        if [[ -z "${seen_paths[$filepath]+x}" ]]; then
+            seen_paths[$filepath]=1
+            ledger_files+=("$filepath")
+        fi
+        # Count ALL agent_type entries including duplicates per-file
+        # (same path from different agents = different counts)
         if [[ -n "$agent_type" ]]; then
             agent_counts["$agent_type"]=$(( ${agent_counts["$agent_type"]:-0} + 1 ))
         fi

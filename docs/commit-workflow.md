@@ -295,6 +295,11 @@ fi
 exit 0
 ```
 
+> **Note**: This is a simplified illustration. The deployed `track-file-changes.sh`
+> adds input validation (tab/newline rejection, regex validation of agent fields),
+> path sanitization, restricted file permissions (`install -m 0600`), and
+> deduplication. See the source file for the production implementation.
+
 ### Why a Ledger Instead of `git status`?
 
 `git status` shows all uncommitted changes, including those from before the session or from manual edits. The ledger tracks only changes made by this Claude session, preventing the auto-commit from proposing to commit unrelated work.

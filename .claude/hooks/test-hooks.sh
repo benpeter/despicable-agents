@@ -359,10 +359,8 @@ ledger19=$(ledger_path "$t19_session")
 echo "${repo19}/app.js" > "$ledger19"
 printf '%s\t%s\n' "${repo19}/app.js" "backend-minion" >> "$ledger19"
 
-stderr19=$(run_commit '{"session_id":"'"$t19_session"'"}' "$repo19" "$t19_session" 2>&1) || true
-# Should not crash; should produce a checkpoint (exit 2 means block)
 exit19=0
-run_commit '{"session_id":"'"$t19_session"'"}' "$repo19" "$t19_session" >/dev/null 2>&1 || exit19=$?
+stderr19=$(run_commit '{"session_id":"'"$t19_session"'"}' "$repo19" "$t19_session" 2>&1) || exit19=$?
 if [[ "$exit19" -eq 2 ]]; then
     pass "Test 19: Mixed format (bare + TSV) -> handled gracefully"
 else
