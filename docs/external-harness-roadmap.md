@@ -52,7 +52,7 @@ Shared types, configuration schema, and instruction translation. No tool invocat
 - Interface is minimal -- covers Codex and Aider use cases, nothing more
 - No harness-specific fields in the shared types
 
-**Specification**: [docs/adapter-interface.md](adapter-interface.md)
+**Specification**: [Adapter Interface](adapter-interface.md)
 
 ### Issue 1.2: Routing Configuration Schema
 
@@ -163,7 +163,7 @@ Second concrete adapter. Validates that the abstraction holds for a tool without
 
 **Scope**:
 - Input: unified diff (from `git diff`) + original task prompt
-- Output: structured summary matching `DelegationResult.stdout_summary` (changed files, scope description, purpose)
+- Output: structured summary matching `DelegationResult.task_summary` (changed files, scope description, purpose)
 - Use a small fast model; target <$0.01 per call, <5 second latency
 - Reusable by any adapter that lacks native structured output (Aider today; others potentially later)
 

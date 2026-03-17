@@ -61,7 +61,7 @@ timeout_ms: 900000
 | `agent_name` | yes | string | Canonical agent name matching the AGENT.md frontmatter `name` field (e.g., `frontend-minion`). Used for routing config resolution. |
 | `task_prompt` | yes | string | The complete task prompt, already stripped of Claude Code-specific instructions (TaskUpdate, SendMessage, scratch directory conventions). The adapter passes this to the external tool unchanged. |
 | `translated_instruction_path` | yes | string | Absolute path to the tool-native instruction file produced by the AGENT.md translator (Issue 1.3). The adapter passes this to the tool and cleans it up after invocation. The adapter does NOT translate AGENT.md itself -- that is already done before the adapter is called. |
-| `working_directory` | yes | string | Absolute, canonicalized path to the working directory with symlinks resolved. The adapter invokes the tool in this directory. Must be validated: canonicalize (resolve symlinks), then verify the resolved path falls within an allowlisted root. |
+| `working_directory` | yes | string | Absolute path to the working directory. The adapter invokes the tool in this directory. See "Validate working_directory" in the behavioral contract for validation requirements. |
 | `model_tier` | yes | string (enum: `opus`, `sonnet`) | Quality-intent signal, not a model ID. The adapter resolves this to a provider-specific model ID via the routing config's `model-mapping` section. Uses the existing project vocabulary matching AGENT.md frontmatter convention. |
 | `required_agent_tools` | yes | list of strings | Tool capabilities the AI agent needs during execution (e.g., `["Bash", "Read", "Edit"]`). Used for capability gating: the routing config loader (Issue 1.2) validates that the target harness supports these tools before routing. |
 | `timeout_ms` | no | integer | Maximum wall-clock execution time in milliseconds. The adapter enforces this and terminates the tool process if exceeded. Default: 1800000 (30 minutes). |
@@ -70,7 +70,7 @@ timeout_ms: 900000
 
 **`task_prompt` must not be modified by the adapter.** The adapter is permitted only the formatting adjustments strictly required by the target tool's invocation interface (e.g., writing the prompt to a temp file for `--message-file`). Any content rewriting is out of scope for adapters.
 
-**`working_directory` validation is the adapter's responsibility.** Although the orchestrator passes a canonicalized path, the adapter must re-validate before invocation: resolve symlinks on the received path and confirm the result falls within an allowlisted root (project repository root or an explicitly configured base path). Reject requests whose canonicalized path resolves outside the allowed root. This prevents path traversal if a symlink is created between orchestrator construction and adapter invocation.
+**`working_directory` validation is the adapter's responsibility.** See "Validate working_directory" in the behavioral contract for the full validation procedure.
 
 **`model_tier` is a routing hint, not a constraint.** If the routing config has no `model-mapping` entry for a tier, the adapter should apply a sensible default for the target tool rather than failing. The mapping is resolved at adapter initialization, not per-request.
 
@@ -125,7 +125,7 @@ duration_ms: 3100
 | `changed_files` | yes | list of FileChange (see below) | Files modified during execution, collected via `git diff --name-status --numstat` against a pre-invocation git ref. Empty list is valid (task may have made no file changes). |
 | `task_summary` | yes (when `success` is true) | string | Human-readable summary of what the task accomplished (1-2 sentences). May come from parsed structured output (Codex `--output-schema`) or LLM-generated summarization (Aider via Issue 3.1). Describes the semantic outcome, not the mechanical changes. |
 | `stderr` | no | string | Raw stderr output, truncated to the last 50 lines. Useful for diagnosing failures. |
-| `raw_diff_path` | no | string | Absolute file path to the saved full unified diff. Written by the adapter for debugging. The orchestrator does not process this -- it exists for human inspection and the review gate. See "Temporary File Security" in the behavioral contract. |
+| `raw_diff_path` | no | string | Absolute file path to the saved full unified diff. Written by the adapter for debugging. The orchestrator does not process this -- it exists for human inspection and the review gate. See "Create temporary files with restricted permissions" in the behavioral contract. |
 | `duration_ms` | no | integer | Wall-clock execution time in milliseconds. Measured from tool invocation start to completion or timeout. |
 
 ### Semantics Notes
@@ -148,6 +148,8 @@ Sub-type used in `DelegationResult.changed_files`. Each entry represents one fil
 | `action` | yes | string (enum: `added`, `modified`, `deleted`, `renamed`) | What happened to this file. Sourced from `git diff --name-status`. |
 | `lines_added` | yes | integer | Lines added. From `git diff --numstat`. 0 for deleted files. |
 | `lines_removed` | yes | integer | Lines removed. From `git diff --numstat`. 0 for added files. |
+
+For `renamed` files, `lines_added` and `lines_removed` reflect content changes after renaming. Both are 0 for a pure rename with no content change. Source: `git diff --numstat` output for `R`-status files.
 
 ---
 
