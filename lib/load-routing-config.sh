@@ -189,7 +189,7 @@ canon_path() {
 
   # Expand ~ manually
   case "$1" in
-    "~"*) raw_path="$HOME${1#\~}" ;;
+    "~"*) raw_path="$HOME${raw_path#\~}" ;;
     *)    raw_path="$1" ;;
   esac
 
@@ -333,30 +333,6 @@ detect_yaml_anchors() {
 }
 
 # ---------------------------------------------------------------------------
-# Error emission
-# ---------------------------------------------------------------------------
-
-# emit_errors FILE ERR1 ERR2 ...
-# Prints a count header when multiple errors, then each error.
-emit_errors() {
-  local file="$1"
-  shift
-  local count=$#
-
-  if [ "$count" -gt 1 ]; then
-    echo "${file}: ${count} errors found" >&2
-    echo "" >&2
-    while [ $# -gt 0 ]; do
-      echo "  $1" >&2
-      echo "" >&2
-      shift
-    done
-  else
-    echo "$1" >&2
-  fi
-}
-
-# ---------------------------------------------------------------------------
 # Capability gating
 # ---------------------------------------------------------------------------
 
@@ -444,10 +420,12 @@ validate_routing_file() {
 
   # (a) Syntax check via yq
   local parsed_json
-  if ! parsed_json="$(yq -o=json '.' "$file" 2>/tmp/yq-parse-error-$$)"; then
+  local yq_err_file
+  yq_err_file="$(mktemp "${TMPDIR:-/tmp}/yq-parse-error-XXXXXX")"
+  if ! parsed_json="$(yq -o=json '.' "$file" 2>"$yq_err_file")"; then
     local parse_err
-    parse_err="$(cat /tmp/yq-parse-error-$$ 2>/dev/null || echo "parse error")"
-    rm -f /tmp/yq-parse-error-$$
+    parse_err="$(cat "$yq_err_file" 2>/dev/null || echo "parse error")"
+    rm -f "$yq_err_file"
     echo "Error: YAML syntax error" >&2
     echo "" >&2
     echo "  in: $file" >&2
@@ -455,7 +433,7 @@ validate_routing_file() {
     echo "$parse_err" >&2
     exit 1
   fi
-  rm -f /tmp/yq-parse-error-$$
+  rm -f "$yq_err_file"
 
   # (c) Required field: default
   local default_val
@@ -968,6 +946,17 @@ main() {
   esac
 
   local merged_json="$project_json"
+
+  if [ -f "$user_config_path" ]; then
+    :  # file exists, proceed below
+  elif [ -n "$ARG_USER_CONFIG" ]; then
+    echo "Error: User config file not found" >&2
+    echo "" >&2
+    echo "  path: $user_config_path" >&2
+    echo "" >&2
+    echo "Check the path and try again." >&2
+    exit 1
+  fi
 
   if [ -f "$user_config_path" ]; then
     local canon_user

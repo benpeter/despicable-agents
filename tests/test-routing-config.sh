@@ -100,9 +100,11 @@ run_loader() {
   OUT=""
   ERR=""
   RC=0
-  OUT=$(bash "$LOADER" "$@" 2>/tmp/test-routing-stderr-$$ ) || RC=$?
-  ERR=$(cat /tmp/test-routing-stderr-$$ 2>/dev/null || true)
-  rm -f /tmp/test-routing-stderr-$$
+  local stderr_file
+  stderr_file="$(mktemp "${TMPDIR:-/tmp}/test-routing-stderr-XXXXXX")"
+  OUT=$(bash "$LOADER" "$@" 2>"$stderr_file" ) || RC=$?
+  ERR=$(cat "$stderr_file" 2>/dev/null || true)
+  rm -f "$stderr_file"
 }
 
 # make_mock_agent_dir -- creates a temp dir with minimal AGENT.md mocks.
@@ -984,6 +986,41 @@ if [ "$line_count" -eq 1 ]; then
   pass "Output: loader emits exactly one JSON line to stdout"
 else
   fail "Output: loader emits exactly one JSON line to stdout" "lines=$line_count OUT=$OUT"
+fi
+
+# ---------------------------------------------------------------------------
+# YAML anchor rejection
+# ---------------------------------------------------------------------------
+
+echo "--- YAML anchor rejection ---"
+
+t_anchor_dir=$(make_mock_agent_dir)
+run_loader --project-config "$FIXTURES/yaml-anchors.yml" --agent-dir "$t_anchor_dir"
+if [ "$RC" -ne 0 ]; then
+  pass "YAML anchors: config with anchors is rejected"
+else
+  fail "YAML anchors: config with anchors is rejected" "exit=$RC"
+fi
+
+if echo "$ERR" | grep -qi "anchor"; then
+  pass "YAML anchors: error message mentions anchors"
+else
+  fail "YAML anchors: error message mentions anchors" "ERR=$ERR"
+fi
+
+# ---------------------------------------------------------------------------
+# Explicit --user-config with nonexistent file exits 1
+# ---------------------------------------------------------------------------
+
+echo "--- Explicit --user-config missing file ---"
+
+run_loader --project-config "$FIXTURES/minimal.yml" \
+  --user-config "/nonexistent/path/routing.yml" \
+  --agent-dir "$t_anchor_dir"
+if [ "$RC" -ne 0 ]; then
+  pass "Explicit --user-config with nonexistent file exits non-zero"
+else
+  fail "Explicit --user-config with nonexistent file exits non-zero" "exit=$RC"
 fi
 
 # ---------------------------------------------------------------------------
