@@ -155,3 +155,9 @@ sequenceDiagram
 
     Nef->>Plan: Populate External Skill Integration section
 ```
+
+---
+
+## See Also
+
+- [External Harness Integration](external-harness-integration.md) -- related but distinct concept. External *skills* are Claude Code SKILL.md files discovered and incorporated into orchestration. External *harnesses* are separate LLM coding tools (Aider, Codex CLI, etc.) that could serve as alternative execution backends for delegation.
