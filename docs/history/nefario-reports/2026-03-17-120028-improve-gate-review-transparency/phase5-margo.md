@@ -1,0 +1,17 @@
+VERDICT: ADVISE
+
+FINDINGS:
+
+- [ADVISE] docs/orchestration.md:402 + skills/nefario/SKILL.md:1040 -- Reviewer gate line budget inconsistency
+  AGENT: ai-modeling-minion
+  FIX: The synthesis plan specified "target 7-13 lines" for the Reviewer gate (Edit 3 in Task 2, and verification step 5 of the synthesis). The implementation applied "target 10-16 lines" instead -- identical to the Team gate. This creates two problems: (1) the Reviewer gate and Team gate now share the same line budget despite having different information density (the Reviewer gate has a fixed 5-member discretionary pool, making it structurally smaller than the Team gate which draws from the full 27-agent roster), and (2) the synthesis's own verification step 5 ("Cross-reference line budgets are consistent: Team 10-16, Reviewer 7-13, Execution Plan 35-55, Mid-execution 12-18") no longer holds. The mismatch between plan and implementation should be resolved: either the plan's 7-13 was correct (the Reviewer gate IS structurally smaller) and SKILL.md + orchestration.md should use 7-13, or the implementation discovered 7-13 was too tight and the synthesis verification step was not updated. Either way, the two documents and the plan should agree. Suggest: use 10-16 if the per-member exclusion rationale and Review focus sub-lines genuinely need the space; otherwise revert to 7-13 as planned.
+
+- [NIT] nefario/AGENT.md:370-373 -- Decision transparency anchor is informational, not structural
+  AGENT: ai-modeling-minion
+  FIX: The paragraph added after "Target 12-18 lines..." states that "all four gate types follow this progressive-disclosure pattern" and that "SKILL.md defines per-gate formats." This is a statement of intent -- it does not add any machine-actionable structure to the output template. It is also mildly redundant with the "Decision Transparency at Gates" preamble in SKILL.md (lines 482-503), which is the actual authoritative instruction. Low cost to keep, but worth noting it is commentary rather than specification. No action required.
+
+- [NIT] docs/history/nefario-reports/TEMPLATE.md:54-63 -- Dual Decisions sections
+  AGENT: ai-modeling-minion
+  FIX: The report template now has two sections named "Decisions" at different levels: one as an H3 subsection under "Key Design Decisions" (line 54, the renamed Conflict Resolutions) and another as an H2 section (line 203, the gate decisions). Both were present before this change (as "Conflict Resolutions" and "Decisions" respectively), but now they share a name. This is not a regression (the scope is different: synthesis decisions vs. gate decisions) but it may confuse report authors. A future rename of one section (e.g., "Synthesis Decisions" vs. "Gate Decisions") would eliminate ambiguity. No action required for this PR.
+
+Overall assessment: The changes are well-scoped, proportional to the problem, and additive. Four files, five targeted edits each, all following a consistent pattern (Chosen/Over/Why micro-format, self-containment principle, density-proportional disclosure). No new abstractions introduced. No new dependencies. No new technologies. The Chosen/Over/Why format is a thin convention, not a framework -- it adds structure to existing gate rendering without introducing machinery. The line budget increases (Team 8-12 to 10-16, Execution Plan 25-40 to 35-55) are justified by the additional rationale content. The one substantive concern is the Reviewer gate line budget inconsistency between the synthesis plan and the implementation.
