@@ -171,19 +171,28 @@ EOF
     local all_markdown=true
 
     # Read and deduplicate ledger entries (TSV: filepath<TAB>agent_type<TAB>agent_id)
-    local -A seen_paths
-    local -A agent_counts
+    # Bash 3.2 compatible: use newline-delimited strings instead of associative arrays
+    local _seen_paths=""
+    local _agent_counts=""  # format: "type:count\ntype:count\n..."
     while IFS=$'\t' read -r filepath agent_type agent_id || [[ -n "$filepath" ]]; do
         [[ -z "$filepath" ]] && continue
         # Deduplicate file paths for staging (one entry per file)
-        if [[ -z "${seen_paths[$filepath]+x}" ]]; then
-            seen_paths[$filepath]=1
-            ledger_files+=("$filepath")
-        fi
+        case "$_seen_paths" in
+            *"|${filepath}|"*) ;;  # already seen
+            *)
+                _seen_paths="${_seen_paths}|${filepath}|"
+                ledger_files+=("$filepath")
+                ;;
+        esac
         # Count ALL agent_type entries including duplicates per-file
-        # (same path from different agents = different counts)
         if [[ -n "$agent_type" ]]; then
-            agent_counts["$agent_type"]=$(( ${agent_counts["$agent_type"]:-0} + 1 ))
+            local _cur_count
+            _cur_count=$(echo "$_agent_counts" | grep "^${agent_type}:" | head -1 | cut -d: -f2)
+            _cur_count=$(( ${_cur_count:-0} + 1 ))
+            # Remove old entry, add updated one
+            _agent_counts=$(echo "$_agent_counts" | grep -v "^${agent_type}:" || true)
+            _agent_counts="${_agent_counts}
+${agent_type}:${_cur_count}"
         fi
     done < "$ledger"
 
@@ -262,18 +271,15 @@ EOF
     # --- Determine primary agent (majority-wins, alphabetical tie-breaking) ---
     local max_count=0
     local primary_agent=""
-    for agent in $(echo "${!agent_counts[@]}" | tr ' ' '\n' | sort); do
-        if [[ ${agent_counts[$agent]} -gt $max_count ]]; then
-            max_count=${agent_counts[$agent]}
+    local -a all_agents=()
+    while IFS=: read -r agent count; do
+        [[ -z "$agent" ]] && continue
+        all_agents+=("$agent")
+        if [[ "$count" -gt "$max_count" ]]; then
+            max_count=$count
             primary_agent="$agent"
         fi
-    done
-
-    # Collect all unique agent types (sorted, for deterministic trailer order)
-    local -a all_agents=()
-    for agent in $(echo "${!agent_counts[@]}" | tr ' ' '\n' | sort); do
-        all_agents+=("$agent")
-    done
+    done < <(echo "$_agent_counts" | grep -v '^$' | sort)
 
     # --- Derive domain scope from primary agent type ---
     local scope=""
