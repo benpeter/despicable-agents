@@ -113,7 +113,7 @@ AGENT.md uses a five-section template (Identity, Core Knowledge, Working Pattern
 **Key findings**:
 
 - The five prompt sections translate cleanly to any Markdown-based instruction format. Content fidelity is high.
-- Frontmatter fields (`model`, `tools`, `memory`) have no cross-tool equivalent. These are runtime parameters that belong in the wrapper configuration, not the instruction file.
+- Frontmatter fields (`model`, `tools`, `memory`) have no cross-tool equivalent. These are runtime parameters that belong in the wrapper configuration, not the instruction file. Frontmatter fields are stripped during instruction translation and passed as adapter runtime config. Markdown body is the only content written to instruction files. Model selection handled through routing config.
 - The task prompt must be stripped of Claude Code-specific instructions (TaskUpdate, SendMessage, scratch directory conventions) before passing to an external tool.
 - AGENTS.md (Linux Foundation / AAIF) is the emerging cross-tool format, supported by 60,000+ repos and 10+ tools. It is structurally similar to CLAUDE.md (both are Markdown project instructions) but differs in discovery paths, override semantics, and scoping rules.
 
@@ -167,7 +167,7 @@ Structured comparison of what the current Claude Code Task tool provides versus 
 | **Prompt delivery** | Single text string via Task `prompt` parameter | `-p` / `--message` flag or `--message-file` for long prompts | None -- direct mapping |
 | **Context injection** | Inline text + filesystem path references; subagent reads files with Read/Glob/Grep tools | Write instruction file (AGENTS.md, CONVENTIONS.md) + `--read` flags; tool reads files natively | Low -- filesystem paths work; tool-specific read mechanisms vary |
 | **File access** | Shared filesystem; Read/Write/Edit/Bash tools | Shared filesystem; tool-native file operations | None -- same working directory |
-| **Result collection** | TaskUpdate status + structured SendMessage (file paths, line counts, summary) | Exit code + git diff of changed files + stdout (JSON where supported) | Medium -- git diff provides file changes but not semantic summaries. Codex `--output-schema` can enforce structured output. Aider has no JSON output. |
+| **Result collection** | TaskUpdate status + structured SendMessage (file paths, line counts, summary) | Exit code + git diff of changed files + stdout (JSON where supported) | Low-Medium -- git diff provides file changes; semantic summary generated via LLM-based diff summarization (small fast model processes unified diff + task prompt → structured summary, ~500+200 tokens, ~1-3 second latency, negligible vs multi-minute tasks). Codex `--output-schema` can enforce structured output directly. |
 | **Error handling** | TaskList polling for idle/failure detection; no timeout; no structured errors | Exit code (0/non-zero) + stderr; configurable timeout via wrapper; no structured error categories | Low-Medium -- exit codes are more reliable than polling. Lack of structured error categories (retryable vs. fatal) requires heuristic classification. |
 | **Progress monitoring** | SendMessage for intermediate updates; TaskList for status | stdout streaming (Codex JSONL, Cline NDJSON); no equivalent for non-streaming tools (Aider) | Medium -- streaming tools provide progress; batch tools are opaque until completion |
 | **Model routing** | `model` frontmatter field (opus/sonnet); runtime override | Tool-specific model flags (`--model`); model names differ across providers | Medium -- model intent (quality tier) must be translated to provider-specific identifiers. No standard alias system. |
@@ -183,7 +183,7 @@ Structured comparison of what the current Claude Code Task tool provides versus 
 
 **Codex CLI** -- Best automation interface. `codex exec --json` provides JSONL output; `--output-schema` enables JSON Schema validation on final output. `--full-auto` handles approval bypass. TypeScript SDK adds programmatic control. Constraint: uses OpenAI models (o3, o4-mini), so quality parity with Claude Opus is not guaranteed for all task types.
 
-**Aider** -- Most battle-tested scripting mode. `--message` + `--yes` for reliable single-shot execution. Git-native output (commits as deliverables) aligns with the orchestrator's commit workflow. Limitation: no structured JSON output -- result collection requires parsing git diff, which is lossy (file changes but not semantic summaries). Narrower tool set (no Bash, no web search).
+**Aider** -- Most battle-tested scripting mode. `--message` + `--yes` for reliable single-shot execution. Git-native output (commits as deliverables) aligns with the orchestrator's commit workflow. Result collection uses LLM-based diff summarization: a small fast model processes the unified diff alongside the original task prompt to produce a structured summary. Cost is approximately 500+200 tokens with 1-3 second latency -- negligible against multi-minute tasks. Accepted tradeoff. Narrower tool set (no Bash, no web search).
 
 ### Feasible with Constraints
 
@@ -248,6 +248,59 @@ Three convergence trends reduce future adapter complexity:
 
 The Agent Client Protocol (created by Zed, adopted by Cline, Copilot, JetBrains, Zed) standardizes agent-editor communication. If ACP gains an "orchestrator mode" or "headless server mode," it could eventually replace shell-based invocation with protocol-level delegation. As of 2026-03-17, ACP is editor-focused, not orchestrator-focused. Assess ring -- monitor but do not build on it yet.
 
+### Quality Parity
+
+Quality parity across harnesses is the user's responsibility. The routing configuration provides explicit model specification per harness, giving users direct control over which models are assigned to which tasks. No automatic quality tracking or cross-tool outcome comparison is performed by the orchestrator.
+
+---
+
+## Routing and Configuration
+
+The routing layer sits between the orchestrator and the invocation layer. It translates agent identities and task types to harness selection and model specification without touching planning logic.
+
+**Configuration surface**: A single YAML file at project level (proposed location: `.nefario/routing.yml`) with an optional user-level override. Zero-config means everything routes to Claude Code -- existing behavior is fully preserved.
+
+**Three granularity levels**: default harness, per-agent-group, per-agent. Resolution order: agent > group > default > implicit claude-code.
+
+**Model specification**: The `model:` field in AGENT.md (`opus` or `sonnet`) expresses a quality-tier intent, not a provider-specific model ID. The routing config contains a `model-mapping` block that translates tiers to provider identifiers per harness -- for example, `opus → o3` for Codex CLI, `opus → claude-opus-4-6` for Aider. Users choose models explicitly through this mapping; the orchestrator does not make model decisions.
+
+**Capability gating**: The routing layer validates agent tool requirements (from the `tools:` frontmatter field) against the target harness's known capabilities at config load time. A hard error with actionable guidance is raised if a required tool is unsupported -- for example, routing a web-research agent to Aider (no web access) fails at startup, not mid-task.
+
+**Minimal example** (default harness only):
+
+```yaml
+default: claude-code
+```
+
+**Power-user example** (per-group and per-agent overrides with model mapping):
+
+```yaml
+default: claude-code
+
+model-mapping:
+  claude-code:
+    opus: claude-opus-4-6
+    sonnet: claude-sonnet-4-6
+  codex:
+    opus: o3
+    sonnet: o4-mini
+  aider:
+    opus: claude-opus-4-6
+    sonnet: claude-sonnet-4-6
+
+groups:
+  code-writers: codex
+  data-analysts: aider
+
+agents:
+  security-minion: claude-code
+  frontend-minion: codex
+```
+
+The `.nefario/routing.yml` path is a proposed convention, not a commitment. The configuration surface will be defined as part of adapter implementation.
+
+For implementation sequencing, see [External Harness Roadmap](external-harness-roadmap.md).
+
 ---
 
 ## Out of Scope
@@ -263,10 +316,4 @@ The Agent Client Protocol (created by Zed, adopted by Cline, Copilot, JetBrains,
 
 1. **Instruction isolation**: When an external tool loads both injected instructions (AGENTS.md from the wrapper) and existing project config (.cursorrules, CLAUDE.md), how should conflicts be handled? Can tools be configured to ignore project-level instructions in favor of injected ones?
 
-2. **Parallel delegation race conditions**: If multiple tasks delegate to different tools in the same working directory, concurrent file writes could conflict. Worktree isolation (already supported by the orchestrator) mitigates this, but adds overhead. Is per-delegation worktree creation practical at scale?
-
-3. **Model quality parity**: Routing a task designed for Claude Opus to Codex (o3/o4-mini) or Aider (provider-dependent) may produce different quality results. Should the orchestrator track per-tool quality outcomes to inform future routing, or is this the user's responsibility?
-
-4. **AGENTS.md spec stability**: AGENTS.md recently moved to the Linux Foundation. The spec could evolve in ways that affect translation logic. What is the expected spec cadence and backward-compatibility policy?
-
-5. **Result collection without structured output**: For tools that produce only git diffs (Aider), how should the wrapper generate the semantic summary (file paths, change scope, purpose) that the orchestrator expects? LLM-based summarization of diffs is one option but adds cost and latency.
+2. **AGENTS.md spec stability**: AGENTS.md recently moved to the Linux Foundation. The spec could evolve in ways that affect translation logic. What is the expected spec cadence and backward-compatibility policy?
