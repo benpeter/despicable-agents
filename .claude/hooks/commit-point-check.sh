@@ -117,6 +117,10 @@ main() {
     # --- Session ID and ledger path ---
     local session_id
     session_id=$(get_session_id "$input")
+    # Validate session_id to prevent path traversal (mirrors track-file-changes.sh)
+    if ! [[ "$session_id" =~ ^[a-zA-Z0-9_-]{1,128}$ ]]; then
+        session_id="default"
+    fi
     local ledger="/tmp/claude-change-ledger-${session_id}.txt"
     local defer_marker="/tmp/claude-commit-defer-${session_id}.txt"
     local declined_marker="/tmp/claude-commit-declined-${session_id}"
@@ -166,13 +170,21 @@ EOF
     local total_diff_lines=0
     local all_markdown=true
 
-    # Read and deduplicate ledger entries
+    # Read and deduplicate ledger entries (TSV: filepath<TAB>agent_type<TAB>agent_id)
     local -A seen_paths
-    while IFS= read -r filepath || [[ -n "$filepath" ]]; do
+    local -A agent_counts
+    while IFS=$'\t' read -r filepath agent_type agent_id || [[ -n "$filepath" ]]; do
         [[ -z "$filepath" ]] && continue
-        [[ -n "${seen_paths[$filepath]+x}" ]] && continue
-        seen_paths[$filepath]=1
-        ledger_files+=("$filepath")
+        # Deduplicate file paths for staging (one entry per file)
+        if [[ -z "${seen_paths[$filepath]+x}" ]]; then
+            seen_paths[$filepath]=1
+            ledger_files+=("$filepath")
+        fi
+        # Count ALL agent_type entries including duplicates per-file
+        # (same path from different agents = different counts)
+        if [[ -n "$agent_type" ]]; then
+            agent_counts["$agent_type"]=$(( ${agent_counts["$agent_type"]:-0} + 1 ))
+        fi
     done < "$ledger"
 
     # No files after dedup
@@ -247,6 +259,28 @@ EOF
         exit 0
     fi
 
+    # --- Determine primary agent (majority-wins, alphabetical tie-breaking) ---
+    local max_count=0
+    local primary_agent=""
+    for agent in $(echo "${!agent_counts[@]}" | tr ' ' '\n' | sort); do
+        if [[ ${agent_counts[$agent]} -gt $max_count ]]; then
+            max_count=${agent_counts[$agent]}
+            primary_agent="$agent"
+        fi
+    done
+
+    # Collect all unique agent types (sorted, for deterministic trailer order)
+    local -a all_agents=()
+    for agent in $(echo "${!agent_counts[@]}" | tr ' ' '\n' | sort); do
+        all_agents+=("$agent")
+    done
+
+    # --- Derive domain scope from primary agent type ---
+    local scope=""
+    if [[ -n "$primary_agent" ]]; then
+        scope="${primary_agent%-minion}"
+    fi
+
     # --- Branch protection check ---
     local branch_warning=""
     if [[ -z "$branch" ]]; then
@@ -294,6 +328,34 @@ EOF
         file_list+="  + ${remaining} more"$'\n'
     fi
 
+    # --- Build commit subject template ---
+    local commit_subject_template
+    if [[ -n "$scope" ]]; then
+        commit_subject_template="\"<type>(${scope}): <summary>\""
+    else
+        commit_subject_template="\"<type>: <summary>\""
+    fi
+
+    # --- Build Agent trailers ---
+    local agent_trailers=""
+    for agent in "${all_agents[@]}"; do
+        agent_trailers+="Agent: ${agent}"$'\n'
+    done
+
+    # --- Build full commit block ---
+    local commit_block
+    if [[ -n "$agent_trailers" ]]; then
+        commit_block="${commit_subject_template}
+
+${file_list}
+${agent_trailers}Co-Authored-By: Claude <noreply@anthropic.com>"
+    else
+        commit_block="${commit_subject_template}
+
+${file_list}
+Co-Authored-By: Claude <noreply@anthropic.com>"
+    fi
+
     # --- Build PR suggestion ---
     local pr_suggestion=""
     if [[ -n "$branch" ]] && ! is_protected_branch "$branch"; then
@@ -316,10 +378,7 @@ If gh CLI is not available, suggest: git push -u origin ${branch}"
 Use this exact format:
 
 \`\`\`
-Commit: "<type>: <summary>"
-
-${file_list}
-Co-Authored-By: Claude <noreply@anthropic.com>
+${commit_block}
 (Y/n)
 \`\`\`
 
@@ -327,6 +386,8 @@ Rules for the commit message:
 - Use conventional commit types: feat, fix, docs, refactor, test, chore, style
 - Summary in imperative mood, lowercase, no period, max 72 chars
 - Infer the type and summary from the changed files and session context
+- When a scope is shown, include it in parentheses after the type
+- Include Agent trailer(s) in the commit body when shown
 
 ${sensitive_warning:+${sensitive_warning}
 
@@ -337,7 +398,7 @@ $(printf '  git add "%s"\n' "${changed_files[@]}")
 
 If the user responds "Y" or presses Enter:
 1. Stage the files listed above
-2. Commit with the message and Co-Authored-By trailer
+2. Commit with the message and trailer(s) shown above
 3. After committing, clear the ledger: > "${ledger}"
 
 If the user responds "n":

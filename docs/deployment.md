@@ -84,7 +84,7 @@ Two hook scripts in `.claude/hooks/` extend Claude Code's behavior for commit wo
 
 | Script | Event | Purpose |
 |--------|-------|---------|
-| `track-file-changes.sh` | PostToolUse (Write, Edit) | Appends modified file paths to a session-scoped change ledger. The ledger tracks which files the current session changed, so commit checkpoints only propose session-produced changes. |
+| `track-file-changes.sh` | PostToolUse (Write, Edit) | Appends modified file paths (with optional agent metadata) to a session-scoped change ledger in TSV format. The ledger tracks which files the current session changed, so commit checkpoints only propose session-produced changes. |
 | `commit-point-check.sh` | Stop | Reads the change ledger, filters sensitive files, and presents a commit checkpoint if uncommitted session changes exist. |
 
 ### Settings Configuration

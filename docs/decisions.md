@@ -435,6 +435,17 @@ These decisions were made during the nefario v2.0 update, extending orchestratio
 | **Rationale** | Rooted in Helix Manifesto principles: "lean and mean" (serverless eliminates infrastructure management overhead) and "ops reliability wins" (managed platform reliability exceeds most self-managed setups). The question shifts from "which topology fits?" (neutral evaluation) to "why NOT serverless?" (justify deviation). This is a strong preference, not a hard block -- the five blocking concerns provide explicit escape hatches. |
 | **Consequences** | iac-minion Step 0 starts with serverless default and blocking concern gate. margo's complexity budget actively penalizes self-managed infrastructure when serverless alternative exists. CLAUDE.md template encodes serverless as the omission default. lucy enforces serverless-first compliance in plan reviews. Historical reports and the topology-neutral advisory are preserved as records of the prior stance -- they are not modified. |
 
+### Decision 32: Agent Attribution in Commit Messages
+
+| Field | Value |
+|-------|-------|
+| **Status** | Implemented |
+| **Date** | 2026-03-17 |
+| **Choice** | Use domain-derived scopes (suffix-stripping) in the conventional commit scope position, and an `Agent:` git trailer for full agent identity. The `Co-Authored-By` trailer remains `Claude <noreply@anthropic.com>`. |
+| **Alternatives rejected** | (1) Agent names as commit scope (e.g., `feat(frontend-minion): ...`) -- degrades git log scanning with 27 long scope values. (2) Separate metadata sidecar file -- adds synchronization complexity without security benefit. (3) Agent-specific Co-Authored-By -- fragments `git shortlog` into 27 buckets. |
+| **Rationale** | Claude Code 2.1.69 added `agent_type` and `agent_id` to hook events. Surfacing this in commits improves traceability without breaking existing tooling. Domain-derived scopes keep `git log --oneline` readable. The `Agent:` trailer preserves full identity for tools that need it. |
+| **Consequences** | The change ledger format changes from bare paths to TSV (`file_path[\tagent_type[\tagent_id]]`). Readers must handle both formats during transition. `agent_type` is informational only -- it must not be used for authorization decisions. |
+
 ---
 
 ## Deferred

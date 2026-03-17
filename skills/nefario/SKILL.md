@@ -1792,8 +1792,14 @@ A batch contains all tasks that can run before the next gate.
    2. Filter against sensitive patterns (existing safety rails apply).
    3. If no changes or all changes are sensitive, skip silently.
    4. Stage and commit (`git commit --quiet`) with conventional commit message:
-      `<type>(<scope>): <summary>` with
+      `<type>(<scope>): <summary>` with trailers per [commit-workflow.md](../../../docs/commit-workflow.md):
+      `Agent: <agent-name>` (when agent metadata is available in the change ledger)
       `Co-Authored-By: Claude <noreply@anthropic.com>`
+      The scope is derived from the agent_type in the change ledger by stripping
+      the `-minion` suffix (e.g., `frontend-minion` -> `frontend`). When reading
+      file paths from the ledger for staging, extract column 1 only (the ledger
+      uses TSV format: `file_path[\tagent_type[\tagent_id]]`). When multiple
+      agents contributed files, use the majority agent's scope.
    5. Print ONE informational line:
       `Committed N files: path1, path2, ...`
       (list up to 5 files; if more, show first 4 and "+ N more").

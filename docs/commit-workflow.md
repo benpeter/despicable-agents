@@ -165,7 +165,16 @@ Auto-commits require no user interaction, so anti-fatigue measures for commit pr
 
 ### Format
 
-**Single-agent sessions:**
+**Single-agent sessions (with --agent flag):**
+
+```
+<type>(<scope>): <summary>
+
+Agent: <agent-name>
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+**Single-agent sessions (without --agent flag):**
 
 ```
 <type>: <summary>
@@ -178,10 +187,31 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 <type>(<scope>): <summary>
 
+Agent: <primary-agent>
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
-The scope in orchestrated sessions is derived from the agent or domain that produced the work (e.g., `oauth`, `frontend`, `security`, `docs`).
+The scope is derived from the `agent_type` field recorded in the change ledger by stripping the `-minion` suffix (e.g., `frontend-minion` → `frontend`). See Scope Derivation below.
+
+### Scope Derivation
+
+In orchestrated sessions and single-agent sessions with `--agent`, the scope
+is derived from the `agent_type` field in hook events (available since Claude
+Code 2.1.69):
+
+1. Strip the `-minion` suffix: `frontend-minion` -> `frontend`
+2. Use the result as the conventional commit scope
+
+When a commit contains files from multiple agents, use the agent that authored
+the majority of files (majority-wins rule, with alphabetical tie-breaking).
+When no agent metadata is available, omit the scope or use heuristic inference
+from the session context.
+
+The `Agent:` git trailer carries the full agent name (e.g., `frontend-minion`)
+for forensic attribution. When multiple agents contributed to a commit, each
+gets its own `Agent:` trailer line. This is distinct from the `Co-Authored-By`
+trailer, which remains `Claude <noreply@anthropic.com>` to keep all AI
+contributions grouped in `git shortlog` and GitHub contributor graphs.
 
 ### Type Vocabulary
 
@@ -209,7 +239,18 @@ A session-scoped change ledger tracks which files were modified during the sessi
 
 ### Ledger Interface
 
-The ledger is a plain text file, one absolute file path per line. Located at a session-scoped temp path:
+The ledger is a TSV (tab-separated values) file. Each line contains an
+absolute file path, optionally followed by agent metadata:
+
+```
+<file_path>[\t<agent_type>[\t<agent_id>]]
+```
+
+When `agent_type` and `agent_id` are absent from the hook input (main
+session without `--agent`), only the bare file path is written. This makes
+the new format a strict superset of the old format.
+
+Located at a session-scoped temp path:
 
 ```
 /tmp/claude-change-ledger-<session-id>.txt
@@ -220,8 +261,8 @@ The ledger is a plain text file, one absolute file path per line. Located at a s
 | Event | Action |
 |-------|--------|
 | Session start | Delete any existing ledger file for this session. Create empty. |
-| PostToolUse (Write) | Append the written file path to the ledger. |
-| PostToolUse (Edit) | Append the edited file path to the ledger. |
+| PostToolUse (Write) | Append file path and agent metadata (if available) to the ledger. |
+| PostToolUse (Edit) | Append file path and agent metadata (if available) to the ledger. |
 | Auto-commit | Read the ledger. Deduplicate paths. Stage only ledger entries that have actual `git diff` changes. |
 | After commit | Remove committed paths from the ledger (or clear if all were committed). |
 | Session end | Delete the ledger file. |
@@ -232,21 +273,32 @@ A PostToolUse hook on the `Write` and `Edit` tools appends file paths to the led
 
 ```bash
 #!/usr/bin/env bash
-# PostToolUse hook: Track file changes for commit workflow
-# Runs after Write and Edit tool calls
+# PostToolUse hook: Track file changes with agent attribution
+# Writes TSV: file_path[\tagent_type[\tagent_id]]
 
 set -euo pipefail
 
 LEDGER="/tmp/claude-change-ledger-${CLAUDE_SESSION_ID}.txt"
 input=$(cat)
-file_path=$(echo "$input" | jq -r '.tool_input.file_path // .tool_input.file_path // empty' 2>/dev/null)
+file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null)
+agent_type=$(echo "$input" | jq -r '.agent_type // empty' 2>/dev/null)
+agent_id=$(echo "$input" | jq -r '.agent_id // empty' 2>/dev/null)
 
 if [[ -n "$file_path" ]]; then
-    echo "$file_path" >> "$LEDGER"
+    if [[ -n "$agent_type" ]]; then
+        printf '%s\t%s\t%s\n' "$file_path" "$agent_type" "$agent_id" >> "$LEDGER"
+    else
+        echo "$file_path" >> "$LEDGER"
+    fi
 fi
 
 exit 0
 ```
+
+> **Note**: This is a simplified illustration. The deployed `track-file-changes.sh`
+> adds input validation (tab/newline rejection, regex validation of agent fields),
+> path sanitization, restricted file permissions (`install -m 0600`), and
+> deduplication. See the source file for the production implementation.
 
 ### Why a Ledger Instead of `git status`?
 
