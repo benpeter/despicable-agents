@@ -549,7 +549,7 @@ Reports follow an inverted pyramid: most important information first, progressiv
 
 - **Summary**: 2-3 sentences covering what happened and why it matters. Enough for a PR reviewer to decide whether to read further.
 - **Original Prompt**: The verbatim user request (inline blockquote for short prompts, collapsible for long ones). Secrets and credentials are redacted before inclusion. Also written as a standalone `prompt.md` file in the report's companion directory for traceability.
-- **Key Design Decisions**: Non-gate design decisions with rationale and rejected alternatives. Includes a Conflict Resolutions subsection (present even if "None.").
+- **Key Design Decisions**: Non-gate design decisions with rationale and rejected alternatives. Includes a Decisions subsection using Chosen/Over/Why format (present even if "None.").
 - **Phases**: Narrative account of the orchestration arc, 1-2 paragraphs per phase.
 - **Agent Contributions**: Collapsible section grouped into Planning (specialist input with adopted recommendations and flagged risks), Architecture Review, and Code Review (verdicts with proportional detail -- one line for APPROVE, 2-3 lines for ADVISE, 3-4 lines for BLOCK with resolution).
 - **Execution**: Tasks table, files changed table, and approval gates table with enriched briefs for each gate.
