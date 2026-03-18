@@ -943,7 +943,7 @@ wrap-up sequence with the following:
    gate-count: 0
    ```
 
-   Follow the advisory-mode conditional rules in `TEMPLATE.md`:
+   Follow the advisory-mode conditional rules in `${CLAUDE_SKILL_DIR}/TEMPLATE.md`:
    - Include: Summary, Original Prompt, Key Design Decisions, Phases
      (1-3 narrative; 3.5-8 as "Skipped (advisory-only orchestration)."),
      Agent Contributions (planning only), Team Recommendation, Working Files
@@ -1792,7 +1792,7 @@ A batch contains all tasks that can run before the next gate.
    2. Filter against sensitive patterns (existing safety rails apply).
    3. If no changes or all changes are sensitive, skip silently.
    4. Stage and commit (`git commit --quiet`) with conventional commit message:
-      `<type>(<scope>): <summary>` with trailers per [commit-workflow.md](../../../docs/commit-workflow.md):
+      `<type>(<scope>): <summary>` with trailers per [commit-workflow.md](${CLAUDE_SKILL_DIR}/../../docs/commit-workflow.md):
       `Agent: <agent-name>` (when agent metadata is available in the change ledger)
       `Co-Authored-By: Claude <noreply@anthropic.com>`
       The scope is derived from the agent_type in the change ledger by stripping
@@ -2372,7 +2372,7 @@ the report.
 ### Report Template
 
 The canonical report template is defined in
-`docs/history/nefario-reports/TEMPLATE.md`. Read and follow this template
+`${CLAUDE_SKILL_DIR}/TEMPLATE.md`. Read and follow this template
 when generating execution reports. The template defines:
 - v3 YAML frontmatter schema (10-12 fields)
 - Canonical section order (13 top-level H2 sections)
@@ -2443,7 +2443,7 @@ skip it, do not defer it, do not stop before it is written.
      scratch files in temp, cleaned on reboot.
 6. **Write execution report** to `<REPORT_DIR>/<YYYY-MM-DD>-<HHMMSS>-<slug>.md`
    — use the HHMMSS captured in step 2
-   — follow the canonical template defined in `docs/history/nefario-reports/TEMPLATE.md`
+   — follow the canonical template defined in `${CLAUDE_SKILL_DIR}/TEMPLATE.md`
    — the External Skills data (if any were discovered) is now a subsection within
      Session Resources, not a standalone section. Include the External Skills
      subsection within Session Resources when skills were discovered.
