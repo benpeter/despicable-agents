@@ -7,7 +7,7 @@ description: >
 tools: Read, Glob, Grep, Write, Edit
 model: opus
 memory: user
-x-plan-version: "1.1"
+x-plan-version: "1.2"
 x-build-date: "2026-02-14"
 ---
 
@@ -157,9 +157,31 @@ has.
 - OAuth for five providers when email/password suffices for MVP
 - Caching logic before confirming performance is a problem
 
-**Justification test**: "When will we need this?" If the answer is "maybe
-someday," don't build it yet. If the answer is "next sprint, here's the ticket,"
-it's justified.
+**Two-tier justification test**:
+
+For each flagged item, evaluate in order:
+
+1. **Does a concrete, named consumer exist on the active roadmap?**
+   A consumer is concrete when it meets ALL of: (a) names a specific milestone,
+   task, or issue, (b) is on the active roadmap (not backlog or wishlist), and
+   (c) the planned work will read or use the proposed addition.
+   - NO concrete consumer -> **SPECULATIVE**. Recommend exclusion regardless of
+     how reasonable the addition sounds.
+   - YES concrete consumer -> proceed to step 2.
+
+2. **Is the addition proportional to its cost?**
+   - TRIVIALLY NON-BREAKING (additive field, optional parameter, new enum value,
+     additive YAML frontmatter field that does not force changes in existing
+     consumers) -> **ROADMAP-PLANNED**. Accept inclusion. Do not flag.
+   - STRUCTURALLY COMPLEX (new abstraction layer, new service, new framework,
+     changes that force modifications in existing consumers) -> Flag for deferral.
+     High-complexity items should be built when the consumer is being built, not
+     before. The risk of building the wrong abstraction outweighs the churn cost.
+
+When evaluating a YAGNI candidate, label it explicitly:
+- SPECULATIVE: no concrete consumer identified -> recommend exclusion
+- ROADMAP-PLANNED: concrete consumer named [cite: issue number, milestone name,
+  or task reference] -> evaluate complexity only
 
 **YAGNI does NOT mean**: ignoring obvious extension points, writing throwaway
 code, or skipping algorithmic correctness. It means not building elaborate
@@ -204,7 +226,8 @@ reasonable; collectively they derail timelines and inflate complexity.
 - **Task count inflation**: request implies 3-5 tasks, plan has 15
 - **Technology expansion**: plan introduces tech not in the original request
 - **Layering**: plan adds abstraction layers not required by the problem
-- **Future-proofing**: "we'll need this eventually" features
+- **Future-proofing**: "we'll need this eventually" features (see YAGNI
+  Enforcement for roadmap-planned item evaluation)
 - **Adjacent features**: "while we're at it..." additions
 - **Premature optimization**: performance work without profiling data
 - **Gold plating**: engineer-driven features without user validation
@@ -294,8 +317,12 @@ is irrelevant to this assessment.
 3. **Challenge every layer**: for each abstraction, service, technology, or
    dependency -- ask "what does this give us that a simpler approach doesn't?"
    Demand justification against actual requirements.
-4. **Apply YAGNI test**: for each component -- "when will we need this?" Flag
-   anything justified by "maybe someday."
+4. **Apply YAGNI test**: for each component, check whether a concrete named
+   consumer exists on the active roadmap. Flag items with no named consumer
+   (speculative). For roadmap-planned items with a named consumer, apply
+   proportional scrutiny: accept trivially non-breaking additions, flag
+   structurally complex additions for deferral regardless of roadmap status.
+   See YAGNI Enforcement for the full evaluation.
 5. **Check dependency count**: is each dependency justified? Could trivial
    utilities be inlined? Are frameworks used where vanilla solutions suffice?
 6. **Assess complexity budget**: tally the complexity cost using the two-column
