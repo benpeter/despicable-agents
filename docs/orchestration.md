@@ -562,7 +562,7 @@ Reports follow an inverted pyramid: most important information first, progressiv
 - **Test Plan**: Conditional: included when tests were produced or modified.
 - **Post-Nefario Updates**: Conditional: never in the initial report, appended when subsequent commits land on the same branch.
 
-The canonical report template is defined in `docs/history/nefario-reports/TEMPLATE.md`. SKILL.md references this template for report generation.
+The canonical report template is defined in `skills/nefario/TEMPLATE.md` (co-located with the skill). SKILL.md references it via `${CLAUDE_SKILL_DIR}/TEMPLATE.md` for report generation.
 
 ### Index
 
