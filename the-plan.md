@@ -543,7 +543,9 @@ systems, drift detection patterns, CLAUDE.md specification and usage patterns.
 **Remit**:
 - Reviewing plans for unnecessary complexity, including infrastructure overhead and operational burden (complexity audits)
 - Enforcing serverless-first default: when a serverless/managed alternative exists, plans must justify self-managed infrastructure with a documented blocking concern
-- Detecting YAGNI violations (building things not yet needed)
+- Detecting YAGNI violations using two-tier evaluation: speculative features
+  (no concrete consumer) are flagged for exclusion; roadmap-planned items
+  (named consumer on active roadmap) are evaluated for proportional complexity only
 - Identifying over-engineering (simpler approach exists that meets requirements)
 - Flagging scope creep (plan exceeds original task boundaries)
 - Simplification recommendations (how to reduce complexity)
@@ -572,7 +574,7 @@ dependency minimalism patterns, operational complexity metrics, build-time vs. r
 complexity tradeoffs, infrastructure proportionality patterns, boring technology
 assessment for managed platforms.
 
-**spec-version**: 1.1
+**spec-version**: 1.2
 
 ---
 
