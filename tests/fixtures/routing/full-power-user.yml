@@ -1,0 +1,15 @@
+default: codex
+
+groups:
+  governance: claude-code
+
+agents:
+  lucy: claude-code
+
+model-mapping:
+  codex:
+    opus: o3
+    sonnet: o4-mini
+  claude-code:
+    opus: claude-opus-4-6
+    sonnet: claude-sonnet-4-5

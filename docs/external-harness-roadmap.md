@@ -52,6 +52,8 @@ Shared types, configuration schema, and instruction translation. No tool invocat
 - Interface is minimal -- covers Codex and Aider use cases, nothing more
 - No harness-specific fields in the shared types
 
+**Specification**: [Adapter Interface](adapter-interface.md)
+
 ### #139: Routing Configuration Schema
 
 **Goal**: Define the YAML schema for `.nefario/routing.yml` and implement config loading with validation.
@@ -72,6 +74,8 @@ Shared types, configuration schema, and instruction translation. No tool invocat
 
 **Notes**: No "did you mean?" suggestions, no JSON Schema output, no CI/CD env var overrides -- these are premature for a first implementation.
 
+**Specification**: [Routing Configuration](routing-config.md)
+
 ### #140: AGENT.md Instruction Translator
 
 **Goal**: Translate an AGENT.md file to a tool-native instruction file (AGENTS.md or CONVENTIONS.md), stripping frontmatter and Claude Code-specific content.
@@ -88,6 +92,8 @@ Shared types, configuration schema, and instruction translation. No tool invocat
 - Output file contains no YAML frontmatter
 - Output file contains no TaskUpdate, SendMessage, or scratch file references
 - Output is valid Markdown readable by the target tool
+
+**Specification**: [Translator Rules](adapter-interface.md#translator-rules)
 
 ---
 
@@ -161,7 +167,7 @@ Second concrete adapter. Validates that the abstraction holds for a tool without
 
 **Scope**:
 - Input: unified diff (from `git diff`) + original task prompt
-- Output: structured summary matching `DelegationResult.stdout_summary` (changed files, scope description, purpose)
+- Output: structured summary matching `DelegationResult.task_summary` (changed files, scope description, purpose)
 - Use a small fast model; target <$0.01 per call, <5 second latency
 - Reusable by any adapter that lacks native structured output (Aider today; others potentially later)
 
