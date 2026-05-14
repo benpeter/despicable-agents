@@ -849,7 +849,19 @@ count, execution order) in session context. **Proceed to Phase 3.5
 
 ### Compaction Checkpoint
 
-After writing the synthesis to the scratch file, perform these steps in order:
+**Headless mode skip**: If the environment variable `NEFARIO_HEADLESS=1` is set
+(check via `Bash` tool: `printenv NEFARIO_HEADLESS`), SKIP THIS ENTIRE CHECKPOINT.
+Do not call `pbcopy`. Do not print any "compaction prompt copied" / "paste the
+command below" / "type continue" text. Your immediate next action MUST be the
+Phase 3.5 reviewer Agent invocations. The rationale: in headless invocations
+(e.g., `claude -p` for autonomous build loops), no human is present to paste
+the `/compact` command, and emitting the checkpoint message is interpreted by
+the model as an end-of-turn signal, which kills the cycle mid-orchestration.
+The fresh-context-per-cycle pattern that headless drivers use makes
+intra-cycle compaction structurally unnecessary.
+
+Interactive mode (default): after writing the synthesis to the scratch file,
+perform these steps in order:
 
 <!-- The <system_warning> token usage format ("Token usage: {used}/{total};
      {remaining} remaining") is empirically observed Claude Code behavior, not a
@@ -1377,7 +1389,15 @@ Follow these steps exactly. **Global cap: 2 revision rounds total.**
 
 ### Compaction Checkpoint
 
-After processing all review verdicts, perform these steps in order:
+**Headless mode skip**: If `NEFARIO_HEADLESS=1` is set (check via `Bash` tool:
+`printenv NEFARIO_HEADLESS`), SKIP THIS ENTIRE CHECKPOINT. Do not call
+`pbcopy`. Do not print "compaction prompt copied" / "paste the command below"
+/ "type continue" text. Your immediate next action MUST be the Phase 4
+execution dispatches from the synthesized plan. See the Phase 3 checkpoint
+above for full rationale.
+
+Interactive mode (default): after processing all review verdicts, perform
+these steps in order:
 
 Extract context usage from the most recent `<system_warning>` in the conversation
 (same extraction and fallback as the Phase 3 checkpoint above).
